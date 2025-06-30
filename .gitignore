@@ -1,0 +1,9 @@
+# Ignorar carpetas pesadas y archivos sensibles
+node_modules/
+.next/
+.env
+.env.local
+dist/
+.cache/
+*.log
+/
