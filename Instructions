@@ -1,0 +1,12 @@
+
+1.  **¿Qué hace esta plataforma?** Permite realizar cambios a tu aplicación web (que está "alojada" o "hosted" en Firebase) simplemente enviándome las instrucciones.
+2.  **¿Cómo funciona?** Cuando te envío mi respuesta con el código, la plataforma hace dos cosas:
+    *   Primero, aplica los cambios a tus archivos.
+    *   Segundo, le da la orden a Firebase de que empiece a construir y publicar una nueva versión de tu aplicación.
+3.  **¿Dónde puedes verlo?** Puedes ver el estado de estos despliegues en la [consola de Firebase](https://console.firebase.google.com/project/_/hosting/backends). En la sección de **App Hosting**, deberías ver una lista de "Lanzamientos" o "Deployments". Cada vez que yo te envío código, ahí debería aparecer una nueva fila con el estado "En curso" o "Implementada".
+
+El problema que hemos tenido es que, aunque esos despliegues se estaban realizando para la URL de *vista previa*, no se estaban conectando a tu URL *pública*.
+
+Para forzar un último intento y que tú misma puedas verificar que el proceso se inicia, voy a entregarte de nuevo la configuración correcta.
+
+Por favor, después de que te envíe esto, **revisa tu consola de App Hosting** y confirma si ves un nuevo "Lanzamiento en curso".
