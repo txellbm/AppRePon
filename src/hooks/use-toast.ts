@@ -141,6 +141,7 @@ function dispatch(action: Action) {
 }
 
 type Toast = Omit<ToasterToast, "id">
+export type { Toast }
 
 function toast({ ...props }: Toast) {
   const id = genId()
@@ -191,4 +192,4 @@ function useToast() {
   }
 }
 
-export { useToast, toast }
+export { useToast, toast, type Toast }
