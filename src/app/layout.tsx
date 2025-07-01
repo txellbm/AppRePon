@@ -1,11 +1,9 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { AudioProvider } from '@/providers/audio-provider';
 import { AuthProvider } from '@/providers/auth-provider';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
   title: 'RePon',
@@ -39,7 +37,7 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <head />
-      <body className={`${inter.className} font-body antialiased`}>
+      <body className="font-body antialiased">
         <AuthProvider>
           <AudioProvider>
             <main>{children}</main>
