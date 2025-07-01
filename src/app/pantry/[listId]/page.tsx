@@ -2,12 +2,14 @@
 
 import { useParams } from 'next/navigation'
 import { useSharedList } from '@/hooks/use-shared-list'
+import { useReponToast } from '@/hooks/use-repon-toast'
 import type { Product } from '@/lib/types'
 
 export default function PantryPage() {
   const params = useParams()
   const listId = Array.isArray(params?.listId) ? params.listId[0] : params?.listId || ''
-  const { pantry, shoppingList, history, updateRemoteList } = useSharedList(listId)
+  const { toast } = useReponToast()
+  const { pantry, shoppingList, history, updateRemoteList } = useSharedList(listId, toast)
 
   const getCounts = (
     arr: Product[],
@@ -26,8 +28,6 @@ export default function PantryPage() {
   const pantryNameCount = getCounts(pantry, 'name')
   const shoppingIdCount = getCounts(shoppingList, 'id')
   const shoppingNameCount = getCounts(shoppingList, 'name')
-  const historyIdCount = getCounts(history, 'id')
-  const historyNameCount = getCounts(history, 'name')
 
   const getKey = (
     product: Product,
@@ -68,10 +68,8 @@ export default function PantryPage() {
 
       <h2>Historial</h2>
       <ul>
-        {history.map((product, index) => (
-          <li key={getKey(product, index, historyIdCount, historyNameCount)}>
-            {product.name}
-          </li>
+        {history.map((item, index) => (
+          <li key={index}>{item}</li>
         ))}
       </ul>
     </div>
