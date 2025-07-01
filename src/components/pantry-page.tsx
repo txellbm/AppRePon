@@ -129,7 +129,8 @@ function AddItemForm({ onAddItem, history, pantry, shoppingList, activeTab }: { 
     const value = e.target.value;
     setItemName(value);
     if (value && !value.includes(',')) {
-      const currentItems = new Set([...pantry.map(p => p.name.toLowerCase()), ...shoppingList.map(p => p.name.toLowerCase())]);
+      const listItems = activeTab === 'pantry' ? pantry : shoppingList;
+      const currentItems = new Set(listItems.map(p => p.name.toLowerCase()));
       setSuggestions(
         history.filter(
           item => item.toLowerCase().includes(value.toLowerCase()) && !currentItems.has(item.toLowerCase())
@@ -479,8 +480,15 @@ export default function PantryPage({ listId }: { listId: string }) {
         
         const oldName = editingProduct.name;
         
-        const nameExists = pantry.some(p => p.name.toLowerCase() === correctedName.toLowerCase() && p.id !== editingProduct.id) ||
-                         shoppingList.some(p => p.name.toLowerCase() === correctedName.toLowerCase() && p.id !== editingProduct.id);
+        const existsInPantry = pantry.some(p => p.id === editingProduct.id);
+        const existsInShopping = shoppingList.some(p => p.id === editingProduct.id);
+
+        const nameExistsInPantry = existsInPantry &&
+            pantry.some(p => p.name.toLowerCase() === correctedName.toLowerCase() && p.id !== editingProduct.id);
+        const nameExistsInShopping = existsInShopping &&
+            shoppingList.some(p => p.name.toLowerCase() === correctedName.toLowerCase() && p.id !== editingProduct.id);
+
+        const nameExists = nameExistsInPantry || nameExistsInShopping;
         
         if (nameExists) {
             toastie.update({
