@@ -17,12 +17,13 @@ const useSpeechRecognition = (options?: { onResult: (transcript: string) => void
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
   const shouldKeepListeningRef = useRef(false);
   const { toast } = useReponToast({ audioDisabled: true });
 
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       setError('El reconocimiento de voz no es compatible en este navegador.');
       toast({ title: "Comandos de voz no compatibles", description: "Tu navegador no es compatible con el reconocimiento de voz.", variant: "destructive" });
@@ -55,7 +56,7 @@ const useSpeechRecognition = (options?: { onResult: (transcript: string) => void
       }
     };
 
-    recognition.onerror = (event) => {
+    recognition.onerror = (event: any) => {
       // The 'no-speech' error is not a critical failure. It simply means the user
       // didn't say anything. We can log it for debugging but shouldn't treat it
       // as an application-breaking error. We return early to avoid showing a toast
@@ -78,7 +79,7 @@ const useSpeechRecognition = (options?: { onResult: (transcript: string) => void
       setIsListening(false);
     };
 
-    recognition.onresult = (event) => {
+    recognition.onresult = (event: any) => {
       console.log("💬 Resultado de voz recibido:", event);
       let finalTranscript = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
