@@ -652,7 +652,13 @@ export default function PantryPage({ listId }: { listId: string }) {
                 newShoppingList = shoppingList.map(item => item.id === product.id ? { ...item, status: 'out of stock', reason: 'out of stock' } : item);
             } else {
                 const { isPendingPurchase, ...restOfProduct } = product;
-                newShoppingList.push({ ...restOfProduct, status: 'out of stock', reason: 'out of stock', buyLater: false });
+                newShoppingList.push({
+                    ...restOfProduct,
+                    status: 'out of stock',
+                    reason: 'out of stock',
+                    isPendingPurchase: false,
+                    buyLater: false,
+                });
             }
             updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
             const { message } = await generateGrammaticalMessageAction({ productName: product.name, messageType: 'out_of_stock_and_moved' });
@@ -736,7 +742,12 @@ export default function PantryPage({ listId }: { listId: string }) {
         };
     } else {
         const { reason, buyLater, ...restOfItem } = boughtItem;
-        newPantry.push({ ...restOfItem, status: 'available' as const, isPendingPurchase: false });
+        newPantry.push({
+            ...restOfItem,
+            status: 'available' as const,
+            isPendingPurchase: false,
+            buyLater: false,
+        });
     }
 
     const newShoppingList = shoppingList.filter(p => p.id !== id);
@@ -760,7 +771,13 @@ export default function PantryPage({ listId }: { listId: string }) {
         );
     } else {
         const { isPendingPurchase, ...restOfProduct } = product;
-        newShoppingList.push({ ...restOfProduct, status: 'low', reason: 'low', buyLater: false });
+        newShoppingList.push({
+            ...restOfProduct,
+            status: 'low',
+            reason: 'low',
+            isPendingPurchase: false,
+            buyLater: false,
+        });
     }
 
     const newPantry = pantry.map(p => p.id === id ? { ...p, isPendingPurchase: true } : p);
