@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { generateRecipeAction, conversationalAssistantAction, generateGrammaticalMessageAction, correctProductNameAction } from "@/lib/actions";
 import { type Product, type Category, type ProductStatus, type ViewMode, type GenerateRecipeOutput, type ConversationTurn } from "@/lib/types";
 import { useReponToast } from "@/hooks/use-repon-toast";
@@ -61,6 +61,7 @@ import {
   Pencil,
   Cloudy,
   User,
+  Copy,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -91,7 +92,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
 
@@ -170,8 +170,8 @@ function AddItemForm({ onAddItem, history, pantry, shoppingList, activeTab }: { 
           />
           {suggestions.length > 0 && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="absolute z-10 w-full bg-background border rounded-md shadow-lg mt-1 p-2 flex flex-col gap-1">
-              {suggestions.map(suggestion => (
-                <button key={suggestion} onClick={() => handleSuggestionClick(suggestion)} className="text-left p-2 rounded hover:bg-accent w-full">
+              {suggestions.map((suggestion, index) => (
+                <button type="button" key={`suggestion-${suggestion}-${index}`} onClick={() => handleSuggestionClick(suggestion)} className="text-left p-2 rounded hover:bg-accent w-full">
                   {suggestion}
                 </button>
               ))}
@@ -226,7 +226,7 @@ function ProductCard({
   return (
     <motion.div
       layout
-      layoutId={product.id}
+      layoutId={'pantry-' + product.id}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, x: -50, transition: { duration: 0.3 } }}
@@ -320,6 +320,7 @@ function ShoppingItemCard({
   onDelete,
   onReturnToPantry,
   onEdit,
+  layoutId
 }: {
   item: Product;
   viewMode: ViewMode;
@@ -328,6 +329,7 @@ function ShoppingItemCard({
   onDelete: (id: string) => void;
   onReturnToPantry: (id: string) => void;
   onEdit: (product: Product) => void;
+  layoutId: string;
 }) {
   const cardBorderStyle = {
     available: "border-green-500",
@@ -340,7 +342,7 @@ function ShoppingItemCard({
   return (
     <motion.div
       layout
-      layoutId={item.id}
+      layoutId={layoutId}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, x: -50, transition: { duration: 0.3 } }}
@@ -380,7 +382,7 @@ function ShoppingItemCard({
                         {item.buyLater ? <MoveUp className="h-4 w-4" /> : <History className="h-4 w-4" />}
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent><p>{item.buyLater ? 'Mover a la compra de hoy' : 'Dejar para otro día'}</p></TooltipContent>
+                <TooltipContent><p>{item.buyLater ? 'Mover a la compra de hoy' : 'Dejar para otro d\xeda'}</p></TooltipContent>
             </Tooltip>
         </TooltipProvider>
 
@@ -413,121 +415,8 @@ function ShoppingItemCard({
   );
 }
 
-function ProductList({
-  products,
-  viewMode,
-  groupByCategory,
-  pulsingProductId,
-  exitingProductId,
-  openCategories,
-  onOpenCategoriesChange,
-  onUpdateStatus,
-  onDelete,
-  onAddToShoppingList,
-  onUpdateCategory,
-  onEdit,
-}: {
-  products: Product[];
-  viewMode: ViewMode;
-  groupByCategory: boolean;
-  pulsingProductId: string | null;
-  exitingProductId: string | null;
-  openCategories: string[];
-  onOpenCategoriesChange: (categories: string[]) => void;
-  onUpdateStatus: (id: string, status: ProductStatus) => void;
-  onDelete: (id: string) => void;
-  onAddToShoppingList: (id: string) => void;
-  onUpdateCategory: (id: string, category: Category) => void;
-  onEdit: (product: Product) => void;
-}) {
-  const groupedProducts = useMemo(() => {
-    if (!groupByCategory) return { 'Todos los productos': products };
-    return products.reduce((acc, product) => {
-      const category = product.category || "Otros";
-      if (!acc[category]) acc[category] = [];
-      acc[category].push(product);
-      return acc;
-    }, {} as Record<string, Product[]>);
-  }, [products, groupByCategory]);
-
-  const sortedCategories = Object.keys(groupedProducts).sort();
-
-  if (!groupByCategory) {
-    return (
-       <div
-        className={cn(
-          "gap-2",
-          viewMode === "grid"
-            ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-            : "flex flex-col"
-        )}
-      >
-        <AnimatePresence>
-          {products.map((product) => (
-            <ProductCard 
-                key={product.id} 
-                product={product} 
-                viewMode={viewMode}
-                isPulsing={product.id === pulsingProductId}
-                isExiting={product.id === exitingProductId}
-                onUpdateStatus={onUpdateStatus}
-                onDelete={onDelete}
-                onAddToShoppingList={onAddToShoppingList}
-                onUpdateCategory={onUpdateCategory}
-                onEdit={onEdit}
-            />
-          ))}
-        </AnimatePresence>
-      </div>
-    )
-  }
-
-  return (
-    <Accordion type="multiple" value={openCategories} onValueChange={onOpenCategoriesChange} className="w-full space-y-2">
-      <AnimatePresence>
-        {sortedCategories.map((category) => (
-          <AccordionItem key={category} value={category} className="border-none">
-             <AccordionTrigger className="text-sm font-semibold text-muted-foreground uppercase tracking-wider hover:no-underline rounded-md p-2">
-                <div className="flex items-center gap-2">
-                  {categoryIcons[category as Category]} {category}
-                </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div
-                className={cn(
-                  "gap-2 pt-2",
-                  viewMode === "grid"
-                    ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-                    : "flex flex-col"
-                )}
-              >
-                <AnimatePresence>
-                  {groupedProducts[category as Category].map((product) => (
-                    <ProductCard 
-                        key={product.id} 
-                        product={product} 
-                        viewMode={viewMode}
-                        isPulsing={product.id === pulsingProductId}
-                        isExiting={product.id === exitingProductId}
-                        onUpdateStatus={onUpdateStatus}
-                        onDelete={onDelete}
-                        onAddToShoppingList={onAddToShoppingList}
-                        onUpdateCategory={onUpdateCategory}
-                        onEdit={onEdit}
-                    />
-                  ))}
-                </AnimatePresence>
-              </div>
-            </AccordionContent>
-            <Separator className="mt-2" />
-          </AccordionItem>
-        ))}
-      </AnimatePresence>
-    </Accordion>
-  );
-}
-
 export default function PantryPage({ listId }: { listId: string }) {
+  var a,s;
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"pantry" | "shopping-list">("pantry");
@@ -551,7 +440,6 @@ export default function PantryPage({ listId }: { listId: string }) {
   const [isRecipeDialogOpen, setIsRecipeDialogOpen] = useState(false);
   const [recipe, setRecipe] = useState<GenerateRecipeOutput | null>(null);
   const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
-  const [previousRecipeTitles, setPreviousRecipeTitles] = useState<string[]>([]);
   
   const { isAudioEnabled, toggleAudio, playAudio } = useAudio();
 
@@ -605,10 +493,10 @@ export default function PantryPage({ listId }: { listId: string }) {
         }
 
         const newPantry = pantry.map(p => 
-            p.name.toLowerCase() === oldName.toLowerCase() ? { ...p, name: correctedName } : p
+            p.id === editingProduct.id ? { ...p, name: correctedName } : p
         );
         const newShoppingList = shoppingList.map(p => 
-            p.name.toLowerCase() === oldName.toLowerCase() ? { ...p, name: correctedName } : p
+            p.id === editingProduct.id ? { ...p, name: correctedName } : p
         );
 
         const newHistory = [...new Set([...history.filter(h => h.toLowerCase() !== oldName.toLowerCase()), correctedName])];
@@ -653,7 +541,6 @@ export default function PantryPage({ listId }: { listId: string }) {
   };
   
   useEffect(() => {
-    // This effect protects the route
     if (!authLoading && !user) {
       router.replace('/');
     }
@@ -664,7 +551,7 @@ export default function PantryPage({ listId }: { listId: string }) {
     if (!validFiltersForTab.includes(statusFilter)) {
       setStatusFilter('all');
     }
-  }, [activeTab, filterOptions, statusFilter]);
+  }, [activeTab, statusFilter, filterOptions]);
 
 
   useEffect(() => {
@@ -704,7 +591,6 @@ export default function PantryPage({ listId }: { listId: string }) {
     }
   }, [isAssistantOpen]);
 
-  // Effect to control open categories for the accordion
   useEffect(() => {
     if (groupByCategory) {
         const prevPantrySet = new Set(prevPantryRef.current.map(p => p.id));
@@ -712,21 +598,19 @@ export default function PantryPage({ listId }: { listId: string }) {
 
         if (newProducts.length > 0) {
             const newCategories = new Set(newProducts.map(p => p.category));
-            setOpenCategories(prev => [...new Set([...prev, ...Array.from(newCategories)])]);
+            setOpenCategories(prev => [...new Set([...prev, ...Array.from(newCategories)])] as string[]);
         } else if (openCategories.length === 0) {
-            // If grouping is enabled and no categories are open, open all of them.
             const allCategories = [...new Set(pantry.map(p => p.category))];
-            setOpenCategories(allCategories);
+            setOpenCategories(allCategories.filter((c): c is Category => c !== undefined));
         }
     }
     prevPantryRef.current = pantry;
-  }, [pantry, groupByCategory]);
+  }, [pantry, groupByCategory, openCategories.length]);
   
-  // Effect to open all categories when grouping is turned on
   useEffect(() => {
     if (groupByCategory) {
       const allCategories = [...new Set([...pantry.map(p => p.category), ...shoppingList.map(p => p.category)])];
-      setOpenCategories(allCategories);
+      setOpenCategories(allCategories.filter((c): c is Category => c !== undefined));
     }
   }, [groupByCategory, pantry, shoppingList]);
 
@@ -736,8 +620,8 @@ export default function PantryPage({ listId }: { listId: string }) {
     } catch(e) {
       console.warn("Could not remove dev mode flag from localStorage.");
     }
+    
     await signOut();
-    // A full page navigation is needed to force the AuthProvider to re-evaluate and clear the user state.
     window.location.href = '/';
   };
 
@@ -751,43 +635,35 @@ export default function PantryPage({ listId }: { listId: string }) {
     let newPantry = [...pantry];
     let newShoppingList = [...shoppingList];
 
-    // If the product is now 'out of stock'
     if (status === 'out of stock') {
         setExitingProductId(id);
-
         setTimeout(async () => {
             newPantry = pantry.filter(p => p.id !== id);
-            const itemInShoppingListIndex = shoppingList.findIndex(item => item.name.toLowerCase() === product.name.toLowerCase());
-
-            if (itemInShoppingListIndex !== -1) {
-                // If it was already on the shopping list (as 'low'), update its status to 'out of stock'
-                const updatedItem = { ...newShoppingList[itemInShoppingListIndex], status: 'out of stock' as const, reason: 'out of stock' as const };
-                newShoppingList[itemInShoppingListIndex] = updatedItem;
+            const existingShoppingItem = shoppingList.find(item => item.id === product.id);
+            if (existingShoppingItem) {
+                newShoppingList = shoppingList.map(item => item.id === product.id ? { ...item, status: 'out of stock', reason: 'out of stock' } : item);
             } else {
-                // If it wasn't on the shopping list, add it as 'out of stock'
                 const { isPendingPurchase, ...restOfProduct } = product;
-                newShoppingList.push({ ...restOfProduct, status: 'out of stock', reason: 'out of stock' });
+                newShoppingList.push({ ...restOfProduct, status: 'out of stock', reason: 'out of stock', buyLater: false });
             }
-
             updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
-            
             const { message } = await generateGrammaticalMessageAction({ productName: product.name, messageType: 'out_of_stock_and_moved' });
             toast({ title: "¡Producto agotado!", description: message, audioText: message });
             setExitingProductId(null);
-        }, 300); // Animation duration
+        }, 300);
         return;
     }
 
-    // For other status changes ('available', 'low')
     newPantry = pantry.map(p => (p.id === id ? { ...p, status, isPendingPurchase: status === 'available' ? false : p.isPendingPurchase } : p));
     
-    // If status is changed back to available, and item was on shopping list as 'low', remove from shopping list
     if (status === 'available') {
-      newShoppingList = shoppingList.filter(item => item.name.toLowerCase() !== product.name.toLowerCase() || item.status !== 'low');
+      const shoppingListItem = shoppingList.find(item => item.id === product.id);
+      if (shoppingListItem && shoppingListItem.reason === 'low') {
+        newShoppingList = shoppingList.filter(item => item.id !== product.id);
+      }
     }
 
     updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
-
     const { message } = await generateGrammaticalMessageAction({
       productName: product.name,
       messageType: status === 'low' ? 'low_stock' : 'available',
@@ -796,32 +672,37 @@ export default function PantryPage({ listId }: { listId: string }) {
   };
 
   const handleUpdateCategory = async (id: string, newCategory: Category) => {
-    const product = pantry.find((p) => p.id === id) || shoppingList.find((p) => p.id === id);
-    if (product) {
-      const allListsProduct = [ ...pantry, ...shoppingList ];
-      const listToUpdate = allListsProduct.map((p) => (p.id === id ? { ...p, category: newCategory } : p));
-      
-      const newPantry = listToUpdate.filter(p => pantry.some(op => op.id === p.id));
-      const newShoppingList = listToUpdate.filter(p => shoppingList.some(op => op.id === p.id));
+    const productInPantry = pantry.find((p) => p.id === id);
+    const productInShopping = shoppingList.find((p) => p.id === id);
 
-      updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
-      toast({ title: '¡Categoría cambiada!', description: `"${product.name}" ahora está en "${newCategory}".` });
+    let newPantry = pantry;
+    let newShoppingList = shoppingList;
+    let productName = "";
+
+    if (productInPantry) {
+        productName = productInPantry.name;
+        newPantry = pantry.map((p) => (p.id === id ? { ...p, category: newCategory } : p));
+    }
+    if (productInShopping) {
+        productName = productInShopping.name;
+        newShoppingList = shoppingList.map((p) => (p.id === id ? { ...p, category: newCategory } : p));
+    }
+
+    if (productName) {
+        updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
+        toast({ title: '¡Categoría cambiada!', description: `"${productName}" ahora está en "${newCategory}".` });
     }
   };
 
   const handleDelete = (id: string) => {
-    const productToDelete = shoppingList.find(p => p.id === id) || pantry.find(p => p.id === id);
-    if (!productToDelete) return;
+    const itemInShoppingList = shoppingList.find(p => p.id === id);
     
-    // If deleting from shopping list, update pantry item's pending status
-    let newPantry = pantry.map(p => {
-      if (p.name.toLowerCase() === productToDelete.name.toLowerCase()) {
-        return { ...p, isPendingPurchase: false };
-      }
-      return p;
-    });
+    let newPantry = pantry.filter(p => p.id !== id);
+    let newShoppingList = shoppingList.filter(p => p.id !== id);
 
-    const newShoppingList = shoppingList.filter(s => s.id !== id);
+    if (itemInShoppingList && itemInShoppingList.reason === 'low') {
+        newPantry = newPantry.map(p => p.name.toLowerCase() === itemInShoppingList.name.toLowerCase() ? {...p, isPendingPurchase: false } : p);
+    }
     
     updateRemoteList({
         pantry: newPantry,
@@ -837,24 +718,19 @@ export default function PantryPage({ listId }: { listId: string }) {
     if (!boughtItem) return;
 
     let newPantry = [...pantry];
-    // Find the original item in the pantry by name
-    const pantryItemIndex = pantry.findIndex(p => p.name.toLowerCase() === boughtItem.name.toLowerCase());
+    const pantryItemIndex = pantry.findIndex(p => p.id === boughtItem.id);
 
     if (pantryItemIndex > -1) {
-      // If it exists, update it: set status to available and remove pending flag
-      const updatedItem = {
-        ...pantry[pantryItemIndex],
-        status: 'available' as const,
-        isPendingPurchase: false,
-      };
-      newPantry[pantryItemIndex] = updatedItem;
+        newPantry[pantryItemIndex] = {
+            ...pantry[pantryItemIndex],
+            status: 'available',
+            isPendingPurchase: false,
+        };
     } else {
-      // If it doesn't exist in the pantry (e.g., added directly to shopping list), add it as a new item
-      const { reason, isPendingPurchase, ...restOfItem } = boughtItem;
-      newPantry = [...pantry, { ...restOfItem, status: 'available', isPendingPurchase: false }];
+        const { reason, buyLater, ...restOfItem } = boughtItem;
+        newPantry.push({ ...restOfItem, status: 'available' as const, isPendingPurchase: false });
     }
 
-    // Remove the item from the shopping list
     const newShoppingList = shoppingList.filter(p => p.id !== id);
 
     updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
@@ -866,22 +742,21 @@ export default function PantryPage({ listId }: { listId: string }) {
     const product = pantry.find(p => p.id === id);
     if (!product || product.status !== 'low') return;
 
-    const itemInShoppingList = shoppingList.find(item => item.name.toLowerCase() === product.name.toLowerCase());
+    const itemInShoppingList = shoppingList.find(item => item.id === product.id);
+
+    let newShoppingList = [...shoppingList];
 
     if (itemInShoppingList) {
-        // If item is already on the shopping list (maybe marked as 'buyLater'), update it.
-        const newShoppingList = shoppingList.map(item =>
-            item.id === itemInShoppingList.id ? { ...item, buyLater: false, status: 'low' } : item
+        newShoppingList = shoppingList.map(item =>
+            item.id === itemInShoppingList.id ? { ...item, buyLater: false, status: 'low', reason: 'low' } : item
         );
-        const newPantry = pantry.map(p => p.id === id ? { ...p, isPendingPurchase: true } : p);
-        updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
     } else {
-        // If not on the shopping list, add it.
-        const newShoppingListItem = { ...product, id: uuidv4(), status: 'low' as const, reason: 'low' as const, isPendingPurchase: false, buyLater: false };
-        const newShoppingList = [...shoppingList, newShoppingListItem];
-        const newPantry = pantry.map(p => p.id === id ? { ...p, isPendingPurchase: true } : p);
-        updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
+        const { isPendingPurchase, ...restOfProduct } = product;
+        newShoppingList.push({ ...restOfProduct, status: 'low', reason: 'low', buyLater: false });
     }
+
+    const newPantry = pantry.map(p => p.id === id ? { ...p, isPendingPurchase: true } : p);
+    updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
 
     const { message } = await generateGrammaticalMessageAction({ productName: product.name, messageType: 'added_to_shopping_list' });
     toast({ title: '¡Anotado!', description: message, audioText: message });
@@ -897,7 +772,7 @@ export default function PantryPage({ listId }: { listId: string }) {
     updateRemoteList({ shoppingList: newShoppingList });
     
     toast({ 
-      title: item.buyLater ? 'Movido a la compra de hoy' : 'Movido a "Comprar otro día"',
+      title: item.buyLater ? 'Movido a la compra de hoy' : 'Movido a "Comprar otro d\xeda"',
       description: `"${item.name}" se ha actualizado.`
     });
   };
@@ -908,17 +783,18 @@ export default function PantryPage({ listId }: { listId: string }) {
         toast({ title: "Acción no permitida", description: "Solo puedes devolver productos con poco stock.", variant: "destructive" });
         return;
     }
-
-    const newShoppingList = shoppingList.filter(p => p.id !== id);
+    
     const newPantry = pantry.map(p => {
-        if (p.name.toLowerCase() === itemInShoppingList.name.toLowerCase()) {
+        if (p.id === itemInShoppingList.id) {
             return { ...p, isPendingPurchase: false };
         }
         return p;
     });
 
+    const newShoppingList = shoppingList.filter(p => p.id !== id);
+
     updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
-    toast({ title: "Devuelto a la despensa", description: `"${itemInShoppingList.name}" ya no está en la lista de la compra.` });
+    toast({ title: "Devuelto a la despensa", description: `"${itemInShoppingList.name}" ya no est\xe1 en la lista de la compra.` });
   };
 
 
@@ -942,7 +818,7 @@ export default function PantryPage({ listId }: { listId: string }) {
 
     try {
       const result = await generateRecipeAction({
-        products: availableProducts,
+        products: availableProducts
       });
       setRecipe(result);
     } catch (error) {
@@ -975,38 +851,39 @@ export default function PantryPage({ listId }: { listId: string }) {
     setAssistantStatus('speaking');
     
     playAudio(result.response, () => {
-        setAssistantStatus('listening'); // Go back to listening after speaking
+        setAssistantStatus('listening');
     });
 
-    // Process operations
     result.operations?.forEach(op => {
-      const item_name_lower = op.item.toLowerCase();
+      const opItemNameLower = op.item.toLowerCase();
       switch (op.action) {
         case 'add':
           if (op.list === 'pantry') handleAddItem(op.item);
           else if (op.list === 'shopping') handleShoppingListAddItem(op.item);
           break;
         case 'remove': {
-          const itemToRemove = [...pantry, ...shoppingList].find(p => p.name.toLowerCase() === item_name_lower);
+          const itemToRemove = [...pantry, ...shoppingList].find(p => p.name.toLowerCase() === opItemNameLower);
           if (itemToRemove) handleDelete(itemToRemove.id);
           break;
         }
         case 'move': {
-           const itemToMove = [...pantry, ...shoppingList].find(p => p.name.toLowerCase() === item_name_lower);
-           if(itemToMove) {
-                if (op.to === 'shopping') handleLowStockToShoppingList(itemToMove.id);
-                else if (op.to === 'pantry') handleCheckShoppingItem(itemToMove.id); // Assumes it's coming from shopping list
-           } else if (op.from && op.to) {
-                // If item doesn't exist, treat move as an add
-                if (op.to === 'pantry') handleAddItem(op.item);
-                else if (op.to === 'shopping') handleShoppingListAddItem(op.item);
+           const itemInPantry = pantry.find(p => p.name.toLowerCase() === opItemNameLower);
+           const itemInShopping = shoppingList.find(p => p.name.toLowerCase() === opItemNameLower);
+           
+           if (op.from === 'pantry' && op.to === 'shopping' && itemInPantry) {
+              handleUpdateStatus(itemInPantry.id, 'out of stock');
+           } else if (op.from === 'shopping' && op.to === 'pantry' && itemInShopping) {
+              handleCheckShoppingItem(itemInShopping.id);
+           } else if (op.to === 'pantry') {
+              handleAddItem(op.item);
+           } else if (op.to === 'shopping') {
+              handleShoppingListAddItem(op.item);
            }
            break;
         }
       }
     });
 
-    // Process UI Actions
     result.uiActions?.forEach(action => {
         switch(action.action) {
             case 'change_tab':
@@ -1022,7 +899,6 @@ export default function PantryPage({ listId }: { listId: string }) {
     });
   };
 
-
   const handleNameSortToggle = () => {
     setSortConfig(current => {
       if (current.by === 'name') {
@@ -1037,7 +913,7 @@ export default function PantryPage({ listId }: { listId: string }) {
      const sorted = [...items];
      
      sorted.sort((a, b) => {
-        let comparison = a.name.localeCompare(a.name);
+        let comparison = a.name.localeCompare(b.name);
         return order === 'asc' ? comparison : -comparison;
      });
 
@@ -1052,9 +928,20 @@ export default function PantryPage({ listId }: { listId: string }) {
   const shoppingListNow = useMemo(() => filteredShoppingList.filter(p => !p.buyLater), [filteredShoppingList]);
   const shoppingListLater = useMemo(() => filteredShoppingList.filter(p => p.buyLater), [filteredShoppingList]);
 
-
+  const groupedPantry = useMemo(() => {
+    if (!groupByCategory) return null;
+    return filteredPantry.reduce((acc, product) => {
+      const category = product.category || "Otros";
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(product);
+      return acc;
+    }, {} as Record<string, Product[]>);
+  }, [filteredPantry, groupByCategory]);
+  
+  const sortedPantryCategories = useMemo(() => groupedPantry ? Object.keys(groupedPantry).sort() : [], [groupedPantry]);
+  
   const groupedShoppingListNow = useMemo(() => {
-    if (!groupByCategory) return { 'Para comprar ahora': shoppingListNow };
+    if (!groupByCategory) return null;
     return shoppingListNow.reduce((acc, product) => {
       const category = product.category || "Otros";
       if (!acc[category]) acc[category] = [];
@@ -1063,10 +950,10 @@ export default function PantryPage({ listId }: { listId: string }) {
     }, {} as Record<string, Product[]>);
   }, [shoppingListNow, groupByCategory]);
   
-  const sortedShoppingListNowCategories = Object.keys(groupedShoppingListNow).sort();
+  const sortedShoppingListNowCategories = useMemo(() => groupedShoppingListNow ? Object.keys(groupedShoppingListNow).sort() : [], [groupedShoppingListNow]);
   
   const groupedShoppingListLater = useMemo(() => {
-    if (!groupByCategory) return { 'Para comprar otro día': shoppingListLater };
+    if (!groupByCategory) return null;
     return shoppingListLater.reduce((acc, product) => {
       const category = product.category || "Otros";
       if (!acc[category]) acc[category] = [];
@@ -1075,43 +962,23 @@ export default function PantryPage({ listId }: { listId: string }) {
     }, {} as Record<string, Product[]>);
   }, [shoppingListLater, groupByCategory]);
   
-  const sortedShoppingListLaterCategories = Object.keys(groupedShoppingListLater).sort();
+  const sortedShoppingListLaterCategories = useMemo(() => groupedShoppingListLater ? Object.keys(groupedShoppingListLater).sort() : [], [groupedShoppingListLater]);
 
-
-  const handleShare = async () => {
-    const copyToClipboard = () => {
-      navigator.clipboard.writeText(window.location.href).then(() => {
+  const handleShareLink = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
         toast({ title: "¡Enlace copiado!", description: "Ya puedes compartir la lista con quien quieras." });
-      }, () => {
+    }, () => {
         toast({
-          title: "No se pudo copiar el enlace",
-          description: "No te preocupes, esto es normal en la previsualización. Funcionará correctamente cuando la app esté publicada.",
-          duration: 5000,
+            title: "No se pudo copiar el enlace",
+            description: "Esta función podría no estar disponible en tu navegador. Intenta copiar la URL manualmente.",
+            duration: 5000,
+            variant: "destructive"
         });
-      });
-    };
-
-    try {
-        if (!navigator.share) {
-            copyToClipboard();
-            return;
-        }
-        await navigator.share({
-            title: 'RePon - Despensa Compartida',
-            text: 'Te invito a nuestra despensa compartida en RePon.',
-            url: window.location.href,
-        });
-    } catch (error) {
-        if (error instanceof Error && error.name !== 'AbortError') {
-            console.warn("La API para compartir ha fallado, se recurre al portapapeles:", error);
-            copyToClipboard();
-        }
-    }
+    });
   };
 
   const currentAddItemHandler = activeTab === 'pantry' ? handleAddItem : handleShoppingListAddItem;
   const currentFilterOptions = filterOptions[activeTab] || filterOptions.pantry;
-
 
   if (authLoading || !isLoaded || !user) {
     return (
@@ -1152,81 +1019,11 @@ export default function PantryPage({ listId }: { listId: string }) {
         <DropdownMenuLabel>Filtrar por Estado</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {currentFilterOptions.map(opt => (
-            <DropdownMenuRadioItem key={opt.value} value={opt.value}>{opt.label}</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem key={`filter-opt-${opt.value}`} value={opt.value}>{opt.label}</DropdownMenuRadioItem>
         ))}
      </DropdownMenuRadioGroup>
   );
 
-  const renderShoppingListSection = (
-    title: string,
-    items: Product[],
-    groupedItems: Record<string, Product[]>,
-    sortedCategories: string[],
-    isCollapsible: boolean = false
-  ) => {
-      const content = (
-        <>
-            {items.length === 0 ? (
-                <div className="text-center py-6 bg-card rounded-lg border-dashed border-2">
-                    <p className="text-muted-foreground">No hay productos en esta sección.</p>
-                </div>
-            ) : !groupByCategory ? (
-                <div className={cn("gap-2", viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
-                <AnimatePresence>
-                    {items.map((item) => (
-                    <ShoppingItemCard key={item.id} item={item} viewMode={viewMode} onCheck={handleCheckShoppingItem} onToggleBuyLater={handleToggleBuyLater} onDelete={() => setConfirmDeleteId(item.id)} onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct} />
-                    ))}
-                </AnimatePresence>
-                </div>
-            ) : (
-                <Accordion type="multiple" value={openCategories} onValueChange={setOpenCategories} className="w-full space-y-2">
-                <AnimatePresence>
-                    {sortedCategories.filter(cat => groupedItems[cat]).map((category) => (
-                    <AccordionItem key={category} value={category} className="border-none">
-                        <AccordionTrigger className="text-sm font-semibold text-muted-foreground uppercase tracking-wider hover:no-underline rounded-md p-2">
-                        <div className="flex items-center gap-2">{categoryIcons[category as Category]} {category}</div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                        <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
-                            <AnimatePresence>
-                            {groupedItems[category].map((item) => (
-                                <ShoppingItemCard key={item.id} item={item} viewMode={viewMode} onCheck={handleCheckShoppingItem} onToggleBuyLater={handleToggleBuyLater} onDelete={() => setConfirmDeleteId(item.id)} onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct} />
-                            ))}
-                            </AnimatePresence>
-                        </div>
-                        </AccordionContent>
-                        <Separator className="mt-2" />
-                    </AccordionItem>
-                    ))}
-                </AnimatePresence>
-                </Accordion>
-            )}
-        </>
-      );
-
-      if (isCollapsible) {
-          return (
-              <Accordion type="multiple" value={openShoppingSections} onValueChange={setOpenShoppingSections} className="w-full">
-                  <AccordionItem value="buy-later-section" className="border-none">
-                      <AccordionTrigger className="hover:no-underline">
-                          <h2 className="text-lg font-semibold tracking-tight text-foreground">{title} ({items.length})</h2>
-                      </AccordionTrigger>
-                      <AccordionContent className="pt-4">
-                          {content}
-                      </AccordionContent>
-                  </AccordionItem>
-              </Accordion>
-          )
-      }
-
-      return (
-        <div className="mt-6">
-            <h2 className="mb-4 text-lg font-semibold tracking-tight">{title} ({items.length})</h2>
-            {content}
-        </div>
-      );
-  };
-  
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-20 w-full border-b bg-background/80 backdrop-blur-sm">
@@ -1270,7 +1067,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                       </Tooltip>
                       <Tooltip>
                           <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" onClick={handleShare}>
+                              <Button variant="ghost" size="icon" onClick={handleShareLink}>
                                   <Link className="h-5 w-5" />
                               </Button>
                           </TooltipTrigger>
@@ -1335,7 +1132,7 @@ export default function PantryPage({ listId }: { listId: string }) {
           </div>
       </header>
       
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
           <div className="sticky top-20 z-10 bg-background/95 backdrop-blur-sm -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 border-b mb-6">
               <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -1513,20 +1310,39 @@ export default function PantryPage({ listId }: { listId: string }) {
             <div className="mt-6">
               {pantry.length > 0 ? (
                 filteredPantry.length > 0 ? (
-                  <ProductList
-                    products={filteredPantry}
-                    viewMode={viewMode}
-                    groupByCategory={groupByCategory}
-                    pulsingProductId={pulsingProductId}
-                    exitingProductId={exitingProductId}
-                    openCategories={openCategories}
-                    onOpenCategoriesChange={setOpenCategories}
-                    onUpdateStatus={handleUpdateStatus}
-                    onDelete={(id) => setConfirmDeleteId(id)}
-                    onAddToShoppingList={handleLowStockToShoppingList}
-                    onUpdateCategory={handleUpdateCategory}
-                    onEdit={setEditingProduct}
-                  />
+                  !groupByCategory ? (
+                    <div className={cn("gap-2", viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
+                      <AnimatePresence>
+                        {filteredPantry.map(product => (
+                          <ProductCard key={`pantry-${product.id}`} product={product} viewMode={viewMode} isPulsing={product.id === pulsingProductId} isExiting={product.id === exitingProductId} onUpdateStatus={handleUpdateStatus} onDelete={() => setConfirmDeleteId(product.id)} onAddToShoppingList={handleLowStockToShoppingList} onUpdateCategory={handleUpdateCategory} onEdit={setEditingProduct} />
+                        ))}
+                      </AnimatePresence>
+                    </div>
+                  ) : (
+                    <Accordion type="multiple" value={openCategories} onValueChange={setOpenCategories} className="w-full space-y-2">
+                       <AnimatePresence>
+                        {sortedPantryCategories.map(category => (
+                          groupedPantry?.[category] && (
+                            <AccordionItem key={`pantry-cat-${category}`} value={category} className="border-none">
+                              <AccordionTrigger className="text-sm font-semibold text-muted-foreground uppercase tracking-wider hover:no-underline rounded-md p-2">
+                                  <div className="flex items-center gap-2">{categoryIcons[category as Category]} {category}</div>
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                  <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
+                                  <AnimatePresence>
+                                      {(groupedPantry?.[category] || []).map((product) => (
+                                      <ProductCard key={`pantry-grouped-${product.id}`} product={product} viewMode={viewMode} isPulsing={product.id === pulsingProductId} isExiting={product.id === exitingProductId} onUpdateStatus={handleUpdateStatus} onDelete={() => setConfirmDeleteId(product.id)} onAddToShoppingList={handleLowStockToShoppingList} onUpdateCategory={handleUpdateCategory} onEdit={setEditingProduct} />
+                                      ))}
+                                  </AnimatePresence>
+                                  </div>
+                              </AccordionContent>
+                              <Separator className="mt-2" />
+                            </AccordionItem>
+                          )
+                        ))}
+                      </AnimatePresence>
+                    </Accordion>
+                  )
                 ) : (
                   <div className="text-center py-10 bg-card rounded-lg">
                     <p className="text-muted-foreground">No se encontraron productos con los filtros actuales.</p>
@@ -1539,31 +1355,134 @@ export default function PantryPage({ listId }: { listId: string }) {
               )}
             </div>
           </TabsContent>
+
           <TabsContent value="shopping-list">
-             {shoppingList.length === 0 ? (
+            {shoppingList.length === 0 ? (
                 <div className="text-center py-10 bg-card rounded-lg mt-6">
-                  <p className="text-muted-foreground">¡Tu lista de compra está vacía!</p>
+                <p className="text-muted-foreground">¡Tu lista de compra está vacía!</p>
                 </div>
-              ) : (
+            ) : (
                 <>
-                  {filteredShoppingList.length === 0 ? (
-                     <div className="text-center py-10 bg-card rounded-lg mt-6">
-                        <p className="text-muted-foreground">No se encontraron productos con los filtros actuales.</p>
-                     </div>
-                  ) : (
+                {filteredShoppingList.length === 0 ? (
+                    <div className="text-center py-10 bg-card rounded-lg mt-6">
+                    <p className="text-muted-foreground">No se encontraron productos con los filtros actuales.</p>
+                    </div>
+                ) : (
                     <>
-                      {renderShoppingListSection("Para comprar ahora", shoppingListNow, groupedShoppingListNow, sortedShoppingListNowCategories)}
-                      {shoppingListLater.length > 0 && (
-                          <Separator className="my-8" />
-                      )}
-                      {renderShoppingListSection("Comprar otro día", shoppingListLater, groupedShoppingListLater, sortedShoppingListLaterCategories, true)}
+                    {shoppingListNow.length > 0 && (
+                        <div className="mt-6">
+                        <h2 className="mb-4 text-lg font-semibold tracking-tight">Para comprar ahora ({shoppingListNow.length})</h2>
+                        {!groupByCategory ? (
+                            <div className={cn("gap-2", viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
+                            <AnimatePresence>
+                                {shoppingListNow.map(item => (
+                                <ShoppingItemCard 
+                                    key={`shopping-now-${item.id}`} 
+                                    layoutId={`shopping-now-${item.id}`}
+                                    item={item} 
+                                    viewMode={viewMode}
+                                    onCheck={handleCheckShoppingItem}
+                                    onToggleBuyLater={handleToggleBuyLater}
+                                    onDelete={() => setConfirmDeleteId(item.id)}
+                                    onReturnToPantry={handleReturnToPantry}
+                                    onEdit={setEditingProduct}
+                                />
+                                ))}
+                            </AnimatePresence>
+                            </div>
+                        ) : (
+                            <Accordion type="multiple" value={openShoppingSections} onValueChange={setOpenShoppingSections} className="w-full space-y-2">
+                                <AnimatePresence>
+                                {sortedShoppingListNowCategories.filter(category => groupedShoppingListNow?.[category]).map(category => (
+                                    <AccordionItem key={`shopping-now-cat-${category}`} value={category} className="border-none">
+                                    <AccordionTrigger className="text-sm font-semibold text-muted-foreground uppercase tracking-wider hover:no-underline rounded-md p-2">
+                                        <div className="flex items-center gap-2">{categoryIcons[category as Category]} {category}</div>
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                        <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
+                                        <AnimatePresence>
+                                            {(groupedShoppingListNow?.[category] || []).map((item) => (
+                                                <ShoppingItemCard 
+                                                    key={`shopping-now-grouped-${item.id}`}
+                                                    layoutId={`shopping-now-grouped-${item.id}`}
+                                                    item={item} viewMode={viewMode} onCheck={handleCheckShoppingItem}
+                                                    onToggleBuyLater={handleToggleBuyLater} onDelete={() => setConfirmDeleteId(item.id)}
+                                                    onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct} />
+                                            ))}
+                                        </AnimatePresence>
+                                        </div>
+                                    </AccordionContent>
+                                    <Separator className="mt-2" />
+                                    </AccordionItem>
+                                ))}
+                                </AnimatePresence>
+                            </Accordion>
+                        )}
+                        </div>
+                    )}
+
+                    {shoppingListLater.length > 0 && (
+                        <>
+                            <Separator className="my-8" />
+                            <Accordion type="multiple" value={openShoppingSections} onValueChange={setOpenShoppingSections} className="w-full">
+                                <AccordionItem value="buy-later-section" className="border-none">
+                                    <AccordionTrigger className="hover:no-underline">
+                                    <h2 className="text-lg font-semibold tracking-tight text-foreground">Comprar otro d\xeda ({shoppingListLater.length})</h2>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-4">
+                                        {!groupByCategory ? (
+                                            <div className={cn("gap-2", viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
+                                            <AnimatePresence>
+                                                {shoppingListLater.map(item => (
+                                                    <ShoppingItemCard 
+                                                        key={`shopping-later-${item.id}`} 
+                                                        layoutId={`shopping-later-${item.id}`}
+                                                        item={item} viewMode={viewMode} onCheck={handleCheckShoppingItem}
+                                                        onToggleBuyLater={handleToggleBuyLater} onDelete={() => setConfirmDeleteId(item.id)}
+                                                        onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct} />
+                                                ))}
+                                            </AnimatePresence>
+                                            </div>
+                                        ) : (
+                                            <Accordion type="multiple" value={openShoppingSections} onValueChange={setOpenShoppingSections} className="w-full space-y-2">
+                                                <AnimatePresence>
+                                                {sortedShoppingListLaterCategories.filter(category => groupedShoppingListLater?.[category]).map(category => (
+                                                    <AccordionItem key={`shopping-later-cat-${category}`} value={category} className="border-none">
+                                                    <AccordionTrigger className="text-sm font-semibold text-muted-foreground uppercase tracking-wider hover:no-underline rounded-md p-2">
+                                                        <div className="flex items-center gap-2">{categoryIcons[category as Category]} {category}</div>
+                                                    </AccordionTrigger>
+                                                    <AccordionContent>
+                                                        <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
+                                                        <AnimatePresence>
+                                                            {(groupedShoppingListLater?.[category] || []).map((item) => (
+                                                                <ShoppingItemCard 
+                                                                    key={`shopping-later-grouped-${item.id}`}
+                                                                    layoutId={`shopping-later-grouped-${item.id}`}
+                                                                    item={item} viewMode={viewMode} onCheck={handleCheckShoppingItem}
+                                                                    onToggleBuyLater={handleToggleBuyLater} onDelete={() => setConfirmDeleteId(item.id)}
+                                                                    onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct} />
+                                                            ))}
+                                                        </AnimatePresence>
+                                                        </div>
+                                                    </AccordionContent>
+                                                    <Separator className="mt-2"/>
+                                                    </AccordionItem>
+                                                ))}
+                                                </AnimatePresence>
+                                            </Accordion>
+                                        )}
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
+                        </>
+                    )}
                     </>
-                  )}
+                )}
                 </>
-              )}
+            )}
           </TabsContent>
         </Tabs>
-      </main>
+      </div>
       
       <ShareDialog 
         open={showShareDialog} 
@@ -1640,13 +1559,13 @@ export default function PantryPage({ listId }: { listId: string }) {
               <div>
                 <h3 className="font-semibold mb-2 text-primary">Ingredientes</h3>
                 <ul className="list-disc list-inside space-y-1 text-sm">
-                  {recipe.ingredients.map((ing, i) => <li key={i}>{ing}</li>)}
+                  {recipe.ingredients.map((ing, i) => <li key={`recipe-ing-${i}-${ing}`}>{ing}</li>)}
                 </ul>
               </div>
               <div>
                 <h3 className="font-semibold mb-2 text-primary">Instrucciones</h3>
                 <ol className="list-decimal list-inside space-y-2 text-sm">
-                  {recipe.instructions.map((step, i) => <li key={i}>{step}</li>)}
+                  {recipe.instructions.map((step, i) => <li key={`recipe-step-${i}`}>{step}</li>)}
                 </ol>
               </div>
                <div>
@@ -1702,5 +1621,3 @@ export default function PantryPage({ listId }: { listId: string }) {
     </div>
   );
 }
-
-    

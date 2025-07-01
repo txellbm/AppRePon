@@ -56,7 +56,6 @@ export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: Id
         return;
     }
     try {
-      // Prioritize the rear camera on mobile devices
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       streamRef.current = stream;
       setHasCameraPermission(true);
@@ -195,16 +194,19 @@ export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: Id
         {dialogState === 'confirm' && (
           <div className="space-y-4">
             <div className="max-h-60 space-y-2 overflow-y-auto rounded-md border p-4">
-              {identifiedProducts.map(product => (
-                <div key={product} className="flex items-center gap-3">
-                  <Checkbox
-                    id={`product-${product}`}
-                    checked={selectedProducts.has(product)}
-                    onCheckedChange={(checked) => handleProductSelection(product, !!checked)}
-                  />
-                  <Label htmlFor={`product-${product}`} className="cursor-pointer font-normal">{product}</Label>
-                </div>
-              ))}
+              {identifiedProducts.map((product, index) => {
+                const uniqueId = `identified-product-${product}-${index}`;
+                return (
+                  <div key={uniqueId} className="flex items-center gap-3">
+                    <Checkbox
+                      id={uniqueId}
+                      checked={selectedProducts.has(product)}
+                      onCheckedChange={(checked) => handleProductSelection(product, !!checked)}
+                    />
+                    <Label htmlFor={uniqueId} className="cursor-pointer font-normal">{product}</Label>
+                  </div>
+                )
+              })}
             </div>
              <div className="flex justify-between items-center">
                  <p className="text-sm text-muted-foreground">{selectedProducts.size} de {identifiedProducts.length} seleccionados</p>
@@ -227,3 +229,5 @@ export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: Id
     </Dialog>
   );
 }
+
+    

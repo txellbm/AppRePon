@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -67,35 +68,7 @@ export function ShareDialog({ open, onOpenChange, pantry, shoppingList }: ShareD
       toast({ title: "Error al copiar", description: "No se pudo copiar el contenido.", variant: "destructive" });
     });
   };
-
-  const shareContent = async (text: string) => {
-    if (!text) {
-        toast({ title: "Nada que compartir", description: "Selecciona al menos una lista con productos.", variant: "destructive" });
-        return;
-    }
-    
-    if (!navigator.share) {
-      toast({ title: "Función no disponible", description: "Tu navegador no permite compartir directamente. Se ha copiado el contenido en su lugar." });
-      copyToClipboard(text);
-      return;
-    }
-
-    try {
-      await navigator.share({
-        title: 'Mis listas de RePon',
-        text: text,
-      });
-      onOpenChange(false);
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        return;
-      }
-      console.warn("La API para compartir ha fallado, se recurre al portapapeles:", error);
-      toast({ title: "No se pudo compartir", description: "El contenido se ha copiado al portapapeles como alternativa." });
-      copyToClipboard(text);
-    }
-  };
-
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -119,7 +92,7 @@ export function ShareDialog({ open, onOpenChange, pantry, shoppingList }: ShareD
           <Button variant="outline" onClick={() => copyToClipboard(generateShareableText())}>
             <Copy className="mr-2 h-4 w-4" /> Copiar al portapapeles
           </Button>
-          <Button onClick={() => shareContent(generateShareableText())}>
+          <Button onClick={() => copyToClipboard(generateShareableText())}>
             <Share2 className="mr-2 h-4 w-4" /> Compartir
           </Button>
         </DialogFooter>
@@ -127,3 +100,6 @@ export function ShareDialog({ open, onOpenChange, pantry, shoppingList }: ShareD
     </Dialog>
   );
 }
+
+
+    

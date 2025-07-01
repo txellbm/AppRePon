@@ -2,6 +2,8 @@
 import { doc, getDoc, setDoc, onSnapshot, type Unsubscribe, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/lib/firebase-config";
 import type { Product } from "@/lib/types";
+import { v4 as uuidv4 } from 'uuid';
+
 
 export interface ListData {
   pantry: Product[];
@@ -19,24 +21,53 @@ const emptyList: ListData = {
 
 export const sanitizeProductArray = (products: any): Product[] => {
     if (!Array.isArray(products)) return [];
-    return products
-      .filter(p => p && typeof p === 'object' && p.id && p.name && p.category && p.status) // Ensures p is a valid object with required fields
-      .map(p => {
-          const newProd: Product = {
-              id: p.id,
-              name: p.name,
-              category: p.category,
-              status: p.status,
-              isPendingPurchase: p.isPendingPurchase ?? false,
-              buyLater: p.buyLater ?? false,
-          };
-          
-          if (newProd.status !== 'available' && p.reason) {
-              newProd.reason = p.reason;
-          }
-          
-          return newProd;
-      });
+
+    const seenIds = new Set<string>();
+    const uniqueProducts: Product[] = [];
+
+    for (const p of products) {
+        if (p && typeof p === 'object' && p.id != null) { // Check that id is not null/undefined
+            if (!seenIds.has(p.id)) {
+                if (p.name && p.category && p.status) {
+                    seenIds.add(p.id);
+                    const newProd: Product = {
+                        id: p.id,
+                        name: p.name,
+                        category: p.category,
+                        status: p.status,
+                        isPendingPurchase: p.isPendingPurchase ?? false,
+                        buyLater: p.buyLater ?? false,
+                    };
+                    if (newProd.status !== 'available' && p.reason) {
+                        newProd.reason = p.reason;
+                    }
+                    uniqueProducts.push(newProd);
+                }
+            } else {
+                 console.warn(`Duplicate product ID found and removed during sanitization: ${p.id} (${p.name})`);
+            }
+        } else if (p && typeof p === 'object' && !p.id) {
+             console.warn("Product found without an ID, assigning a temporary one. Please check data integrity.", p);
+             const newId = uuidv4();
+             if (!seenIds.has(newId)) {
+                seenIds.add(newId);
+                const newProd: Product = {
+                    id: newId,
+                    name: p.name || 'Producto sin nombre',
+                    category: p.category || 'Otros',
+                    status: p.status || 'available',
+                    isPendingPurchase: p.isPendingPurchase ?? false,
+                    buyLater: p.buyLater ?? false,
+                };
+                 if (newProd.status !== 'available' && p.reason) {
+                    newProd.reason = p.reason;
+                }
+                uniqueProducts.push(newProd);
+             }
+        }
+    }
+    
+    return uniqueProducts;
 };
 
 
@@ -179,3 +210,5 @@ export function onListUpdate(listId: string, callback: (data: ListData) => void)
 
   return unsubscribe;
 }
+
+    

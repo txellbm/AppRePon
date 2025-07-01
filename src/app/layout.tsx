@@ -42,7 +42,7 @@ export default function RootLayout({
       <body className={`${inter.className} font-body antialiased`}>
         <AuthProvider>
           <AudioProvider>
-            {children}
+            <main>{children}</main>
             <Toaster />
           </AudioProvider>
         </AuthProvider>
