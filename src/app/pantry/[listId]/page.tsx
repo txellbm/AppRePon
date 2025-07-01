@@ -68,8 +68,8 @@ export default function PantryPage() {
 
       <h2>Historial</h2>
       <ul>
-        {history.map((item, index) => (
-          <li key={index}>{item}</li>
+        {history.map((item) => (
+          <li key={item}>{item}</li>
         ))}
       </ul>
     </div>
