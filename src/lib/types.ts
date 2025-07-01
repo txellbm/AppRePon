@@ -54,20 +54,23 @@ export interface AssistantOperation {
   to?: 'pantry' | 'shopping';
 }
 
-export interface AssistantUIAction {
-  action: 'apply_filter';
-  payload: {
-    filterType: 'status';
-    value: ProductStatus | 'all';
-  };
-} | {
-  action: 'change_view';
-  payload: {
-    viewMode: ViewMode;
-  };
-} | {
-  action: 'change_tab';
-  payload: {
-    tab: 'pantry' | 'shopping-list';
-  };
-};
+export type AssistantUIAction =
+  | {
+      action: 'apply_filter';
+      payload: {
+        filterType: 'status';
+        value: ProductStatus | 'all';
+      };
+    }
+  | {
+      action: 'change_view';
+      payload: {
+        viewMode: ViewMode;
+      };
+    }
+  | {
+      action: 'change_tab';
+      payload: {
+        tab: 'pantry' | 'shopping-list';
+      };
+    };
