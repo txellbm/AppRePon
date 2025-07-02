@@ -39,10 +39,15 @@ npm install
 
 ### 3. Variables de Entorno
 
-Crea un archivo `.env.local` en la raíz del proyecto con tu clave de Firebase:
+Crea un archivo `.env.local` en la raíz del proyecto con tu clave de Firebase.
+Este archivo debe incluir `NEXT_PUBLIC_FIREBASE_API_KEY` o, si lo prefieres,
+`GOOGLE_API_KEY`. Al menos una de estas variables es necesaria para habilitar
+las funciones de IA:
 
 ```env
 NEXT_PUBLIC_FIREBASE_API_KEY=TU_CLAVE_API
+# O bien puedes usar
+# GOOGLE_API_KEY=TU_CLAVE_API_DE_GOOGLE
 ```
 
 Verifica también que estén activadas en tu proyecto de Firebase/Google Cloud:
