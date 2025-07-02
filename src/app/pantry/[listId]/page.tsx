@@ -1,12 +1,5 @@
-import PantryPage from "@/components/pantry-page";
+import PantryPage from "e/components/pantry-page";
 
-interface PageProps {
-  params: {
-    listId: string;
-  };
-}
-
-// Dynamic route handler must be async so `params` are available.
-export default async function Page({ params }: PageProps) {
+export default function Page({ params }: { params: { listId: string } }) {
   return <PantryPage listId={params.listId} />;
 }
