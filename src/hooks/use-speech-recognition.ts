@@ -19,7 +19,7 @@ const useSpeechRecognition = (options?: { onResult: (transcript: string) => void
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
   const shouldKeepListeningRef = useRef(false);
-  const { toast } = useReponToast({ audioDisabled: true });
+  const { toast } = useReponToast();
 
   useEffect(() => {
     const SpeechRecognition =

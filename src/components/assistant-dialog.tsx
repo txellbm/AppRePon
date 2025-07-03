@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Mic, Sparkles, User, Loader2, Volume2, Bot } from "lucide-react";
+import { Mic, Sparkles, User, Loader2, Bot } from "lucide-react";
 import { type ConversationTurn } from "@/lib/types";
 import useSpeechRecognition from "@/hooks/use-speech-recognition";
 import { AnimatePresence, motion } from "framer-motion";
@@ -16,7 +16,7 @@ interface AssistantDialogProps {
   onOpenChange: (open: boolean) => void;
   onCommand: (command: string) => void;
   conversation: ConversationTurn[];
-  assistantStatus: 'idle' | 'listening' | 'thinking' | 'speaking';
+  assistantStatus: 'idle' | 'listening' | 'thinking';
 }
 
 export function AssistantDialog({ open, onOpenChange, onCommand, conversation, assistantStatus }: AssistantDialogProps) {
@@ -55,8 +55,6 @@ export function AssistantDialog({ open, onOpenChange, onCommand, conversation, a
         return <div className="flex items-center justify-center gap-2 text-primary"><Mic className="h-4 w-4 animate-pulse" /><span>Escuchando...</span></div>;
       case 'thinking':
         return <div className="flex items-center justify-center gap-2 text-amber-500"><Loader2 className="h-4 w-4 animate-spin" /><span>Pensando...</span></div>;
-      case 'speaking':
-        return <div className="flex items-center justify-center gap-2 text-green-500"><Volume2 className="h-4 w-4" /><span>Hablando...</span></div>;
       default:
         return <div className="flex items-center justify-center gap-2 text-muted-foreground"><Sparkles className="h-4 w-4" /><span>Dime qué necesitas...</span></div>;
     }
@@ -110,7 +108,7 @@ export function AssistantDialog({ open, onOpenChange, onCommand, conversation, a
             </div>
             <Button
               onClick={isListening ? stopListening : startListening}
-              disabled={!isSupported || assistantStatus === 'thinking' || assistantStatus === 'speaking'}
+              disabled={!isSupported || assistantStatus === 'thinking'}
               size="lg"
               className={cn("w-full transition-all duration-300", isListening && "bg-destructive hover:bg-destructive/90")}
             >
