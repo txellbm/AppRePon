@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { generateRecipeAction, conversationalAssistantAction, generateGrammaticalMessageAction, correctProductNameAction } from "@/lib/actions";
+import { generateRecipeAction, conversationalAssistantAction, correctProductNameAction } from "@/lib/actions";
 import { type Product, type Category, type ProductStatus, type ViewMode, type GenerateRecipeOutput, type ConversationTurn } from "@/lib/types";
 import { useReponToast } from "@/hooks/use-repon-toast";
 import { useSharedList } from "@/hooks/use-shared-list";
@@ -59,6 +59,7 @@ import {
   Undo2,
   Package,
   Pencil,
+  ArrowRight,
   Cloudy,
   User,
   Copy,
@@ -198,6 +199,7 @@ function ProductCard({
   onAddToShoppingList,
   onUpdateCategory,
   onEdit,
+  showArrow
 }: {
   product: Product;
   viewMode: ViewMode;
@@ -208,6 +210,7 @@ function ProductCard({
   onAddToShoppingList: (id: string) => void;
   onUpdateCategory: (id: string, category: Category) => void;
   onEdit: (product: Product) => void;
+  showArrow: boolean;
 }) {
   const handleCycleStatus = () => {
     const statuses: ProductStatus[] = ["available", "low", "out of stock"];
@@ -308,6 +311,16 @@ function ProductCard({
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
+        {showArrow && (
+          <motion.div
+            initial={{ opacity: 1, x: 0 }}
+            animate={{ opacity: 0, x: 20 }}
+            transition={{ duration: 1 }}
+            className="absolute right-2 top-1/2 -translate-y-1/2"
+          >
+            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+          </motion.div>
+        )}
       </div>
     </motion.div>
   );
@@ -317,20 +330,28 @@ function ShoppingItemCard({
   item,
   viewMode,
   onCheck,
+  onCardClick,
   onToggleBuyLater,
   onDelete,
   onReturnToPantry,
   onEdit,
-  layoutId
+  layoutId,
+  isChecking,
+  isExiting,
+  isMoving
 }: {
   item: Product;
   viewMode: ViewMode;
   onCheck: (id: string) => void;
+  onCardClick: (id: string) => void;
   onToggleBuyLater: (id: string) => void;
   onDelete: (id: string) => void;
   onReturnToPantry: (id: string) => void;
   onEdit: (product: Product) => void;
   layoutId: string;
+  isChecking: boolean;
+  isExiting: boolean;
+  isMoving: boolean;
 }) {
   const cardBorderStyle = {
     available: "border-green-500",
@@ -345,16 +366,22 @@ function ShoppingItemCard({
       layout
       layoutId={layoutId}
       initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, x: -50, transition: { duration: 0.3 } }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      animate={{
+        opacity: isExiting ? 0 : 1,
+        scale: 1,
+        x: isExiting ? -60 : 0,
+        y: isMoving ? [20, 0] : 0,
+      }}
+      transition={{ type: "spring", stiffness: 300, damping: 30, duration: 0.3 }}
       className={cn(
         "rounded-lg transition-all duration-300 hover:shadow-lg border-2 bg-card text-card-foreground",
         isListView
           ? "p-2 flex items-center justify-between"
           : "p-4 flex flex-col gap-2",
-        cardBorderStyle
+        cardBorderStyle,
+        isChecking && "bg-green-100 border-green-500"
       )}
+      onClick={() => onCardClick(item.id)}
     >
       <h3 className={cn("font-semibold flex-grow", isListView ? '' : 'text-center')}>{item.name}</h3>
       <div className={cn("shrink-0", isListView ? "flex items-center gap-1" : "flex justify-center gap-2 mt-2")}>
@@ -365,7 +392,7 @@ function ShoppingItemCard({
                       variant="outline"
                       size="icon"
                       className="h-8 w-8 border-green-500/50 text-green-600 hover:bg-green-500/10"
-                      onClick={() => onCheck(item.id)}
+                      onClick={(e) => { e.stopPropagation(); onCheck(item.id); }}
                     >
                         <ShoppingCart className="h-4 w-4" />
                     </Button>
@@ -378,12 +405,12 @@ function ShoppingItemCard({
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => onToggleBuyLater(item.id)}
+                        onClick={(e) => { e.stopPropagation(); onToggleBuyLater(item.id); }}
                      >
                         {item.buyLater ? <MoveUp className="h-4 w-4" /> : <History className="h-4 w-4" />}
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent><p>{item.buyLater ? 'Mover a la compra de hoy' : 'Dejar para otro d\xeda'}</p></TooltipContent>
+                <TooltipContent><p>{item.buyLater ? 'Mover a la compra de hoy' : 'Dejar para otro día'}</p></TooltipContent>
             </Tooltip>
         </TooltipProvider>
 
@@ -437,6 +464,10 @@ export default function PantryPage({ listId }: { listId: string }) {
   const [showLegendDialog, setShowLegendDialog] = useState(false);
   const [pulsingProductId, setPulsingProductId] = useState<string | null>(null);
   const [exitingProductId, setExitingProductId] = useState<string | null>(null);
+  const [lowArrowId, setLowArrowId] = useState<string | null>(null);
+  const [checkingItemId, setCheckingItemId] = useState<string | null>(null);
+  const [exitingShoppingId, setExitingShoppingId] = useState<string | null>(null);
+  const [movingItemId, setMovingItemId] = useState<string | null>(null);
   
   const [isRecipeDialogOpen, setIsRecipeDialogOpen] = useState(false);
   const [recipe, setRecipe] = useState<GenerateRecipeOutput | null>(null);
@@ -661,10 +692,8 @@ export default function PantryPage({ listId }: { listId: string }) {
                 });
             }
             updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
-            const { message } = await generateGrammaticalMessageAction({ productName: product.name, messageType: 'out_of_stock_and_moved' });
-            toast({ title: "¡Producto agotado!", description: message, audioText: message });
             setExitingProductId(null);
-        }, 300);
+        }, 1000);
         return;
     }
 
@@ -677,12 +706,12 @@ export default function PantryPage({ listId }: { listId: string }) {
       }
     }
 
+    if (status === 'low') {
+      setLowArrowId(id);
+      setTimeout(() => setLowArrowId(null), 1000);
+    }
+
     updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
-    const { message } = await generateGrammaticalMessageAction({
-      productName: product.name,
-      messageType: status === 'low' ? 'low_stock' : 'available',
-    });
-    toast({ title: message, audioText: message });
   };
 
   const handleUpdateCategory = async (id: string, newCategory: Category) => {
@@ -753,8 +782,30 @@ export default function PantryPage({ listId }: { listId: string }) {
     const newShoppingList = shoppingList.filter(p => p.id !== id);
 
     updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
-    const { message } = await generateGrammaticalMessageAction({ productName: boughtItem.name, messageType: 'added_to_pantry' });
-    toast({ title: '¡A la saca!', description: message, audioText: message });
+  };
+
+  const handleCheckWithAnimation = (id: string) => {
+    setCheckingItemId(id);
+    setTimeout(() => {
+      setCheckingItemId(null);
+      setExitingShoppingId(id);
+      setTimeout(() => {
+        handleCheckShoppingItem(id);
+        setExitingShoppingId(null);
+      }, 300);
+    }, 1000);
+  };
+
+  const handleCardClick = (id: string) => {
+    setCheckingItemId(id);
+    setTimeout(() => {
+      setCheckingItemId(null);
+      setExitingShoppingId(id);
+      setTimeout(() => {
+        handleCheckShoppingItem(id);
+        setExitingShoppingId(null);
+      }, 300);
+    }, 1000);
   };
   
   const handleLowStockToShoppingList = async (id: string) => {
@@ -785,44 +836,41 @@ export default function PantryPage({ listId }: { listId: string }) {
 
     const newPantry = pantry.map(p => p.id === id ? { ...p, isPendingPurchase: true } : p);
     updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
-
-    const { message } = await generateGrammaticalMessageAction({ productName: product.name, messageType: 'added_to_shopping_list' });
-    toast({ title: '¡Anotado!', description: message, audioText: message });
   };
 
   const handleToggleBuyLater = (id: string) => {
     const item = shoppingList.find(p => p.id === id);
     if (!item) return;
 
-    const newShoppingList = shoppingList.map(p => 
+    const newShoppingList = shoppingList.map(p =>
       p.id === id ? { ...p, buyLater: !p.buyLater } : p
     );
+    setMovingItemId(id);
     updateRemoteList({ shoppingList: newShoppingList });
-    
-    toast({ 
-      title: item.buyLater ? 'Movido a la compra de hoy' : 'Movido a "Comprar otro d\xeda"',
-      description: `"${item.name}" se ha actualizado.`
-    });
+    setTimeout(() => setMovingItemId(null), 300);
+
+    // transition without notifications
   };
 
   const handleReturnToPantry = (id: string) => {
     const itemInShoppingList = shoppingList.find(p => p.id === id);
     if (!itemInShoppingList || itemInShoppingList.status !== 'low') {
-        toast({ title: "Acción no permitida", description: "Solo puedes devolver productos con poco stock.", variant: "destructive" });
         return;
     }
-    
-    const newPantry = pantry.map(p => {
-        if (p.id === itemInShoppingList.id) {
-            return { ...p, isPendingPurchase: false };
-        }
-        return p;
-    });
+    setExitingShoppingId(id);
+    setTimeout(() => {
+        const newPantry = pantry.map(p => {
+            if (p.id === itemInShoppingList.id) {
+                return { ...p, isPendingPurchase: false };
+            }
+            return p;
+        });
 
-    const newShoppingList = shoppingList.filter(p => p.id !== id);
+        const newShoppingList = shoppingList.filter(p => p.id !== id);
 
-    updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
-    toast({ title: "Devuelto a la despensa", description: `"${itemInShoppingList.name}" ya no est\xe1 en la lista de la compra.` });
+        updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
+        setExitingShoppingId(null);
+    }, 300);
   };
 
 
@@ -1342,7 +1390,19 @@ export default function PantryPage({ listId }: { listId: string }) {
                     <div className={cn("gap-2", viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
                       <AnimatePresence>
                         {filteredPantry.map(product => (
-                          <ProductCard key={`pantry-${product.id}`} product={product} viewMode={viewMode} isPulsing={product.id === pulsingProductId} isExiting={product.id === exitingProductId} onUpdateStatus={handleUpdateStatus} onDelete={() => setConfirmDeleteId(product.id)} onAddToShoppingList={handleLowStockToShoppingList} onUpdateCategory={handleUpdateCategory} onEdit={setEditingProduct} />
+                          <ProductCard
+                            key={`pantry-${product.id}`}
+                            product={product}
+                            viewMode={viewMode}
+                            isPulsing={product.id === pulsingProductId}
+                            isExiting={product.id === exitingProductId}
+                            onUpdateStatus={handleUpdateStatus}
+                            onDelete={() => setConfirmDeleteId(product.id)}
+                            onAddToShoppingList={handleLowStockToShoppingList}
+                            onUpdateCategory={handleUpdateCategory}
+                            onEdit={setEditingProduct}
+                            showArrow={product.id === lowArrowId}
+                          />
                         ))}
                       </AnimatePresence>
                     </div>
@@ -1359,7 +1419,19 @@ export default function PantryPage({ listId }: { listId: string }) {
                                   <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
                                   <AnimatePresence>
                                       {(groupedPantry?.[category] || []).map((product) => (
-                                      <ProductCard key={`pantry-grouped-${product.id}`} product={product} viewMode={viewMode} isPulsing={product.id === pulsingProductId} isExiting={product.id === exitingProductId} onUpdateStatus={handleUpdateStatus} onDelete={() => setConfirmDeleteId(product.id)} onAddToShoppingList={handleLowStockToShoppingList} onUpdateCategory={handleUpdateCategory} onEdit={setEditingProduct} />
+                                      <ProductCard
+                                        key={`pantry-grouped-${product.id}`}
+                                        product={product}
+                                        viewMode={viewMode}
+                                        isPulsing={product.id === pulsingProductId}
+                                        isExiting={product.id === exitingProductId}
+                                        onUpdateStatus={handleUpdateStatus}
+                                        onDelete={() => setConfirmDeleteId(product.id)}
+                                        onAddToShoppingList={handleLowStockToShoppingList}
+                                        onUpdateCategory={handleUpdateCategory}
+                                        onEdit={setEditingProduct}
+                                        showArrow={product.id === lowArrowId}
+                                      />
                                       ))}
                                   </AnimatePresence>
                                   </div>
@@ -1404,16 +1476,20 @@ export default function PantryPage({ listId }: { listId: string }) {
                             <div className={cn("gap-2", viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
                             <AnimatePresence>
                                 {shoppingListNow.map(item => (
-                                <ShoppingItemCard 
-                                    key={`shopping-now-${item.id}`} 
+                                <ShoppingItemCard
+                                    key={`shopping-now-${item.id}`}
                                     layoutId={`shopping-now-${item.id}`}
-                                    item={item} 
+                                    item={item}
                                     viewMode={viewMode}
-                                    onCheck={handleCheckShoppingItem}
+                                    onCheck={handleCheckWithAnimation}
+                                    onCardClick={handleCardClick}
                                     onToggleBuyLater={handleToggleBuyLater}
                                     onDelete={() => setConfirmDeleteId(item.id)}
                                     onReturnToPantry={handleReturnToPantry}
                                     onEdit={setEditingProduct}
+                                    isChecking={item.id === checkingItemId}
+                                    isExiting={item.id === exitingShoppingId}
+                                    isMoving={item.id === movingItemId}
                                 />
                                 ))}
                             </AnimatePresence>
@@ -1430,12 +1506,18 @@ export default function PantryPage({ listId }: { listId: string }) {
                                         <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
                                         <AnimatePresence>
                                             {(groupedShoppingListNow?.[category] || []).map((item) => (
-                                                <ShoppingItemCard 
+                                                <ShoppingItemCard
                                                     key={`shopping-now-grouped-${item.id}`}
                                                     layoutId={`shopping-now-grouped-${item.id}`}
-                                                    item={item} viewMode={viewMode} onCheck={handleCheckShoppingItem}
+                                                    item={item} viewMode={viewMode}
+                                                    onCheck={handleCheckWithAnimation}
+                                                    onCardClick={handleCardClick}
                                                     onToggleBuyLater={handleToggleBuyLater} onDelete={() => setConfirmDeleteId(item.id)}
-                                                    onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct} />
+                                                    onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
+                                                    isChecking={item.id === checkingItemId}
+                                                    isExiting={item.id === exitingShoppingId}
+                                                    isMoving={item.id === movingItemId}
+                                                />
                                             ))}
                                         </AnimatePresence>
                                         </div>
@@ -1455,19 +1537,25 @@ export default function PantryPage({ listId }: { listId: string }) {
                             <Accordion type="multiple" value={openShoppingSections} onValueChange={setOpenShoppingSections} className="w-full">
                                 <AccordionItem value="buy-later-section" className="border-none">
                                     <AccordionTrigger className="hover:no-underline">
-                                    <h2 className="text-lg font-semibold tracking-tight text-foreground">Comprar otro d\xeda ({shoppingListLater.length})</h2>
+                                    <h2 className="text-lg font-semibold tracking-tight text-foreground">Comprar otro día ({shoppingListLater.length})</h2>
                                     </AccordionTrigger>
                                     <AccordionContent className="pt-4">
                                         {!groupByCategory ? (
                                             <div className={cn("gap-2", viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
                                             <AnimatePresence>
                                                 {shoppingListLater.map(item => (
-                                                    <ShoppingItemCard 
-                                                        key={`shopping-later-${item.id}`} 
+                                                    <ShoppingItemCard
+                                                        key={`shopping-later-${item.id}`}
                                                         layoutId={`shopping-later-${item.id}`}
-                                                        item={item} viewMode={viewMode} onCheck={handleCheckShoppingItem}
+                                                        item={item} viewMode={viewMode}
+                                                        onCheck={handleCheckWithAnimation}
+                                                        onCardClick={handleCardClick}
                                                         onToggleBuyLater={handleToggleBuyLater} onDelete={() => setConfirmDeleteId(item.id)}
-                                                        onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct} />
+                                                        onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
+                                                        isChecking={item.id === checkingItemId}
+                                                        isExiting={item.id === exitingShoppingId}
+                                                        isMoving={item.id === movingItemId}
+                                                    />
                                                 ))}
                                             </AnimatePresence>
                                             </div>
@@ -1483,12 +1571,18 @@ export default function PantryPage({ listId }: { listId: string }) {
                                                         <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
                                                         <AnimatePresence>
                                                             {(groupedShoppingListLater?.[category] || []).map((item) => (
-                                                                <ShoppingItemCard 
+                                                                <ShoppingItemCard
                                                                     key={`shopping-later-grouped-${item.id}`}
                                                                     layoutId={`shopping-later-grouped-${item.id}`}
-                                                                    item={item} viewMode={viewMode} onCheck={handleCheckShoppingItem}
+                                                                    item={item} viewMode={viewMode}
+                                                                    onCheck={handleCheckWithAnimation}
+                                                                    onCardClick={handleCardClick}
                                                                     onToggleBuyLater={handleToggleBuyLater} onDelete={() => setConfirmDeleteId(item.id)}
-                                                                    onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct} />
+                                                                    onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
+                                                                    isChecking={item.id === checkingItemId}
+                                                                    isExiting={item.id === exitingShoppingId}
+                                                                    isMoving={item.id === movingItemId}
+                                                                />
                                                             ))}
                                                         </AnimatePresence>
                                                         </div>
