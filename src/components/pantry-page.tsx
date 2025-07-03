@@ -211,9 +211,9 @@ function ProductCard({
   };
 
   const statusStyles = {
-    available: "bg-[#27AE60] text-white",
-    low: "bg-[#F39C12] text-white",
-    "out of stock": "bg-[#C0392B] text-white",
+    available: "bg-[#A3B18A] text-white",
+    low: "bg-[#E9C46A] text-white",
+    "out of stock": "bg-[#E76F51] text-white",
   }[product.status];
 
   const isListView = viewMode === 'list';
@@ -228,13 +228,13 @@ function ProductCard({
       exit={isExiting ? { opacity: 0, x: 120, y: 80, rotate: 20, transition: { duration: 0.6 } } : { opacity: 0, x: -50, transition: { duration: 0.3 } }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
-        "rounded-md transition-all duration-200 hover:brightness-110 shadow-md mb-2 p-3",
+        "rounded-md transition-all duration-300 hover:brightness-110 shadow-md mb-2 p-3",
         isListView
           ? "flex items-center justify-between"
           : "flex flex-col gap-2",
         statusStyles,
-        "cursor-pointer",
-        isPulsing && "pulse",
+        "cursor-pointer transition-colors",
+        isPulsing && "pulse bg-[#E9C46A]",
         isExiting && "flash-out"
       )}
       onClick={handleCycleStatus}
@@ -330,9 +330,9 @@ function ShoppingItemCard({
   isChecking?: boolean;
 }) {
   const statusStyles = {
-    available: "bg-[#27AE60] text-white",
-    low: "bg-[#F39C12] text-white",
-    "out of stock": "bg-[#C0392B] text-white",
+    available: "bg-[#A3B18A] text-white",
+    low: "bg-[#E9C46A] text-white",
+    "out of stock": "bg-[#E76F51] text-white",
   }[item.status];
       
   const isListView = viewMode === "list";
@@ -347,10 +347,11 @@ function ShoppingItemCard({
       exit={{ opacity: 0, x: -50, transition: { duration: 0.3 } }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
-        "rounded-md transition-all duration-200 hover:brightness-110 shadow-md mb-2 p-3",
+        "rounded-md transition-all duration-300 hover:brightness-110 shadow-md mb-2 p-3",
         isListView ? "flex items-center justify-between" : "flex flex-col gap-2",
         statusStyles,
-        isChecking && "brightness-110"
+        "transition-colors",
+        isChecking && "bg-[#A3B18A] opacity-80"
       )}
       onClick={() => onCardClick(item.id)}
     >
@@ -568,6 +569,16 @@ export default function PantryPage({ listId }: { listId: string }) {
         console.warn("Could not access localStorage for viewMode");
     }
   }, [viewMode]);
+
+  const hasOpenedShopping = useRef(false);
+
+  useEffect(() => {
+    if (activeTab === 'shopping-list' && !hasOpenedShopping.current) {
+      setViewMode('list');
+      setGroupByCategory(false);
+      hasOpenedShopping.current = true;
+    }
+  }, [activeTab]);
 
 
   useEffect(() => {
@@ -1098,11 +1109,11 @@ export default function PantryPage({ listId }: { listId: string }) {
                            <TooltipProvider>
                               <Tooltip>
                                   <TooltipTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowIdentifyDialog(true)} aria-label="Añadir desde foto">
+                                      <Button size="icon" className="h-9 w-9" onClick={() => setShowIdentifyDialog(true)} aria-label="Añadir producto con foto">
                                           <Camera className="h-5 w-5" />
                                       </Button>
                                   </TooltipTrigger>
-                                  <TooltipContent><p>Añadir desde foto</p></TooltipContent>
+                                  <TooltipContent><p>Añadir producto con foto</p></TooltipContent>
                               </Tooltip>
                           </TooltipProvider>
                       </div>
@@ -1179,12 +1190,12 @@ export default function PantryPage({ listId }: { listId: string }) {
                     <TooltipProvider>
                        <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowIdentifyDialog(true)} aria-label="Añadir desde foto">
+                            <Button size="icon" className="h-9 w-9" onClick={() => setShowIdentifyDialog(true)} aria-label="Añadir producto con foto">
                                 <Camera className="h-5 w-5" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>Añadir desde foto</p>
+                            <p>Añadir producto con foto</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -1471,15 +1482,15 @@ export default function PantryPage({ listId }: { listId: string }) {
           </DialogHeader>
           <div className="space-y-4 py-4">
               <div className="flex items-center gap-4">
-                <div className="h-4 w-4 rounded-full bg-green-500 shrink-0 border"/>
+                <div className="h-4 w-4 rounded-full bg-[#A3B18A] shrink-0 border"/>
                 <p className="text-sm"><b>Verde:</b> Producto disponible en tu despensa.</p>
               </div>
               <div className="flex items-center gap-4">
-                <div className="h-4 w-4 rounded-full bg-amber-400 shrink-0 border"/>
+                <div className="h-4 w-4 rounded-full bg-[#E9C46A] shrink-0 border"/>
                 <p className="text-sm"><b>Ámbar:</b> Queda poca cantidad del producto.</p>
               </div>
               <div className="flex items-center gap-4">
-                <div className="h-4 w-4 rounded-full bg-destructive shrink-0 border"/>
+                <div className="h-4 w-4 rounded-full bg-[#E76F51] shrink-0 border"/>
                 <p className="text-sm"><b>Rojo:</b> Producto agotado o que necesitas comprar.</p>
               </div>
           </div>
