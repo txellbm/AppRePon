@@ -211,9 +211,9 @@ function ProductCard({
   };
 
   const statusStyles = {
-    available: "bg-teal-100 text-teal-800",
-    low: "bg-orange-100 text-orange-800",
-    "out of stock": "bg-rose-100 text-rose-800",
+    available: "bg-[#2E8B57] text-white",
+    low: "bg-[#B8860B] text-white",
+    "out of stock": "bg-[#8B0000] text-white",
   }[product.status];
 
   const isListView = viewMode === 'list';
@@ -246,7 +246,7 @@ function ProductCard({
        <div className={cn("shrink-0", isListView ? "flex items-center gap-1" : "flex flex-wrap justify-center gap-1 mt-2")}>
         {product.status === 'low' && (
           product.isPendingPurchase ? (
-            <div className="flex items-center justify-center text-xs h-8 px-2 rounded-md bg-amber-100 text-amber-900 border border-amber-400 font-medium">
+            <div className="flex items-center justify-center text-xs h-8 px-2 rounded-md bg-[#4F6272] text-white border border-[#4F6272] font-medium">
                 Pendiente de compra
             </div>
           ) : (
@@ -297,7 +297,7 @@ function ProductCard({
                     </DropdownMenuPortal>
                 </DropdownMenuSub>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-500 focus:bg-red-500/20" onClick={(e) => { e.stopPropagation(); onDelete(product.id); }}>
+                <DropdownMenuItem className="text-[#FF4D4D] hover:bg-[#1A1A1A] focus:bg-[#1A1A1A]" onClick={(e) => { e.stopPropagation(); onDelete(product.id); }}>
                     <Trash2 className="mr-2 h-4 w-4" />
                     <span>Eliminar</span>
                 </DropdownMenuItem>
@@ -330,9 +330,9 @@ function ShoppingItemCard({
   isChecking?: boolean;
 }) {
   const statusStyles = {
-    available: "bg-teal-100 text-teal-800",
-    low: "bg-orange-100 text-orange-800",
-    "out of stock": "bg-rose-100 text-rose-800",
+    available: "bg-[#2E8B57] text-white",
+    low: "bg-[#B8860B] text-white",
+    "out of stock": "bg-[#8B0000] text-white",
   }[item.status];
       
   const isListView = viewMode === "list";
@@ -390,7 +390,7 @@ function ShoppingItemCard({
                     </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-500 focus:bg-red-500/20" onClick={() => onDelete(item.id)}>
+                <DropdownMenuItem className="text-[#FF4D4D] hover:bg-[#1A1A1A] focus:bg-[#1A1A1A]" onClick={() => onDelete(item.id)}>
                     <Trash2 className="mr-2 h-4 w-4" />
                     <span>Eliminar</span>
                 </DropdownMenuItem>
@@ -1165,7 +1165,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                         "flex cursor-pointer items-center gap-2 rounded-md px-3 h-9 text-sm font-medium ring-offset-background transition-colors",
                         groupByCategory ?
                           "bg-accent text-accent-foreground shadow-sm" :
-                          "border border-input bg-secondary/60 text-foreground hover:bg-accent hover:text-accent-foreground"
+                          "border border-white/30 bg-secondary/50 text-foreground hover:bg-accent hover:text-accent-foreground"
                       )}
                     >
                       <span>Agrupar</span>
@@ -1448,7 +1448,13 @@ export default function PantryPage({ listId }: { listId: string }) {
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmDeleteId(null)}>Cancelar</Button>
-            <Button variant="destructive" onClick={() => confirmDeleteId && handleDelete(confirmDeleteId)}>Eliminar</Button>
+            <Button
+              variant="destructive"
+              className="bg-[#1A1A1A] text-[#FF4D4D] hover:bg-[#1A1A1A]/90"
+              onClick={() => confirmDeleteId && handleDelete(confirmDeleteId)}
+            >
+              Eliminar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
