@@ -211,9 +211,9 @@ function ProductCard({
   };
 
   const statusStyles = {
-    available: "bg-green-800",
-    low: "bg-yellow-700",
-    "out of stock": "bg-red-700",
+    available: "bg-green-700/60",
+    low: "bg-amber-600/60",
+    "out of stock": "bg-red-700/60",
   }[product.status];
 
   const isListView = viewMode === 'list';
@@ -254,9 +254,9 @@ function ProductCard({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     size="icon"
-                    className="h-8 w-8 text-amber-900 border-amber-400 hover:bg-amber-400/20 hover:text-amber-900"
+                    className="h-8 w-8 bg-gray-800 text-white hover:bg-gray-700"
                     aria-label="Añadir a la lista de compra"
                     onClick={(e) => { e.stopPropagation(); onAddToShoppingList(product.id); }}
                   >
@@ -297,7 +297,7 @@ function ProductCard({
                     </DropdownMenuPortal>
                 </DropdownMenuSub>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={(e) => { e.stopPropagation(); onDelete(product.id); }}>
+                <DropdownMenuItem className="text-red-500 focus:bg-red-500/20" onClick={(e) => { e.stopPropagation(); onDelete(product.id); }}>
                     <Trash2 className="mr-2 h-4 w-4" />
                     <span>Eliminar</span>
                 </DropdownMenuItem>
@@ -311,7 +311,6 @@ function ProductCard({
 function ShoppingItemCard({
   item,
   viewMode,
-  onCheck,
   onCardClick,
   onToggleBuyLater,
   onDelete,
@@ -322,7 +321,6 @@ function ShoppingItemCard({
 }: {
   item: Product;
   viewMode: ViewMode;
-  onCheck: (id: string) => void;
   onCardClick: (id: string) => void;
   onToggleBuyLater: (id: string) => void;
   onDelete: (id: string) => void;
@@ -332,9 +330,9 @@ function ShoppingItemCard({
   isChecking?: boolean;
 }) {
   const cardBorderStyle = {
-    available: "bg-green-800",
-    low: "bg-yellow-700",
-    "out of stock": "bg-red-700",
+    available: "bg-green-700/60",
+    low: "bg-amber-600/60",
+    "out of stock": "bg-red-700/60",
   }[item.status];
       
   const isListView = viewMode === "list";
@@ -359,19 +357,6 @@ function ShoppingItemCard({
       <h3 className={cn("font-semibold flex-grow", isListView ? '' : 'text-center')}>{item.name}</h3>
       <div className={cn("shrink-0", isListView ? "flex items-center gap-1" : "flex justify-center gap-2 mt-2")}>
         <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 border-green-500/50 text-green-600 hover:bg-green-500/10"
-                      onClick={(e) => { e.stopPropagation(); onCheck(item.id); }}
-                    >
-                        <ShoppingCart className="h-4 w-4" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Marcar como comprado</p></TooltipContent>
-            </Tooltip>
              <Tooltip>
                 <TooltipTrigger asChild>
                      <Button
@@ -405,7 +390,7 @@ function ShoppingItemCard({
                     </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => onDelete(item.id)}>
+                <DropdownMenuItem className="text-red-500 focus:bg-red-500/20" onClick={() => onDelete(item.id)}>
                     <Trash2 className="mr-2 h-4 w-4" />
                     <span>Eliminar</span>
                 </DropdownMenuItem>
@@ -1007,9 +992,9 @@ export default function PantryPage({ listId }: { listId: string }) {
               <Image
                 src="/logorepon.png"
                 alt="RePon"
-                width={160}
-                height={40}
-                className="h-10 w-auto"
+                width={200}
+                height={50}
+                className="h-12 w-auto"
                 priority
               />
             </div>
@@ -1094,7 +1079,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                       <DropdownMenuItem onClick={handleSignOut} className={user.isAnonymous ? "text-destructive focus:text-destructive focus:bg-destructive/10" : ""}>
+                       <DropdownMenuItem onClick={handleSignOut} className={user.isAnonymous ? "text-red-500 focus:bg-red-500/20" : ""}>
                             {user.isAnonymous ? <Trash2 className="mr-2 h-4 w-4" /> : <LogOut className="mr-2 h-4 w-4" />}
                             <span>{user.isAnonymous ? 'Descartar y Salir' : 'Cerrar sesión'}</span>
                        </DropdownMenuItem>
@@ -1183,7 +1168,10 @@ export default function PantryPage({ listId }: { listId: string }) {
                     </TooltipProvider>
                      <Label
                       htmlFor="group-by-category"
-                      className="flex cursor-pointer items-center gap-2 rounded-md border border-input bg-transparent px-3 h-9 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground"
+                      className={cn(
+                        "flex cursor-pointer items-center gap-2 rounded-md px-3 h-9 text-sm font-medium ring-offset-background transition-colors",
+                        groupByCategory ? "bg-accent text-accent-foreground shadow-sm" : "border border-input bg-transparent hover:bg-accent hover:text-accent-foreground"
+                      )}
                     >
                       <span>Agrupar</span>
                       <Switch id="group-by-category" checked={groupByCategory} onCheckedChange={setGroupByCategory} />
@@ -1334,7 +1322,6 @@ export default function PantryPage({ listId }: { listId: string }) {
                                     layoutId={`shopping-now-${item.id}`}
                                     item={item}
                                     viewMode={viewMode}
-                                    onCheck={handleCheckShoppingItem}
                                     onCardClick={handleCardClick}
                                     onToggleBuyLater={handleToggleBuyLater}
                                     onDelete={() => setConfirmDeleteId(item.id)}
@@ -1361,7 +1348,6 @@ export default function PantryPage({ listId }: { listId: string }) {
                                                     key={`shopping-now-grouped-${item.id}`}
                                                     layoutId={`shopping-now-grouped-${item.id}`}
                                                     item={item} viewMode={viewMode}
-                                                    onCheck={handleCheckShoppingItem}
                                                     onCardClick={handleCardClick}
                                                     onToggleBuyLater={handleToggleBuyLater} onDelete={() => setConfirmDeleteId(item.id)}
                                                     onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
@@ -1397,7 +1383,6 @@ export default function PantryPage({ listId }: { listId: string }) {
                                                         key={`shopping-later-${item.id}`}
                                                         layoutId={`shopping-later-${item.id}`}
                                                         item={item} viewMode={viewMode}
-                                                        onCheck={handleCheckShoppingItem}
                                                         onCardClick={handleCardClick}
                                                         onToggleBuyLater={handleToggleBuyLater} onDelete={() => setConfirmDeleteId(item.id)}
                                                         onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
@@ -1422,7 +1407,6 @@ export default function PantryPage({ listId }: { listId: string }) {
                                                                     key={`shopping-later-grouped-${item.id}`}
                                                                     layoutId={`shopping-later-grouped-${item.id}`}
                                                                     item={item} viewMode={viewMode}
-                                                                    onCheck={handleCheckShoppingItem}
                                                                     onCardClick={handleCardClick}
                                                                     onToggleBuyLater={handleToggleBuyLater} onDelete={() => setConfirmDeleteId(item.id)}
                                                                     onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
