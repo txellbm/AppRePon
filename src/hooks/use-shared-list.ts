@@ -169,15 +169,13 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
             ? `Se ha añadido "${finalProductsToAdd[0].name}" a tu despensa.`
             : `Se han añadido ${finalProductsToAdd.length} productos a tu despensa.`;
 
-        toastie.update({ id: toastie.id, title: "¡Añadido!", description: successMessage });
+        toastie.update({ title: "¡Añadido!", description: successMessage });
       } else {
         toastie.dismiss();
       }
     } catch (error) {
       console.error("Failed to add item(s):", error);
-      toastie.update({
-        id: toastie.id,
-        title: "¡Error!",
+      toastie.update({        title: "¡Error!",
         description: "No se pudieron guardar los productos.",
         variant: "destructive",
       });
@@ -251,11 +249,10 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
           ? `Se ha añadido "${newProducts[0].name}" a la lista de la compra.`
           : `Se han añadido ${newProducts.length} productos a la lista de la compra.`;
 
-      toastie.update({ id: toastie.id, title: "¡Anotado!", description: successMessage });
+      toastie.update({ title: "¡Anotado!", description: successMessage });
     } catch (error) {
       console.error("Failed to add item(s) to shopping list:", error);
       toastie.update({
-        id: toastie.id,
         title: "¡Error!",
         description: "No se pudieron añadir los productos a la compra.",
         variant: "destructive",

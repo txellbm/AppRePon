@@ -9,7 +9,6 @@ import { useSharedList } from "@/hooks/use-shared-list";
 import { IdentifyProductsDialog } from "@/components/identify-products-dialog";
 import { ShareDialog } from "@/components/share-dialog";
 import { AssistantDialog } from "@/components/assistant-dialog";
-import { useAudio } from "@/providers/audio-provider";
 import Image from "next/image";
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from "@/providers/auth-provider";
@@ -43,8 +42,6 @@ import {
   ArrowDownAZ,
   ArrowUpAZ,
   Camera,
-  Volume2,
-  VolumeX,
   Loader2,
   RefreshCw,
   ChefHat,
@@ -59,7 +56,6 @@ import {
   Undo2,
   Package,
   Pencil,
-  ArrowRight,
   Cloudy,
   User,
   Copy,
@@ -198,8 +194,7 @@ function ProductCard({
   onDelete,
   onAddToShoppingList,
   onUpdateCategory,
-  onEdit,
-  showArrow
+  onEdit
 }: {
   product: Product;
   viewMode: ViewMode;
@@ -210,7 +205,6 @@ function ProductCard({
   onAddToShoppingList: (id: string) => void;
   onUpdateCategory: (id: string, category: Category) => void;
   onEdit: (product: Product) => void;
-  showArrow: boolean;
 }) {
   const handleCycleStatus = () => {
     const statuses: ProductStatus[] = ["available", "low", "out of stock"];
@@ -311,16 +305,6 @@ function ProductCard({
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
-        {showArrow && (
-          <motion.div
-            initial={{ opacity: 1, x: 0 }}
-            animate={{ opacity: 0, x: 20 }}
-            transition={{ duration: 1 }}
-            className="absolute right-2 top-1/2 -translate-y-1/2"
-          >
-            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-          </motion.div>
-        )}
       </div>
     </motion.div>
   );
@@ -440,7 +424,7 @@ export default function PantryPage({ listId }: { listId: string }) {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"pantry" | "shopping-list">("pantry");
-  const { toast } = useReponToast({ audioDisabled: activeTab === 'shopping-list' });
+  const { toast } = useReponToast();
   const { pantry, shoppingList, history, isLoaded, hasPendingWrites, handleAddItem, handleBulkAdd, updateRemoteList, handleShoppingListAddItem } = useSharedList(listId, toast);
   
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -456,18 +440,16 @@ export default function PantryPage({ listId }: { listId: string }) {
   const [showLegendDialog, setShowLegendDialog] = useState(false);
   const [pulsingProductId, setPulsingProductId] = useState<string | null>(null);
   const [exitingProductId, setExitingProductId] = useState<string | null>(null);
-  const [lowArrowId, setLowArrowId] = useState<string | null>(null);
   const [checkingItemId, setCheckingItemId] = useState<string | null>(null);
   
   const [isRecipeDialogOpen, setIsRecipeDialogOpen] = useState(false);
   const [recipe, setRecipe] = useState<GenerateRecipeOutput | null>(null);
   const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
   
-  const { isAudioEnabled, toggleAudio, playAudio } = useAudio();
 
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [conversation, setConversation] = useState<ConversationTurn[]>([]);
-  const [assistantStatus, setAssistantStatus] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle');
+  const [assistantStatus, setAssistantStatus] = useState<'idle' | 'listening' | 'thinking'>('idle');
 
   const [openCategories, setOpenCategories] = useState<string[]>([]);
   const [openShoppingSections, setOpenShoppingSections] = useState<string[]>(['buy-later-section']);
@@ -512,9 +494,7 @@ export default function PantryPage({ listId }: { listId: string }) {
         const nameExists = nameExistsInPantry || nameExistsInShopping;
         
         if (nameExists) {
-            toastie.update({
-                id: toastie.id,
-                title: "Error: Producto duplicado",
+        toastie.update({                title: "Error: Producto duplicado",
                 description: `Ya existe un producto llamado "${correctedName}".`,
                 variant: "destructive"
             });
@@ -537,7 +517,6 @@ export default function PantryPage({ listId }: { listId: string }) {
         });
 
         toastie.update({
-            id: toastie.id,
             title: "¡Nombre actualizado!",
             description: `"${oldName}" ahora es "${correctedName}".`
         });
@@ -545,7 +524,6 @@ export default function PantryPage({ listId }: { listId: string }) {
     } catch (error) {
         console.error("Error updating product name:", error);
         toastie.update({
-            id: toastie.id,
             title: "Error",
             description: "No se pudo actualizar el nombre del producto.",
             variant: "destructive"
@@ -696,10 +674,7 @@ export default function PantryPage({ listId }: { listId: string }) {
       }
     }
 
-    if (status === 'low') {
-      setLowArrowId(id);
-      setTimeout(() => setLowArrowId(null), 1000);
-    }
+
 
     updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
   };
@@ -900,11 +875,7 @@ export default function PantryPage({ listId }: { listId: string }) {
     });
 
     setConversation(prev => [...prev, { id: uuidv4(), speaker: 'assistant', text: result.response }]);
-    setAssistantStatus('speaking');
-    
-    playAudio(result.response, () => {
-        setAssistantStatus('listening');
-    });
+    setAssistantStatus('listening');
 
     result.operations?.forEach(op => {
       const opItemNameLower = op.item.toLowerCase();
@@ -1125,16 +1096,6 @@ export default function PantryPage({ listId }: { listId: string }) {
                           </TooltipTrigger>
                           <TooltipContent>
                               <p>Compartir enlace de la lista</p>
-                          </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" onClick={toggleAudio}>
-                                  {isAudioEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5 text-muted-foreground" />}
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                              <p>{isAudioEnabled ? 'Silenciar notificaciones' : 'Activar sonido'}</p>
                           </TooltipContent>
                       </Tooltip>
                       <Tooltip>
@@ -1377,7 +1338,6 @@ export default function PantryPage({ listId }: { listId: string }) {
                             onAddToShoppingList={handleLowStockToShoppingList}
                             onUpdateCategory={handleUpdateCategory}
                             onEdit={setEditingProduct}
-                            showArrow={product.id === lowArrowId}
                           />
                         ))}
                       </AnimatePresence>
@@ -1406,7 +1366,6 @@ export default function PantryPage({ listId }: { listId: string }) {
                                         onAddToShoppingList={handleLowStockToShoppingList}
                                         onUpdateCategory={handleUpdateCategory}
                                         onEdit={setEditingProduct}
-                                        showArrow={product.id === lowArrowId}
                                       />
                                       ))}
                                   </AnimatePresence>

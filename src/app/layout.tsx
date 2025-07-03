@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster"
-import { AudioProvider } from '@/providers/audio-provider';
 import { AuthProvider } from '@/providers/auth-provider';
 
 
@@ -39,10 +37,7 @@ export default function RootLayout({
       <head />
       <body className="font-body antialiased">
         <AuthProvider>
-          <AudioProvider>
-            <main>{children}</main>
-            <Toaster />
-          </AudioProvider>
+          <main>{children}</main>
         </AuthProvider>
       </body>
     </html>
