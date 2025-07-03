@@ -335,7 +335,8 @@ function ShoppingItemCard({
   onDelete,
   onReturnToPantry,
   onEdit,
-  layoutId
+  layoutId,
+  isChecking = false
 }: {
   item: Product;
   viewMode: ViewMode;
@@ -346,7 +347,7 @@ function ShoppingItemCard({
   onReturnToPantry: (id: string) => void;
   onEdit: (product: Product) => void;
   layoutId: string;
-  isChecking: boolean;
+  isChecking?: boolean;
 }) {
   const cardBorderStyle = {
     available: "border-green-500",
