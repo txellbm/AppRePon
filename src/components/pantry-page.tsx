@@ -211,9 +211,9 @@ function ProductCard({
   };
 
   const statusStyles = {
-    available: "bg-green-700/60",
-    low: "bg-amber-600/60",
-    "out of stock": "bg-red-700/60",
+    available: "bg-teal-100 text-teal-800",
+    low: "bg-orange-100 text-orange-800",
+    "out of stock": "bg-rose-100 text-rose-800",
   }[product.status];
 
   const isListView = viewMode === 'list';
@@ -228,7 +228,7 @@ function ProductCard({
       exit={isExiting ? { opacity: 0, x: 120, y: 80, rotate: 20, transition: { duration: 0.6 } } : { opacity: 0, x: -50, transition: { duration: 0.3 } }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
-        "rounded-md transition-all duration-200 hover:brightness-110 shadow-md text-white mb-2 p-3",
+        "rounded-md transition-all duration-200 hover:brightness-110 shadow-md mb-2 p-3",
         isListView
           ? "flex items-center justify-between"
           : "flex flex-col gap-2",
@@ -329,10 +329,10 @@ function ShoppingItemCard({
   layoutId: string;
   isChecking?: boolean;
 }) {
-  const cardBorderStyle = {
-    available: "bg-green-700/60",
-    low: "bg-amber-600/60",
-    "out of stock": "bg-red-700/60",
+  const statusStyles = {
+    available: "bg-teal-100 text-teal-800",
+    low: "bg-orange-100 text-orange-800",
+    "out of stock": "bg-rose-100 text-rose-800",
   }[item.status];
       
   const isListView = viewMode === "list";
@@ -347,9 +347,9 @@ function ShoppingItemCard({
       exit={{ opacity: 0, x: -50, transition: { duration: 0.3 } }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
-        "rounded-md transition-all duration-200 hover:brightness-110 shadow-md text-white mb-2 p-3",
+        "rounded-md transition-all duration-200 hover:brightness-110 shadow-md mb-2 p-3",
         isListView ? "flex items-center justify-between" : "flex flex-col gap-2",
-        cardBorderStyle,
+        statusStyles,
         isChecking && "brightness-110"
       )}
       onClick={() => onCardClick(item.id)}
@@ -989,14 +989,7 @@ export default function PantryPage({ listId }: { listId: string }) {
       <header className="sticky top-0 z-20 w-full border-b bg-background/80 backdrop-blur-sm">
           <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
             <div className="flex items-center">
-              <Image
-                src="/logorepon.png"
-                alt="RePon"
-                width={200}
-                height={50}
-                className="h-12 w-auto"
-                priority
-              />
+              <span className="font-headline text-3xl font-bold text-primary">RePon</span>
             </div>
               <div className="flex items-center gap-1">
                   {hasPendingWrites && (
@@ -1170,7 +1163,9 @@ export default function PantryPage({ listId }: { listId: string }) {
                       htmlFor="group-by-category"
                       className={cn(
                         "flex cursor-pointer items-center gap-2 rounded-md px-3 h-9 text-sm font-medium ring-offset-background transition-colors",
-                        groupByCategory ? "bg-accent text-accent-foreground shadow-sm" : "border border-input bg-transparent hover:bg-accent hover:text-accent-foreground"
+                        groupByCategory ?
+                          "bg-accent text-accent-foreground shadow-sm" :
+                          "border border-input bg-secondary/60 text-foreground hover:bg-accent hover:text-accent-foreground"
                       )}
                     >
                       <span>Agrupar</span>
