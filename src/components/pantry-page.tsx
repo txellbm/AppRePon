@@ -152,7 +152,7 @@ function AddItemForm({ onAddItem, history, pantry, shoppingList, activeTab }: { 
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-20 bg-background border-t p-4">
+    <div className="relative pt-4">
       <form onSubmit={handleSubmit} className="flex gap-2">
         <div className="relative flex-grow">
           <Input
@@ -177,7 +177,6 @@ function AddItemForm({ onAddItem, history, pantry, shoppingList, activeTab }: { 
           <Plus />
         </Button>
       </form>
-      <p className="mt-2 text-xs text-muted-foreground">Puedes añadir varios productos separados por comas</p>
     </div>
   );
 }
