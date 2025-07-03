@@ -33,9 +33,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang="es" className="dark" suppressHydrationWarning>
       <head />
-      <body className="font-body antialiased">
+      <body className="font-body antialiased bg-gray-900 text-white">
         <AuthProvider>
           <main>{children}</main>
         </AuthProvider>
