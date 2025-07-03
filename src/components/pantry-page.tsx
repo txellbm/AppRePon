@@ -230,7 +230,7 @@ function ProductCard({
       layoutId={'pantry-' + product.id}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, x: -50, transition: { duration: 0.3 } }}
+      exit={isExiting ? { opacity: 0, x: 120, y: 80, rotate: 20, transition: { duration: 0.6 } } : { opacity: 0, x: -50, transition: { duration: 0.3 } }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
         "rounded-lg transition-all duration-300 hover:shadow-lg border-2 bg-card",
@@ -760,6 +760,9 @@ export default function PantryPage({ listId }: { listId: string }) {
   const handleLowStockToShoppingList = async (id: string) => {
     const product = pantry.find(p => p.id === id);
     if (!product || product.status !== 'low') return;
+
+    setPulsingProductId(id);
+    setTimeout(() => setPulsingProductId(null), 500);
 
     const itemInShoppingList = shoppingList.find(item => item.id === product.id);
 
