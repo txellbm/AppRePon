@@ -160,7 +160,7 @@ function AddItemForm({ onAddItem, history, pantry, shoppingList, activeTab }: { 
             type="text"
             value={itemName}
             onChange={handleInputChange}
-            placeholder={activeTab === 'pantry' ? "Añadir a la despensa..." : "Añadir a la lista de compra..."}
+            placeholder="Puedes añadir varios productos separados por comas"
             className="flex-grow"
           />
           {suggestions.length > 0 && (
