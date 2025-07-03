@@ -161,7 +161,7 @@ function AddItemForm({ onAddItem, history, pantry, shoppingList, activeTab }: { 
             value={itemName}
             onChange={handleInputChange}
             placeholder="Puedes añadir varios productos separados por comas"
-            className="flex-grow"
+            className="flex-grow bg-gray-800 text-white placeholder-gray-400"
           />
           {suggestions.length > 0 && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="absolute z-10 w-full bg-background border rounded-md shadow-lg mt-1 p-2 flex flex-col gap-1">
@@ -173,7 +173,7 @@ function AddItemForm({ onAddItem, history, pantry, shoppingList, activeTab }: { 
             </motion.div>
           )}
         </div>
-        <Button type="submit" size="icon" aria-label="Añadir producto">
+        <Button type="submit" size="icon" aria-label="Añadir producto" className="hover:opacity-80">
           <Plus />
         </Button>
       </form>
@@ -211,9 +211,9 @@ function ProductCard({
   };
 
   const statusStyles = {
-    available: "border-green-500",
-    low: "border-amber-400",
-    "out of stock": "border-destructive",
+    available: "bg-green-800",
+    low: "bg-yellow-700",
+    "out of stock": "bg-red-700",
   }[product.status];
 
   const isListView = viewMode === 'list';
@@ -228,10 +228,10 @@ function ProductCard({
       exit={isExiting ? { opacity: 0, x: 120, y: 80, rotate: 20, transition: { duration: 0.6 } } : { opacity: 0, x: -50, transition: { duration: 0.3 } }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
-        "rounded-lg transition-all duration-300 hover:shadow-lg border-2 bg-card",
+        "rounded-md transition-all duration-200 hover:brightness-110 shadow-md text-white mb-2 p-3",
         isListView
-          ? "p-2 flex items-center justify-between"
-          : "p-4 flex flex-col gap-2",
+          ? "flex items-center justify-between"
+          : "flex flex-col gap-2",
         statusStyles,
         "cursor-pointer",
         isPulsing && "pulse",
@@ -332,9 +332,9 @@ function ShoppingItemCard({
   isChecking?: boolean;
 }) {
   const cardBorderStyle = {
-    available: "border-green-500",
-    low: "border-amber-400",
-    "out of stock": "border-destructive",
+    available: "bg-green-800",
+    low: "bg-yellow-700",
+    "out of stock": "bg-red-700",
   }[item.status];
       
   const isListView = viewMode === "list";
@@ -349,12 +349,10 @@ function ShoppingItemCard({
       exit={{ opacity: 0, x: -50, transition: { duration: 0.3 } }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
-        "rounded-lg transition-all duration-300 hover:shadow-lg border-2 bg-card text-card-foreground",
-        isListView
-          ? "p-2 flex items-center justify-between"
-          : "p-4 flex flex-col gap-2",
+        "rounded-md transition-all duration-200 hover:brightness-110 shadow-md text-white mb-2 p-3",
+        isListView ? "flex items-center justify-between" : "flex flex-col gap-2",
         cardBorderStyle,
-        isChecking && "bg-green-100 border-green-500"
+        isChecking && "brightness-110"
       )}
       onClick={() => onCardClick(item.id)}
     >
@@ -1006,7 +1004,14 @@ export default function PantryPage({ listId }: { listId: string }) {
       <header className="sticky top-0 z-20 w-full border-b bg-background/80 backdrop-blur-sm">
           <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
             <div className="flex items-center">
-              <h1 className="text-3xl font-bold text-primary tracking-tighter">RePon</h1>
+              <Image
+                src="/logorepon.png"
+                alt="RePon"
+                width={160}
+                height={40}
+                className="h-10 w-auto"
+                priority
+              />
             </div>
               <div className="flex items-center gap-1">
                   {hasPendingWrites && (
@@ -1213,7 +1218,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                     <Input
                       type="text"
                       placeholder="Buscar productos..."
-                      className="pl-10 w-full bg-card"
+                      className="pl-10 w-full bg-gray-800 text-white placeholder-gray-400"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -1565,6 +1570,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                     onChange={(e) => setNewProductName(e.target.value)}
                     onKeyDown={(e) => {if (e.key === 'Enter') { e.preventDefault(); handleUpdateName()}}}
                     placeholder="Nuevo nombre del producto"
+                    className="bg-gray-800 text-white placeholder-gray-400"
                 />
             </div>
             <DialogFooter>
