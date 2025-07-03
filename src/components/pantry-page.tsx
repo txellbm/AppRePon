@@ -2,15 +2,13 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { generateRecipeAction, conversationalAssistantAction, generateGrammaticalMessageAction, correctProductNameAction } from "@/lib/actions";
-import { type Product, type Category, type ProductStatus, type ViewMode, type GenerateRecipeOutput, type ConversationTurn } from "@/lib/types";
+import { generateRecipeAction, generateGrammaticalMessageAction, correctProductNameAction } from "@/lib/actions";
+import { type Product, type Category, type ProductStatus, type ViewMode, type GenerateRecipeOutput } from "@/lib/types";
 import { useReponToast } from "@/hooks/use-repon-toast";
 import { useSharedList } from "@/hooks/use-shared-list";
 import { IdentifyProductsDialog } from "@/components/identify-products-dialog";
 import { ShareDialog } from "@/components/share-dialog";
-import { AssistantDialog } from "@/components/assistant-dialog";
 import Image from "next/image";
-import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from "@/providers/auth-provider";
 import { useRouter } from 'next/navigation';
 import { signOut } from '@/services/auth-service';
@@ -48,7 +46,6 @@ import {
   HelpCircle,
   Settings,
   Filter,
-  Sparkles,
   LogOut,
   History,
   MoveUp,
@@ -155,7 +152,7 @@ function AddItemForm({ onAddItem, history, pantry, shoppingList, activeTab }: { 
   };
 
   return (
-    <div className="relative pt-4">
+    <div className="fixed bottom-0 left-0 right-0 z-20 bg-background border-t p-4">
       <form onSubmit={handleSubmit} className="flex gap-2">
         <div className="relative flex-grow">
           <Input
@@ -163,7 +160,7 @@ function AddItemForm({ onAddItem, history, pantry, shoppingList, activeTab }: { 
             type="text"
             value={itemName}
             onChange={handleInputChange}
-            placeholder={activeTab === 'pantry' ? "Añadir a la despensa..." : "Añadir a la lista de compra..."}
+            placeholder="Puedes añadir varios productos separados por comas"
             className="flex-grow"
           />
           {suggestions.length > 0 && (
@@ -223,6 +220,7 @@ function ProductCard({
 
   return (
     <motion.div
+      id={`product-${product.id}`}
       layout
       layoutId={'pantry-' + product.id}
       initial={{ opacity: 0, scale: 0.8 }}
@@ -343,6 +341,7 @@ function ShoppingItemCard({
 
   return (
     <motion.div
+      id={`product-${item.id}`}
       layout
       layoutId={layoutId}
       initial={{ opacity: 0, scale: 0.8 }}
@@ -434,7 +433,6 @@ export default function PantryPage({ listId }: { listId: string }) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
-  const [showAddItem, setShowAddItem] = useState(false);
   const [showIdentifyDialog, setShowIdentifyDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showLegendDialog, setShowLegendDialog] = useState(false);
@@ -447,13 +445,11 @@ export default function PantryPage({ listId }: { listId: string }) {
   const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
   
 
-  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
-  const [conversation, setConversation] = useState<ConversationTurn[]>([]);
-  const [assistantStatus, setAssistantStatus] = useState<'idle' | 'listening' | 'thinking'>('idle');
 
   const [openCategories, setOpenCategories] = useState<string[]>([]);
   const [openShoppingSections, setOpenShoppingSections] = useState<string[]>(['buy-later-section']);
   const prevPantryRef = useRef<Product[]>([]);
+  const prevShoppingRef = useRef<Product[]>([]);
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [newProductName, setNewProductName] = useState("");
@@ -590,13 +586,6 @@ export default function PantryPage({ listId }: { listId: string }) {
     }
   }, [viewMode]);
 
-  useEffect(() => {
-    if (isAssistantOpen) {
-      setAssistantStatus('listening');
-    } else {
-      setAssistantStatus('idle');
-    }
-  }, [isAssistantOpen]);
 
   useEffect(() => {
     if (groupByCategory) {
@@ -611,8 +600,33 @@ export default function PantryPage({ listId }: { listId: string }) {
             setOpenCategories(allCategories.filter((c): c is Category => c !== undefined));
         }
     }
-    prevPantryRef.current = pantry;
   }, [pantry, groupByCategory, openCategories.length]);
+
+  useEffect(() => {
+    const prevIds = new Set(prevPantryRef.current.map(p => p.id));
+    const newItems = pantry.filter(p => !prevIds.has(p.id));
+    if (newItems.length > 0) {
+      const lastId = newItems[newItems.length - 1].id;
+      setTimeout(() => {
+        const el = document.getElementById(`product-${lastId}`);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+    prevPantryRef.current = pantry;
+  }, [pantry]);
+
+  useEffect(() => {
+    const prevIds = new Set(prevShoppingRef.current.map(p => p.id));
+    const newItems = shoppingList.filter(p => !prevIds.has(p.id));
+    if (newItems.length > 0) {
+      const lastId = newItems[newItems.length - 1].id;
+      setTimeout(() => {
+        const el = document.getElementById(`product-${lastId}`);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+    prevShoppingRef.current = shoppingList;
+  }, [shoppingList]);
   
   useEffect(() => {
     if (groupByCategory) {
@@ -861,66 +875,6 @@ export default function PantryPage({ listId }: { listId: string }) {
     }
   };
   
-  const handleAssistantCommand = async (command: string) => {
-    if (!command.trim()) return;
-
-    setAssistantStatus('thinking');
-    setConversation(prev => [...prev, { id: uuidv4(), speaker: 'user', text: command }]);
-
-    const result = await conversationalAssistantAction({
-        command,
-        pantry,
-        shoppingList,
-        activeTab
-    });
-
-    setConversation(prev => [...prev, { id: uuidv4(), speaker: 'assistant', text: result.response }]);
-    setAssistantStatus('listening');
-
-    result.operations?.forEach(op => {
-      const opItemNameLower = op.item.toLowerCase();
-      switch (op.action) {
-        case 'add':
-          if (op.list === 'pantry') handleAddItem(op.item);
-          else if (op.list === 'shopping') handleShoppingListAddItem(op.item);
-          break;
-        case 'remove': {
-          const itemToRemove = [...pantry, ...shoppingList].find(p => p.name.toLowerCase() === opItemNameLower);
-          if (itemToRemove) handleDelete(itemToRemove.id);
-          break;
-        }
-        case 'move': {
-           const itemInPantry = pantry.find(p => p.name.toLowerCase() === opItemNameLower);
-           const itemInShopping = shoppingList.find(p => p.name.toLowerCase() === opItemNameLower);
-           
-           if (op.from === 'pantry' && op.to === 'shopping' && itemInPantry) {
-              handleUpdateStatus(itemInPantry.id, 'out of stock');
-           } else if (op.from === 'shopping' && op.to === 'pantry' && itemInShopping) {
-              handleCheckShoppingItem(itemInShopping.id);
-           } else if (op.to === 'pantry') {
-              handleAddItem(op.item);
-           } else if (op.to === 'shopping') {
-              handleShoppingListAddItem(op.item);
-           }
-           break;
-        }
-      }
-    });
-
-    result.uiActions?.forEach(action => {
-        switch(action.action) {
-            case 'change_tab':
-                setActiveTab(action.payload.tab);
-                break;
-            case 'change_view':
-                setViewMode(action.payload.viewMode);
-                break;
-            case 'apply_filter':
-                setStatusFilter(action.payload.value);
-                break;
-        }
-    });
-  };
 
   const handleNameSortToggle = () => {
     setSortConfig(current => {
@@ -1159,27 +1113,11 @@ export default function PantryPage({ listId }: { listId: string }) {
                            <TooltipProvider>
                               <Tooltip>
                                   <TooltipTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowAddItem(s => !s)} aria-label="Añadir producto">
-                                          <Plus className="h-5 w-5" />
-                                      </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent><p>Añadir producto</p></TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                  <TooltipTrigger asChild>
                                       <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowIdentifyDialog(true)} aria-label="Añadir desde foto">
                                           <Camera className="h-5 w-5" />
                                       </Button>
                                   </TooltipTrigger>
                                   <TooltipContent><p>Añadir desde foto</p></TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                  <TooltipTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setIsAssistantOpen(true)} aria-label="Asistente de IA">
-                                          <Sparkles className="h-5 w-5" />
-                                      </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent><p>Asistente IA</p></TooltipContent>
                               </Tooltip>
                           </TooltipProvider>
                       </div>
@@ -1251,16 +1189,6 @@ export default function PantryPage({ listId }: { listId: string }) {
                     <TooltipProvider>
                        <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setIsAssistantOpen(true)} aria-label="Asistente de IA">
-                                <Sparkles className="h-5 w-5" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Asistente IA</p>
-                        </TooltipContent>
-                      </Tooltip>
-                       <Tooltip>
-                        <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowIdentifyDialog(true)} aria-label="Añadir desde foto">
                                 <Camera className="h-5 w-5" />
                             </Button>
@@ -1270,10 +1198,6 @@ export default function PantryPage({ listId }: { listId: string }) {
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    <Button onClick={() => setShowAddItem(s => !s)} className="h-9">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Añadir producto
-                    </Button>
                   </div>
               </div>
 
@@ -1299,24 +1223,13 @@ export default function PantryPage({ listId }: { listId: string }) {
                   </motion.div>
                 )}
               </AnimatePresence>
-              <AnimatePresence>
-                {showAddItem && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden"
-                    >
-                        <AddItemForm
-                            onAddItem={currentAddItemHandler}
-                            history={history}
-                            pantry={pantry}
-                            shoppingList={shoppingList}
-                            activeTab={activeTab}
-                        />
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            <AddItemForm
+              onAddItem={currentAddItemHandler}
+              history={history}
+              pantry={pantry}
+              shoppingList={shoppingList}
+              activeTab={activeTab}
+            />
           </div>
           
           <TabsContent value="pantry">
@@ -1542,13 +1455,6 @@ export default function PantryPage({ listId }: { listId: string }) {
 
       <IdentifyProductsDialog open={showIdentifyDialog} onOpenChange={setShowIdentifyDialog} onAddProducts={handleBulkAdd} />
       
-      <AssistantDialog 
-        open={isAssistantOpen}
-        onOpenChange={setIsAssistantOpen}
-        conversation={conversation}
-        assistantStatus={assistantStatus}
-        onCommand={handleAssistantCommand}
-      />
 
       <Dialog open={!!confirmDeleteId} onOpenChange={() => setConfirmDeleteId(null)}>
         <DialogContent>
