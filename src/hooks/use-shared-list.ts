@@ -124,7 +124,10 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
         if (currentPantryNames.has(lower)) {
           toast({ title: "¡Ya lo tienes!", description: `"${correctedName}" ya está en tu despensa.` });
         } else if (shoppingListMap.has(lower)) {
-          itemsToMoveFromShoppingList.push(shoppingListMap.get(lower)!);
+          if (typeof window !== 'undefined' &&
+              window.confirm('Este producto ya está en la lista de compra. ¿Quieres moverlo a la despensa y eliminarlo de la lista?')) {
+            itemsToMoveFromShoppingList.push(shoppingListMap.get(lower)!);
+          }
         } else {
           namesToCreate.push(correctedName);
         }
@@ -154,7 +157,7 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
 
       if (finalProductsToAdd.length > 0) {
         const newShoppingList = listData.shoppingList.filter(
-          (item) => !itemsToMoveFromShoppingList.some((moved) => moved.id === item.id)
+          (item) => !itemsToMoveFromShoppingList.some((moved) => moved.name.toLowerCase() === item.name.toLowerCase())
         );
         const newPantry = [...listData.pantry, ...finalProductsToAdd];
         const newHistory = [...new Set([...listData.history, ...finalProductsToAdd.map((p) => p.name)])];
