@@ -119,12 +119,58 @@
 }
 
 
-/* Tab-specific highlights */
-[data-state='active'][value='pantry'],
-[data-state='active'][value='shopping-list'],
-[data-state='active'][value='pending'] {
-  box-shadow: inset 0 -3px 0 0 #3498DB;
-  color: #ffffff;
+
+/* Color utilities */
+.bg-verde-oliva {
+  background-color: #79792E;
+}
+
+.bg-amarillo-mostaza {
+  background-color: #F2DD6C;
+}
+
+.bg-rojo-terracota {
+  background-color: #794515;
+}
+
+.transition-color {
+  transition: background-color 0.4s ease;
+}
+
+@keyframes slideLeft {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slideRight {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.animate-slide-left {
+  animation: slideLeft 0.5s forwards;
+}
+
+.animate-slide-right {
+  animation: slideRight 0.5s forwards;
+}
+
+.tab-activa {
+  border-bottom: 3px solid #F2DD6C;
+  font-weight: bold;
+  color: #F2DD6C;
 }
 
 @keyframes accordion-down {

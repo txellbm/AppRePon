@@ -211,9 +211,9 @@ function ProductCard({
   };
 
   const statusStyles = {
-    available: "bg-[#A3B18A] text-white",
-    low: "bg-[#E9C46A] text-white",
-    "out of stock": "bg-[#E76F51] text-white",
+    available: "bg-verde-oliva text-white",
+    low: "bg-amarillo-mostaza text-white",
+    "out of stock": "bg-rojo-terracota text-white",
   }[product.status];
 
   const isListView = viewMode === 'list';
@@ -225,7 +225,7 @@ function ProductCard({
       layoutId={'pantry-' + product.id}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={isExiting ? { opacity: 0, x: 120, y: 80, rotate: 20, transition: { duration: 0.6 } } : { opacity: 0, x: -50, transition: { duration: 0.3 } }}
+      exit={{ opacity: 0, x: -50, transition: { duration: 0.3 } }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
         "rounded-md transition-all duration-300 hover:brightness-110 shadow-md mb-2 p-3",
@@ -233,9 +233,9 @@ function ProductCard({
           ? "flex items-center justify-between"
           : "flex flex-col gap-2",
         statusStyles,
-        "cursor-pointer transition-colors",
-        isPulsing && "pulse bg-[#E9C46A]",
-        isExiting && "flash-out"
+        "cursor-pointer transition-colors transition-color",
+        isPulsing && "pulse bg-amarillo-mostaza",
+        isExiting && "animate-slide-left"
       )}
       onClick={handleCycleStatus}
     >
@@ -317,7 +317,8 @@ function ShoppingItemCard({
   onReturnToPantry,
   onEdit,
   layoutId,
-  isChecking = false
+  isChecking = false,
+  isSliding = false
 }: {
   item: Product;
   viewMode: ViewMode;
@@ -328,11 +329,12 @@ function ShoppingItemCard({
   onEdit: (product: Product) => void;
   layoutId: string;
   isChecking?: boolean;
+  isSliding?: boolean;
 }) {
   const statusStyles = {
-    available: "bg-[#A3B18A] text-white",
-    low: "bg-[#E9C46A] text-white",
-    "out of stock": "bg-[#E76F51] text-white",
+    available: "bg-verde-oliva text-white",
+    low: "bg-amarillo-mostaza text-white",
+    "out of stock": "bg-rojo-terracota text-white",
   }[item.status];
       
   const isListView = viewMode === "list";
@@ -350,8 +352,9 @@ function ShoppingItemCard({
         "rounded-md transition-all duration-300 hover:brightness-110 shadow-md mb-2 p-3",
         isListView ? "flex items-center justify-between" : "flex flex-col gap-2",
         statusStyles,
-        "transition-colors",
-        isChecking && "bg-[#A3B18A] opacity-80"
+        "transition-colors transition-color",
+        isChecking && "bg-verde-oliva opacity-80",
+        isSliding && "animate-slide-right"
       )}
       onClick={() => onCardClick(item.id)}
     >
@@ -423,6 +426,7 @@ export default function PantryPage({ listId }: { listId: string }) {
   const [pulsingProductId, setPulsingProductId] = useState<string | null>(null);
   const [exitingProductId, setExitingProductId] = useState<string | null>(null);
   const [checkingItemId, setCheckingItemId] = useState<string | null>(null);
+  const [slidingRightId, setSlidingRightId] = useState<string | null>(null);
   
   const [isRecipeDialogOpen, setIsRecipeDialogOpen] = useState(false);
   const [recipe, setRecipe] = useState<GenerateRecipeOutput | null>(null);
@@ -653,25 +657,28 @@ export default function PantryPage({ listId }: { listId: string }) {
     if (status === 'out of stock') {
         const interimPantry = pantry.map(p => p.id === id ? { ...p, status: 'out of stock' as ProductStatus } : p);
         updateRemoteList({ pantry: interimPantry });
-        setExitingProductId(id);
-        setTimeout(async () => {
-            newPantry = pantry.filter(p => p.id !== id);
-            const existingShoppingItem = shoppingList.find(item => item.id === product.id);
-            if (existingShoppingItem) {
-                newShoppingList = shoppingList.map(item => item.id === product.id ? { ...item, status: 'out of stock', reason: 'out of stock' } : item);
-            } else {
-                const { isPendingPurchase, ...restOfProduct } = product;
-                newShoppingList.push({
-                    ...restOfProduct,
-                    status: 'out of stock',
-                    reason: 'out of stock',
-                    isPendingPurchase: false,
-                    buyLater: false,
-                });
-            }
-            updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
-            setExitingProductId(null);
-        }, 1000);
+        setTimeout(() => {
+            setExitingProductId(id);
+            setTimeout(() => {
+                const finalPantry = pantry.filter(p => p.id !== id);
+                let finalShoppingList = [...shoppingList];
+                const existingShoppingItem = shoppingList.find(item => item.id === product.id);
+                if (existingShoppingItem) {
+                    finalShoppingList = shoppingList.map(item => item.id === product.id ? { ...item, status: 'out of stock', reason: 'out of stock' } : item);
+                } else {
+                    const { isPendingPurchase, ...restOfProduct } = product;
+                    finalShoppingList.push({
+                        ...restOfProduct,
+                        status: 'out of stock',
+                        reason: 'out of stock',
+                        isPendingPurchase: false,
+                        buyLater: false,
+                    });
+                }
+                updateRemoteList({ pantry: finalPantry, shoppingList: finalShoppingList });
+                setExitingProductId(null);
+            }, 500);
+        }, 2000);
         return;
     }
 
@@ -766,9 +773,13 @@ export default function PantryPage({ listId }: { listId: string }) {
   const handleCardClick = (id: string) => {
     setCheckingItemId(id);
     setTimeout(() => {
-      handleCheckShoppingItem(id, true);
-      setCheckingItemId(null);
-    }, 1000);
+      setSlidingRightId(id);
+      setTimeout(() => {
+        handleCheckShoppingItem(id, true);
+        setCheckingItemId(null);
+        setSlidingRightId(null);
+      }, 500);
+    }, 1500);
   };
   
   const handleLowStockToShoppingList = async (id: string) => {
@@ -1336,6 +1347,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                     onReturnToPantry={handleReturnToPantry}
                                     onEdit={setEditingProduct}
                                     isChecking={item.id === checkingItemId}
+                                    isSliding={item.id === slidingRightId}
                                 />
                                 ))}
                             </AnimatePresence>
@@ -1360,6 +1372,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                                     onToggleBuyLater={handleToggleBuyLater} onDelete={() => setConfirmDeleteId(item.id)}
                                                     onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
                                                     isChecking={item.id === checkingItemId}
+                                                    isSliding={item.id === slidingRightId}
                                                 />
                                             ))}
                                         </AnimatePresence>
@@ -1395,6 +1408,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                                         onToggleBuyLater={handleToggleBuyLater} onDelete={() => setConfirmDeleteId(item.id)}
                                                         onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
                                                         isChecking={item.id === checkingItemId}
+                                                        isSliding={item.id === slidingRightId}
                                                     />
                                                 ))}
                                             </AnimatePresence>
@@ -1419,6 +1433,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                                                     onToggleBuyLater={handleToggleBuyLater} onDelete={() => setConfirmDeleteId(item.id)}
                                                                     onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
                                                                     isChecking={item.id === checkingItemId}
+                                                                    isSliding={item.id === slidingRightId}
                                                                 />
                                                             ))}
                                                         </AnimatePresence>
@@ -1482,15 +1497,15 @@ export default function PantryPage({ listId }: { listId: string }) {
           </DialogHeader>
           <div className="space-y-4 py-4">
               <div className="flex items-center gap-4">
-                <div className="h-4 w-4 rounded-full bg-[#A3B18A] shrink-0 border"/>
+                <div className="h-4 w-4 rounded-full bg-verde-oliva shrink-0 border"/>
                 <p className="text-sm"><b>Verde:</b> Producto disponible en tu despensa.</p>
               </div>
               <div className="flex items-center gap-4">
-                <div className="h-4 w-4 rounded-full bg-[#E9C46A] shrink-0 border"/>
+                <div className="h-4 w-4 rounded-full bg-amarillo-mostaza shrink-0 border"/>
                 <p className="text-sm"><b>Ámbar:</b> Queda poca cantidad del producto.</p>
               </div>
               <div className="flex items-center gap-4">
-                <div className="h-4 w-4 rounded-full bg-[#E76F51] shrink-0 border"/>
+                <div className="h-4 w-4 rounded-full bg-rojo-terracota shrink-0 border"/>
                 <p className="text-sm"><b>Rojo:</b> Producto agotado o que necesitas comprar.</p>
               </div>
           </div>
