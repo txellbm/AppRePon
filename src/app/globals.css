@@ -167,11 +167,6 @@
   animation: slideRight 0.5s forwards;
 }
 
-.tab-activa {
-  border-bottom: 3px solid #F2DD6C;
-  font-weight: bold;
-  color: #F2DD6C;
-}
 
 @keyframes accordion-down {
   from {
