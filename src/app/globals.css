@@ -121,16 +121,19 @@
 
 
 /* Color utilities */
-.bg-verde-oliva {
-  background-color: #79792E;
+.bg-verde-eucalipto {
+  background-color: #6DA78C;
+  color: white;
 }
 
 .bg-amarillo-mostaza {
-  background-color: #F2DD6C;
+  background-color: #D6A844;
+  color: white;
 }
 
-.bg-rojo-terracota {
-  background-color: #794515;
+.bg-rojo-coral {
+  background-color: #C65A5A;
+  color: white;
 }
 
 .transition-color {

@@ -211,9 +211,9 @@ function ProductCard({
   };
 
   const statusStyles = {
-    available: "bg-verde-oliva text-white",
+    available: "bg-verde-eucalipto text-white",
     low: "bg-amarillo-mostaza text-white",
-    "out of stock": "bg-rojo-terracota text-white",
+    "out of stock": "bg-rojo-coral text-white",
   }[product.status];
 
   const isListView = viewMode === 'list';
@@ -225,7 +225,7 @@ function ProductCard({
       layoutId={'pantry-' + product.id}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, x: -50, transition: { duration: 0.3 } }}
+      exit={{ opacity: 0, x: 50, transition: { duration: 0.3 } }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
         "rounded-md transition-all duration-300 hover:brightness-110 shadow-md mb-2 p-3",
@@ -235,7 +235,7 @@ function ProductCard({
         statusStyles,
         "cursor-pointer transition-colors transition-color",
         isPulsing && "pulse bg-amarillo-mostaza",
-        isExiting && "animate-slide-left"
+        isExiting && "animate-slide-right"
       )}
       onClick={handleCycleStatus}
     >
@@ -332,9 +332,9 @@ function ShoppingItemCard({
   isSliding?: boolean;
 }) {
   const statusStyles = {
-    available: "bg-verde-oliva text-white",
+    available: "bg-verde-eucalipto text-white",
     low: "bg-amarillo-mostaza text-white",
-    "out of stock": "bg-rojo-terracota text-white",
+    "out of stock": "bg-rojo-coral text-white",
   }[item.status];
       
   const isListView = viewMode === "list";
@@ -353,8 +353,8 @@ function ShoppingItemCard({
         isListView ? "flex items-center justify-between" : "flex flex-col gap-2",
         statusStyles,
         "transition-colors transition-color",
-        isChecking && "bg-verde-oliva opacity-80",
-        isSliding && "animate-slide-right"
+        isChecking && "bg-verde-eucalipto opacity-80",
+        isSliding && "animate-slide-left"
       )}
       onClick={() => onCardClick(item.id)}
     >
@@ -832,17 +832,20 @@ export default function PantryPage({ listId }: { listId: string }) {
     if (!itemInShoppingList || itemInShoppingList.status !== 'low') {
         return;
     }
+    setSlidingRightId(id);
+    setTimeout(() => {
+        const newPantry = pantry.map(p => {
+            if (p.id === itemInShoppingList.id) {
+                return { ...p, isPendingPurchase: false };
+            }
+            return p;
+        });
 
-    const newPantry = pantry.map(p => {
-        if (p.id === itemInShoppingList.id) {
-            return { ...p, isPendingPurchase: false };
-        }
-        return p;
-    });
+        const newShoppingList = shoppingList.filter(p => p.id !== id);
 
-    const newShoppingList = shoppingList.filter(p => p.id !== id);
-
-    updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
+        updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
+        setSlidingRightId(null);
+    }, 500);
   };
 
 
@@ -1497,7 +1500,7 @@ export default function PantryPage({ listId }: { listId: string }) {
           </DialogHeader>
           <div className="space-y-4 py-4">
               <div className="flex items-center gap-4">
-                <div className="h-4 w-4 rounded-full bg-verde-oliva shrink-0 border"/>
+                <div className="h-4 w-4 rounded-full bg-verde-eucalipto shrink-0 border"/>
                 <p className="text-sm"><b>Verde:</b> Producto disponible en tu despensa.</p>
               </div>
               <div className="flex items-center gap-4">
@@ -1505,7 +1508,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                 <p className="text-sm"><b>Ámbar:</b> Queda poca cantidad del producto.</p>
               </div>
               <div className="flex items-center gap-4">
-                <div className="h-4 w-4 rounded-full bg-rojo-terracota shrink-0 border"/>
+                <div className="h-4 w-4 rounded-full bg-rojo-coral shrink-0 border"/>
                 <p className="text-sm"><b>Rojo:</b> Producto agotado o que necesitas comprar.</p>
               </div>
           </div>
