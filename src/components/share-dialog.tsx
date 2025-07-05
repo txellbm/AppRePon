@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useReponToast } from "@/hooks/use-repon-toast";
 import type { Product } from "@/lib/types";
-import { Share2, Copy } from "lucide-react";
+import { Copy } from "lucide-react";
 
 interface ShareDialogProps {
   open: boolean;
@@ -56,24 +56,26 @@ export function ShareDialog({ open, onOpenChange, pantry, shoppingList }: ShareD
     return text.trim();
   };
 
-  const generateSummaryText = () => {
-    return `\uD83D\uDED2 Lista RePon:\n - Despensa (${pantry.length})\n - Lista de Compra (${shoppingList.length})`;
-  };
-
   const copyToClipboard = (text: string) => {
     if (!text) {
-      alert(
-        "Nada que copiar. Selecciona al menos una lista con productos."
-      );
+      toast({
+        title: "Nada que copiar",
+        description: "Selecciona al menos una lista con productos.",
+        variant: "destructive",
+        duration: 3000,
+      });
       return;
     }
     navigator.clipboard.writeText(text).then(
       () => {
-        alert("✅ Copiado al portapapeles");
+        toast({ title: "Contenido copiado al portapapeles", duration: 2500 });
         onOpenChange(false);
       },
       () => {
-        alert("Error al copiar el contenido.");
+        toast({
+          title: "Error al copiar el contenido",
+          variant: "destructive",
+        });
       }
     );
   };
@@ -82,7 +84,7 @@ export function ShareDialog({ open, onOpenChange, pantry, shoppingList }: ShareD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Compartir o Copiar Listas</DialogTitle>
+          <DialogTitle>Compartir lista</DialogTitle>
           <DialogDescription>
             Elige qué listas quieres incluir y cómo quieres compartirlas.
           </DialogDescription>
@@ -100,9 +102,6 @@ export function ShareDialog({ open, onOpenChange, pantry, shoppingList }: ShareD
         <DialogFooter className="sm:justify-end gap-2">
           <Button variant="outline" onClick={() => copyToClipboard(generateShareableText())}>
             <Copy className="mr-2 h-4 w-4" /> Copiar al portapapeles
-          </Button>
-          <Button onClick={() => copyToClipboard(generateSummaryText())}>
-            <Share2 className="mr-2 h-4 w-4" /> Copiar resumen
           </Button>
         </DialogFooter>
       </DialogContent>
