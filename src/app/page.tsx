@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/auth-provider';
-import { signInWithGoogle, signInAnonymouslyForDev } from '@/services/auth-service';
+import { signInWithGoogle } from '@/services/auth-service';
 import { Button } from '@/components/ui/button';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
@@ -34,17 +34,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleGuestLogin = async () => {
-    setError(null);
-    setIsSigningIn(true);
-    try {
-      await signInAnonymouslyForDev();
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setIsSigningIn(false);
-    }
-  };
 
   // While checking auth or if user exists and is being redirected, show a loader.
   if (loading || user) {
@@ -79,9 +68,6 @@ export default function LoginPage() {
           <Button onClick={handleSignIn} size="lg" className="w-full max-w-xs" disabled={isSigningIn}>
              {isSigningIn ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 21.2 172.9 60.3L337.9 162C300.9 128 258.1 108 210.3 108c-73.2 0-132.3 59.8-132.3 133.1s59.1 133.1 132.3 133.1c76.9 0 115.1-53.7 119.1-82.3H210.3v-71.6h278.2c2.9 15.6 4.6 33.1 4.6 52.5z"></path></svg>}
             Iniciar sesión con Google
-          </Button>
-          <Button onClick={handleGuestLogin} variant="link" className="text-muted-foreground h-auto p-1 text-xs" disabled={isSigningIn}>
-            Continuar como invitado
           </Button>
         </div>
       </div>
