@@ -950,16 +950,16 @@ export default function PantryPage({ listId }: { listId: string }) {
   const sortedShoppingListLaterCategories = useMemo(() => groupedShoppingListLater ? Object.keys(groupedShoppingListLater).sort() : [], [groupedShoppingListLater]);
 
   const handleShareLink = () => {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-        toast({ title: "¡Enlace copiado!", description: "Ya puedes compartir la lista con quien quieras." });
-    }, () => {
-        toast({
-            title: "No se pudo copiar el enlace",
-            description: "Esta función podría no estar disponible en tu navegador. Intenta copiar la URL manualmente.",
-            duration: 5000,
-            variant: "destructive"
-        });
-    });
+    navigator.clipboard.writeText(window.location.href).then(
+      () => {
+        alert("✅ Enlace copiado al portapapeles");
+      },
+      () => {
+        alert(
+          "No se pudo copiar el enlace. Copia la URL manualmente."
+        );
+      }
+    );
   };
 
   const currentAddItemHandler = activeTab === 'pantry' ? handleAddItem : handleShoppingListAddItem;
