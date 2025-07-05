@@ -950,10 +950,7 @@ export default function PantryPage({ listId }: { listId: string }) {
   const sortedShoppingListLaterCategories = useMemo(() => groupedShoppingListLater ? Object.keys(groupedShoppingListLater).sort() : [], [groupedShoppingListLater]);
 
   const handleShareLink = () => {
-    const appBaseUrl =
-      window.location.hostname === "localhost"
-        ? "https://repon-demo.web.app"
-        : window.location.origin;
+    const appBaseUrl = window.location.origin;
     const fullLink = `${appBaseUrl}/pantry/nuestra-despensa-compartida`;
 
     navigator.clipboard.writeText(fullLink).then(
