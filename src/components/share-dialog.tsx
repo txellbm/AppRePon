@@ -56,17 +56,26 @@ export function ShareDialog({ open, onOpenChange, pantry, shoppingList }: ShareD
     return text.trim();
   };
 
+  const generateSummaryText = () => {
+    return `\uD83D\uDED2 Lista RePon:\n - Despensa (${pantry.length})\n - Lista de Compra (${shoppingList.length})`;
+  };
+
   const copyToClipboard = (text: string) => {
     if (!text) {
-        toast({ title: "Nada que copiar", description: "Selecciona al menos una lista con productos.", variant: "destructive" });
-        return;
+      alert(
+        "Nada que copiar. Selecciona al menos una lista con productos."
+      );
+      return;
     }
-    navigator.clipboard.writeText(text).then(() => {
-      toast({ title: "¡Copiado!", description: "El contenido de tus listas se ha copiado al portapapeles." });
-      onOpenChange(false);
-    }, () => {
-      toast({ title: "Error al copiar", description: "No se pudo copiar el contenido.", variant: "destructive" });
-    });
+    navigator.clipboard.writeText(text).then(
+      () => {
+        alert("✅ Copiado al portapapeles");
+        onOpenChange(false);
+      },
+      () => {
+        alert("Error al copiar el contenido.");
+      }
+    );
   };
   
   return (
@@ -92,8 +101,8 @@ export function ShareDialog({ open, onOpenChange, pantry, shoppingList }: ShareD
           <Button variant="outline" onClick={() => copyToClipboard(generateShareableText())}>
             <Copy className="mr-2 h-4 w-4" /> Copiar al portapapeles
           </Button>
-          <Button onClick={() => copyToClipboard(generateShareableText())}>
-            <Share2 className="mr-2 h-4 w-4" /> Compartir
+          <Button onClick={() => copyToClipboard(generateSummaryText())}>
+            <Share2 className="mr-2 h-4 w-4" /> Copiar resumen
           </Button>
         </DialogFooter>
       </DialogContent>
