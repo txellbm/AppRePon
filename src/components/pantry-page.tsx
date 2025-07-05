@@ -950,14 +950,24 @@ export default function PantryPage({ listId }: { listId: string }) {
   const sortedShoppingListLaterCategories = useMemo(() => groupedShoppingListLater ? Object.keys(groupedShoppingListLater).sort() : [], [groupedShoppingListLater]);
 
   const handleShareLink = () => {
-    navigator.clipboard.writeText(window.location.href).then(
+    const appBaseUrl =
+      window.location.hostname === "localhost"
+        ? "https://repon-demo.web.app"
+        : window.location.origin;
+    const fullLink = `${appBaseUrl}/pantry/nuestra-despensa-compartida`;
+
+    navigator.clipboard.writeText(fullLink).then(
       () => {
-        alert("✅ Enlace copiado al portapapeles");
+        toast({ title: "Enlace copiado al portapapeles", duration: 2500 });
       },
       () => {
-        alert(
-          "No se pudo copiar el enlace. Copia la URL manualmente."
-        );
+        toast({
+          title: "No se pudo copiar el enlace",
+          description:
+            "Esta función podría no estar disponible en tu navegador. Intenta copiar la URL manualmente.",
+          duration: 5000,
+          variant: "destructive",
+        });
       }
     );
   };
