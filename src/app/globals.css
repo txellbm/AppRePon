@@ -136,6 +136,18 @@
   color: white;
 }
 
+.text-verde-eucalipto {
+  color: #6DA78C;
+}
+
+.text-amarillo-mostaza {
+  color: #D6A844;
+}
+
+.text-rojo-coral {
+  color: #C65A5A;
+}
+
 .transition-color {
   transition: background-color 0.4s ease;
 }

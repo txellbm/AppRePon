@@ -51,20 +51,32 @@ export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: Id
   };
 
   const requestCameraPermission = async () => {
-    if (typeof navigator.mediaDevices?.getUserMedia !== 'function') {
-        setHasCameraPermission(false);
-        return;
+    if (typeof navigator.mediaDevices?.getUserMedia !== "function") {
+      setHasCameraPermission(false);
+      return;
     }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { exact: "environment" } },
+      });
       streamRef.current = stream;
       setHasCameraPermission(true);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
     } catch (error) {
-      console.error("Error accessing camera:", error);
-      setHasCameraPermission(false);
+      console.error("Error accessing rear camera", error);
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        streamRef.current = stream;
+        setHasCameraPermission(true);
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (err) {
+        console.error("Error accessing camera", err);
+        setHasCameraPermission(false);
+      }
     }
   };
   
