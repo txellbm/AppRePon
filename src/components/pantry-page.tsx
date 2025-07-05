@@ -225,7 +225,7 @@ function ProductCard({
       layoutId={'pantry-' + product.id}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, x: 50, transition: { duration: 0.3 } }}
+      exit={{ opacity: 0, x: isExiting ? 100 : 50, transition: { duration: 0.3 } }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
         "rounded-md transition-all duration-300 hover:brightness-110 shadow-md mb-2 p-3",
@@ -234,8 +234,7 @@ function ProductCard({
           : "flex flex-col gap-2",
         statusStyles,
         "cursor-pointer transition-colors transition-color",
-        isPulsing && "pulse bg-amarillo-mostaza",
-        isExiting && "animate-slide-right"
+        isPulsing && "pulse bg-amarillo-mostaza"
       )}
       onClick={handleCycleStatus}
     >
@@ -346,15 +345,14 @@ function ShoppingItemCard({
       layoutId={layoutId}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, x: -50, transition: { duration: 0.3 } }}
+      exit={{ opacity: 0, x: isSliding ? -100 : -50, transition: { duration: 0.3 } }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
         "rounded-md transition-all duration-300 hover:brightness-110 shadow-md mb-2 p-3",
         isListView ? "flex items-center justify-between" : "flex flex-col gap-2",
         statusStyles,
         "transition-colors transition-color",
-        isChecking && "bg-verde-eucalipto opacity-80",
-        isSliding && "animate-slide-left"
+        isChecking && "bg-verde-eucalipto opacity-80"
       )}
       onClick={() => onCardClick(item.id)}
     >
