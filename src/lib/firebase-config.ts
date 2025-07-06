@@ -48,3 +48,7 @@ if (typeof window !== 'undefined' && !(window as any).__firebase_persistence_ena
 }
 
 export { db, auth };
+
+if (typeof window !== 'undefined') {
+  (window as any).__FIREBASE_APP__ = app;
+}
