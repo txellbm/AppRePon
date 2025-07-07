@@ -3,9 +3,17 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Temporarily allow public read and write access to the 'lists' collection.
+    // Public reads are allowed, but writes are restricted.
     match /lists/{listId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if
+        // Allow clearing explicitly when forceClear flag is provided
+        (request.resource.data.forceClear == true) ||
+        // Otherwise, prevent overwriting with empty arrays
+        (
+          (!("pantry" in request.resource.data) || request.resource.data.pantry.size() > 0) &&
+          (!("shoppingList" in request.resource.data) || request.resource.data.shoppingList.size() > 0)
+        );
     }
   }
 }

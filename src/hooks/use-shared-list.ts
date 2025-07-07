@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { doc, onSnapshot, setDoc, type Unsubscribe } from "firebase/firestore";
+import { doc, onSnapshot, type Unsubscribe } from "firebase/firestore";
 import { db } from "@/lib/firebase-config";
 import { updateList, type ListData, sanitizeProductArray } from "@/services/firebase-service";
 import { type Product, type Category } from "@/lib/types";
@@ -42,16 +42,7 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
     const unsubscribe: Unsubscribe = onSnapshot(docRef,
       (snap) => {
         setHasPendingWrites(snap.metadata.hasPendingWrites);
-        if (!snap.exists() && first) {
-          setDoc(docRef, { pantry: [], shoppingList: [], history: [] }).catch((error) => {
-            console.error("Failed to create list document:", error);
-            toast({
-              title: "Error de Creación",
-              description: "No se pudo crear la lista compartida.",
-              variant: "destructive",
-            });
-          });
-        } else if (snap.exists()) {
+        if (snap.exists()) {
           const data = snap.data();
           setListData({
             pantry: sanitizeProductArray(data.pantry),
@@ -78,7 +69,7 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
     return () => unsubscribe();
   }, [finalListId, toast]);
 
-  const updateRemoteList = useCallback((updatedData: Partial<ListData>) => {
+  const updateRemoteList = useCallback((updatedData: Partial<ListData> & { forceClear?: boolean }) => {
     if (!db) {
       toast({
         title: "Error de Conexión",
@@ -243,6 +234,10 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
     [handleBulkAddToShoppingList]
   );
 
+  const clearPantry = useCallback(() => {
+    updateRemoteList({ pantry: [], forceClear: true });
+  }, [updateRemoteList]);
+
 
   return {
     ...listData,
@@ -252,5 +247,6 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
     handleBulkAdd,
     updateRemoteList,
     handleShoppingListAddItem,
+    clearPantry,
   };
 }
