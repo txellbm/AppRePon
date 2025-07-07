@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, onSnapshot, type Unsubscribe } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, onSnapshot, type Unsubscribe } from "firebase/firestore";
 import { db } from "@/lib/firebase-config";
 import type { Product } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
@@ -76,7 +76,7 @@ export async function getOrCreateList(listId: string): Promise<ListData> {
         history: Array.isArray(data.history) ? data.history : [],
       };
     } else {
-      await setDoc(docRef, emptyList);
+      // Do not create the document automatically when empty
       return { ...emptyList };
     }
   } catch (error) {
@@ -85,19 +85,58 @@ export async function getOrCreateList(listId: string): Promise<ListData> {
   }
 }
 
-export async function updateList(listId: string, data: Partial<ListData>): Promise<void> {
+export async function updateList(
+  listId: string,
+  data: Partial<ListData> & { forceClear?: boolean }
+): Promise<void> {
   if (!db) {
     console.warn("Firebase is not initialized. Update operation skipped.");
     return;
   }
   const docRef = doc(db, listsCollection, listId);
+  const backupRef = doc(db, listsCollection, `backup-${listId}`);
   try {
-    const sanitizedData: Partial<ListData> = {};
-    if (data.pantry) sanitizedData.pantry = sanitizeProductArray(data.pantry);
-    if (data.shoppingList) sanitizedData.shoppingList = sanitizeProductArray(data.shoppingList);
-    if (data.history) sanitizedData.history = data.history;
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      await setDoc(backupRef, docSnap.data(), { merge: true });
+    }
 
-    await setDoc(docRef, sanitizedData, { merge: true });
+    const { forceClear, ...rest } = data;
+    const sanitizedData: Partial<ListData> = {};
+
+    if (rest.pantry !== undefined) {
+      const arr = sanitizeProductArray(rest.pantry);
+      if (arr.length > 0 || forceClear) {
+        sanitizedData.pantry = arr;
+      }
+    }
+
+    if (rest.shoppingList !== undefined) {
+      const arr = sanitizeProductArray(rest.shoppingList);
+      if (arr.length > 0 || forceClear) {
+        sanitizedData.shoppingList = arr;
+      }
+    }
+
+    if (rest.history !== undefined) {
+      sanitizedData.history = rest.history;
+    }
+
+    if (Object.keys(sanitizedData).length === 0) {
+      return;
+    }
+
+    if (docSnap.exists()) {
+      await updateDoc(docRef, sanitizedData);
+    } else if (
+      (sanitizedData.pantry && sanitizedData.pantry.length > 0) ||
+      (sanitizedData.shoppingList && sanitizedData.shoppingList.length > 0) ||
+      forceClear
+    ) {
+      await setDoc(docRef, sanitizedData, { merge: true });
+    } else {
+      console.warn("Attempted to create list with empty data; operation skipped.");
+    }
   } catch (error) {
     console.error("Error updating list:", error);
     throw error;
