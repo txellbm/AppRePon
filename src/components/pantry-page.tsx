@@ -404,7 +404,7 @@ export default function PantryPage({ listId }: { listId: string }) {
   const { pantry, shoppingList, history, isLoaded, hasPendingWrites, handleAddItem, handleBulkAdd, updateRemoteList, handleShoppingListAddItem } = useSharedList(listId, toast);
   
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [groupByCategory, setGroupByCategory] = useState(false);
+  const [groupByCategory, setGroupByCategory] = useState(true);
   const [sortConfig, setSortConfig] = useState<SortConfig>({ by: 'name', order: 'asc' });
   const [statusFilter, setStatusFilter] = useState<'all' | ProductStatus>('all');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
