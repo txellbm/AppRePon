@@ -55,6 +55,12 @@ Durante el desarrollo, la app se ejecuta en modo local (`npm run dev`) para prob
 
 Todos los usuarios acceden a la misma lista pública sin autenticación, y Firestore sincroniza las modificaciones en tiempo real. También funciona sin conexión gracias a la caché local.
 
+## ¿Funciona sin conexión?
+
+Sí. RePon funciona como PWA y utiliza la caché local de Firestore.
+Puedes añadir o modificar productos sin internet.
+Cuando se recupere la conexión, los cambios se sincronizan automáticamente con la lista compartida.
+
 ## Configuración de Firebase y Google Cloud
 - **Servicios de Firebase activos**: se utilizan *Firestore* y *Hosting* (App Hosting con región `us-central1`). Existe una función HTTP mínima (`disabledInitJson`) para desactivar la inicialización automática. Aunque la biblioteca de `auth` está incluida en el código, no se usa porque la lista es pública.
 - **Estructura y reglas de Firestore**: toda la información se guarda en la colección `lists`. La app consulta siempre el documento `nuestra-despensa-compartida`. Las reglas actuales permiten lectura y escritura a cualquiera:
