@@ -39,7 +39,9 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
     const docRef = doc(db, "lists", finalListId);
     let first = true;
 
-    const unsubscribe: Unsubscribe = onSnapshot(docRef,
+    const unsubscribe: Unsubscribe = onSnapshot(
+      docRef,
+      { includeMetadataChanges: true },
       (snap) => {
         setHasPendingWrites(snap.metadata.hasPendingWrites);
         if (snap.exists()) {

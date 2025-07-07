@@ -149,7 +149,10 @@ export function onListUpdate(listId: string, callback: (data: ListData) => void)
     return () => {};
   }
   const docRef = doc(db, listsCollection, listId);
-  const unsubscribe = onSnapshot(docRef, (docSnap) => {
+  const unsubscribe = onSnapshot(
+    docRef,
+    { includeMetadataChanges: true },
+    (docSnap) => {
     if (docSnap.exists()) {
       const data = docSnap.data();
       callback({
