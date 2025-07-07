@@ -604,6 +604,14 @@ export default function PantryPage({ listId }: { listId: string }) {
     }
   }, [groupByCategory, pantry, shoppingList]);
 
+  useEffect(() => {
+    if (activeTab === 'shopping-list' && groupByCategory) {
+      const categoriesSet = new Set<string>(['buy-later-section']);
+      shoppingList.forEach(p => categoriesSet.add(p.category || 'Otros'));
+      setOpenShoppingSections(Array.from(categoriesSet));
+    }
+  }, [activeTab, groupByCategory, shoppingList]);
+
 
   const handleUpdateStatus = async (id: string, status: ProductStatus) => {
     const product = pantry.find(p => p.id === id);
@@ -1061,31 +1069,60 @@ export default function PantryPage({ listId }: { listId: string }) {
                               </Tooltip>
                           </TooltipProvider>
                       </div>
-                      <div className="flex items-center">
+                      <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowSearch(!showSearch)} aria-label="Buscar productos">
                               <Search className="h-5 w-5" />
                           </Button>
-                          <Button
-                            variant={groupByCategory ? 'secondary' : 'ghost'}
-                            size="icon"
-                            className="h-9 w-9"
-                            onClick={() => setGroupByCategory((v) => !v)}
-                            aria-label="Agrupar por categorías"
-                          >
-                            <Tags className="h-5 w-5" />
-                          </Button>
                           <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-9 w-9">
-                                      <Settings className="h-5 w-5" />
-                                  </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                  <ViewAndSortOptions />
-                                  <DropdownMenuSeparator/>
-                                  <FilterOptions/>
-                              </DropdownMenuContent>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-9 w-9">
+                                    <Filter className="h-5 w-5" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                               <FilterOptions />
+                            </DropdownMenuContent>
                           </DropdownMenu>
+                          <TooltipProvider>
+                              <Tooltip>
+                                  <TooltipTrigger asChild>
+                                      <Button variant={sortConfig.by === 'name' ? 'secondary' : 'ghost'} size="icon" className="h-9 w-9" onClick={handleNameSortToggle} aria-label="Ordenar por nombre">
+                                          {sortConfig.order === 'desc' ? <ArrowUpAZ className="h-5 w-5" /> : <ArrowDownAZ className="h-5 w-5" />}
+                                      </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                      <p>Ordenar por Nombre ({sortConfig.order === 'asc' ? 'A-Z' : 'Z-A'})</p>
+                                  </TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                  <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setViewMode(v => v === 'list' ? 'grid' : 'list')} aria-label="Cambiar vista">
+                                          {viewMode === 'list' ? <LayoutGrid className="h-5 w-5" /> : <List className="h-5 w-5" />}
+                                      </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                      <p>{viewMode === 'list' ? 'Vista de Cuadrícula' : 'Vista de Lista'}</p>
+                                  </TooltipContent>
+                              </Tooltip>
+                          </TooltipProvider>
+                          <TooltipProvider>
+                              <Tooltip>
+                                  <TooltipTrigger asChild>
+                                      <Button
+                                        variant={groupByCategory ? 'secondary' : 'ghost'}
+                                        size="icon"
+                                        className="h-9 w-9"
+                                        onClick={() => setGroupByCategory((v) => !v)}
+                                        aria-label="Agrupar por categorías"
+                                      >
+                                        <Tags className="h-5 w-5" />
+                                      </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                      <p>Agrupar por Categorías</p>
+                                  </TooltipContent>
+                              </Tooltip>
+                          </TooltipProvider>
                       </div>
                   </div>
 
@@ -1441,6 +1478,10 @@ export default function PantryPage({ listId }: { listId: string }) {
             <DialogTitle>🟦 Leyenda de Colores</DialogTitle>
             <DialogDescription>
               🔄 Puedes tocar una tarjeta para actualizar su estado.
+              <br />
+              Si lo haces desde la lista de la compra se pondrá en verde y volverá a la despensa automáticamente.
+              <br />
+              También puedes elegir guardar para otro día sin moverlo todavía.
               <br />
               <br />
               El color de fondo de cada tarjeta indica el estado del producto:
