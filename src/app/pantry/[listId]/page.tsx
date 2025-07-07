@@ -7,6 +7,6 @@ export default async function Page({
 }: {
   params: { listId: string };
 }) {
-  const { listId } = await params;
+  const { listId } = params;
   return <PantryPage listId={listId} />;
 }
