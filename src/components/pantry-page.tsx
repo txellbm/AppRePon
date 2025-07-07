@@ -222,21 +222,20 @@ function ProductCard({
       exit={{ opacity: 0, x: isExiting ? 100 : 50, transition: { duration: 0.3 } }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
-        "rounded-md transition-all duration-300 hover:brightness-110 shadow-md mb-2 p-3",
+        "rounded-md transition-all duration-300 hover:brightness-110 shadow-md mb-2",
         isListView
-          ? "flex items-center justify-between"
-          : "flex flex-col gap-2",
+          ? "p-3 flex items-center justify-between"
+          : "p-2 flex flex-col items-center justify-center text-center min-h-[6rem]",
         statusStyles,
         "cursor-pointer transition-colors transition-color",
         isPulsing && "pulse bg-amarillo-mostaza"
       )}
       onClick={handleCycleStatus}
     >
-      <div className={cn("flex items-center flex-grow gap-3", isListView ? '' : 'flex-col gap-2')}>
-        <h3 className={cn("font-semibold", isListView ? '' : 'text-center')}>{product.name}</h3>
-      </div>
-      
-       <div className={cn("shrink-0", isListView ? "flex items-center gap-1" : "flex flex-wrap justify-center gap-1 mt-2")}>
+      <h3 className={cn("font-semibold", isListView ? '' : 'line-clamp-2')}>{product.name}</h3>
+
+      {isListView && (
+        <div className="shrink-0 flex items-center gap-1">
         {product.status === 'low' && (
           product.isPendingPurchase ? (
             <div className="flex items-center justify-center text-xs h-8 px-2 rounded-md bg-[#5D6D7E] text-white border border-[#5D6D7E] font-medium">
@@ -297,6 +296,7 @@ function ProductCard({
             </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      )}
     </motion.div>
   );
 }
@@ -342,16 +342,20 @@ function ShoppingItemCard({
       exit={{ opacity: 0, x: isSliding ? -100 : -50, transition: { duration: 0.3 } }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
-        "rounded-md transition-all duration-300 hover:brightness-110 shadow-md mb-2 p-3",
-        isListView ? "flex items-center justify-between" : "flex flex-col gap-2",
+        "rounded-md transition-all duration-300 hover:brightness-110 shadow-md mb-2",
+        isListView
+          ? "p-3 flex items-center justify-between"
+          : "p-2 flex flex-col items-center justify-center text-center min-h-[6rem]",
         statusStyles,
         "transition-colors transition-color",
         isChecking && "bg-verde-eucalipto opacity-80"
       )}
       onClick={() => onCardClick(item.id)}
     >
-      <h3 className={cn("font-semibold flex-grow", isListView ? '' : 'text-center')}>{item.name}</h3>
-      <div className={cn("shrink-0", isListView ? "flex items-center gap-1" : "flex justify-center gap-2 mt-2")}>
+      <h3 className={cn("font-semibold", isListView ? '' : 'line-clamp-2')}>{item.name}</h3>
+
+      {isListView && (
+      <div className="shrink-0 flex items-center gap-1">
         <TooltipProvider>
              <Tooltip>
                 <TooltipTrigger asChild>
@@ -393,6 +397,7 @@ function ShoppingItemCard({
             </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      )}
     </motion.div>
   );
 }
@@ -1192,7 +1197,7 @@ export default function PantryPage({ listId }: { listId: string }) {
               {pantry.length > 0 ? (
                 filteredPantry.length > 0 ? (
                   !groupByCategory ? (
-                    <div className={cn("gap-2", viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
+                    <div className={cn("gap-2", viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" : "flex flex-col")}>
                       <AnimatePresence>
                         {filteredPantry.map(product => (
                           <ProductCard
@@ -1220,7 +1225,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                   <div className="flex items-center gap-2">{categoryIcons[category as Category]} {category}</div>
                               </AccordionTrigger>
                               <AccordionContent>
-                                  <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
+                                  <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" : "flex flex-col")}>
                                   <AnimatePresence>
                                       {(groupedPantry?.[category] || []).map((product) => (
                                       <ProductCard
@@ -1276,7 +1281,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                         <div className="mt-6">
                         <h2 className="mb-4 text-lg font-semibold tracking-tight">Para comprar ahora ({shoppingListNow.length})</h2>
                         {!groupByCategory ? (
-                            <div className={cn("gap-2", viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
+                            <div className={cn("gap-2", viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" : "flex flex-col")}>
                             <AnimatePresence>
                                 {shoppingListNow.map(item => (
                                 <ShoppingItemCard
@@ -1304,7 +1309,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                         <div className="flex items-center gap-2">{categoryIcons[category as Category]} {category}</div>
                                     </AccordionTrigger>
                                     <AccordionContent>
-                                        <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
+                                        <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" : "flex flex-col")}>
                                         <AnimatePresence>
                                             {(groupedShoppingListNow?.[category] || []).map((item) => (
                                                 <ShoppingItemCard
@@ -1340,7 +1345,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                     </AccordionTrigger>
                                     <AccordionContent className="pt-4">
                                         {!groupByCategory ? (
-                                            <div className={cn("gap-2", viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
+                                            <div className={cn("gap-2", viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" : "flex flex-col")}>
                                             <AnimatePresence>
                                                 {shoppingListLater.map(item => (
                                                     <ShoppingItemCard
@@ -1365,7 +1370,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                                         <div className="flex items-center gap-2">{categoryIcons[category as Category]} {category}</div>
                                                     </AccordionTrigger>
                                                     <AccordionContent>
-                                                        <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col")}>
+                                                        <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" : "flex flex-col")}>
                                                         <AnimatePresence>
                                                             {(groupedShoppingListLater?.[category] || []).map((item) => (
                                                                 <ShoppingItemCard
