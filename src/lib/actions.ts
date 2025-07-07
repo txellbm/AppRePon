@@ -21,6 +21,8 @@ import {
   type CorrectProductNameInput,
   type CorrectProductNameOutput,
 } from "@/ai/flows/correct-product-name";
+import { COMMON_PRODUCTS } from "@/data/common-products";
+import { levenshtein } from "@/lib/levenshtein";
 import {
   identifyProductsFromPhoto,
   type IdentifyProductsFromPhotoInput,
@@ -94,7 +96,18 @@ export async function correctProductNameAction(
   const correctedName =
     input.productName.charAt(0).toUpperCase() +
     input.productName.slice(1).toLowerCase();
-  const fallback = { correctedName };
+  let fallback = { correctedName };
+
+  const bestMatch = COMMON_PRODUCTS.reduce<{name: string; dist: number}>(
+    (acc, candidate) => {
+      const d = levenshtein(candidate.toLowerCase(), input.productName.toLowerCase());
+      return d < acc.dist ? { name: candidate, dist: d } : acc;
+    },
+    { name: correctedName, dist: Infinity }
+  );
+  if (bestMatch.dist <= 2) {
+    fallback = { correctedName: bestMatch.name };
+  }
   return runWithAIFallback(correctProductName, input, fallback, 'correctProductName');
 }
 

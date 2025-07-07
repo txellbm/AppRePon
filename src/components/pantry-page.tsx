@@ -103,7 +103,14 @@ type SortConfig = {
   order: 'asc' | 'desc';
 }
 
-function AddItemForm({ onAddItem, history, pantry, shoppingList, activeTab }: { onAddItem: (name: string) => void, history: string[], pantry: Product[], shoppingList: Product[], activeTab: string }) {
+function AddItemForm({ onAddItem, history, pantry, shoppingList, activeTab, onDeleteHistoryItem }: {
+onAddItem: (name: string) => void,
+history: string[],
+pantry: Product[],
+shoppingList: Product[],
+activeTab: string,
+onDeleteHistoryItem: (name: string) => void
+}) {
   const [itemName, setItemName] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -160,9 +167,22 @@ function AddItemForm({ onAddItem, history, pantry, shoppingList, activeTab }: { 
           {suggestions.length > 0 && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="absolute z-10 w-full bg-background border rounded-md shadow-lg mt-1 p-2 flex flex-col gap-1">
               {suggestions.map((suggestion, index) => (
-                <button type="button" key={`suggestion-${suggestion}-${index}`} onClick={() => handleSuggestionClick(suggestion)} className="text-left p-2 rounded hover:bg-accent w-full">
-                  {suggestion}
-                </button>
+                <div key={`suggestion-${suggestion}-${index}`} className="flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className="text-left flex-grow p-2 rounded hover:bg-accent"
+                  >
+                    {suggestion}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDeleteHistoryItem(suggestion)}
+                    className="p-2 text-destructive hover:bg-destructive/20 rounded"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
               ))}
             </motion.div>
           )}
@@ -688,19 +708,30 @@ export default function PantryPage({ listId }: { listId: string }) {
     }
   };
 
-  const handleDelete = (id: string) => {
-    const itemInShoppingList = shoppingList.find(p => p.id === id);
-    
-    let newPantry = pantry.filter(p => p.id !== id);
-    let newShoppingList = shoppingList.filter(p => p.id !== id);
+  const handleDeleteHistoryItem = (name: string) => {
+    const newHistory = history.filter(
+      (h) => h.toLowerCase() !== name.toLowerCase(),
+    );
+    updateRemoteList({ history: newHistory });
+  };
 
-    if (itemInShoppingList && itemInShoppingList.reason === 'low') {
-        newPantry = newPantry.map(p => p.name.toLowerCase() === itemInShoppingList.name.toLowerCase() ? {...p, isPendingPurchase: false } : p);
+  const handleDelete = (id: string) => {
+    const itemInShoppingList = shoppingList.find((p) => p.id === id);
+
+    let newPantry = pantry.filter((p) => p.id !== id);
+    let newShoppingList = shoppingList.filter((p) => p.id !== id);
+
+    if (itemInShoppingList && itemInShoppingList.reason === "low") {
+      newPantry = newPantry.map((p) =>
+        p.name.toLowerCase() === itemInShoppingList.name.toLowerCase()
+          ? { ...p, isPendingPurchase: false }
+          : p,
+      );
     }
-    
+
     updateRemoteList({
-        pantry: newPantry,
-        shoppingList: newShoppingList,
+      pantry: newPantry,
+      shoppingList: newShoppingList,
     });
 
     toast({ title: "¡Adiós, producto!" });
@@ -1226,6 +1257,7 @@ export default function PantryPage({ listId }: { listId: string }) {
               pantry={pantry}
               shoppingList={shoppingList}
               activeTab={activeTab}
+              onDeleteHistoryItem={handleDeleteHistoryItem}
             />
           </div>
           
