@@ -31,6 +31,7 @@ RePon es una aplicación web pensada para ayudarte a organizar la despensa y la 
 ## Funciones de IA
 - **Corrección ortográfica** y capitalización de los nombres introducidos.
 - **Sugerencia automática de categoría** para cada nuevo producto.
+- **Aprendizaje de categorías**: si cambias la categoría manualmente, la app la recordará para futuras ocasiones.
 - **Identificación de productos en una foto** para añadirlos en bloque.
 - **Generación de mensajes gramaticales** y notificaciones.
 - **Creación de recetas** basadas en lo que está disponible en la despensa.

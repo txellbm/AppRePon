@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { generateRecipeAction, generateGrammaticalMessageAction, correctProductNameAction } from "@/lib/actions";
+import { generateRecipeAction, generateGrammaticalMessageAction, correctProductNameAction, improveCategorizationAction } from "@/lib/actions";
 import { type Product, type Category, type ProductStatus, type ViewMode, type GenerateRecipeOutput } from "@/lib/types";
 import { useReponToast } from "@/hooks/use-repon-toast";
 import { useSharedList } from "@/hooks/use-shared-list";
@@ -406,7 +406,7 @@ export default function PantryPage({ listId }: { listId: string }) {
   var a,s;
   const [activeTab, setActiveTab] = useState<"pantry" | "shopping-list">("pantry");
   const { toast } = useReponToast();
-  const { pantry, shoppingList, history, isLoaded, hasPendingWrites, handleAddItem, handleBulkAdd, updateRemoteList, handleShoppingListAddItem } = useSharedList(listId, toast);
+  const { pantry, shoppingList, history, categoryOverrides, isLoaded, hasPendingWrites, handleAddItem, handleBulkAdd, updateRemoteList, handleShoppingListAddItem } = useSharedList(listId, toast);
   
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [groupByCategory, setGroupByCategory] = useState(true);
@@ -489,10 +489,17 @@ export default function PantryPage({ listId }: { listId: string }) {
 
         const newHistory = [...new Set([...history.filter(h => h.toLowerCase() !== oldName.toLowerCase()), correctedName])];
         
+        let newOverrides = { ...categoryOverrides };
+        const oldKey = oldName.toLowerCase();
+        if (newOverrides[oldKey]) {
+            newOverrides[correctedName.toLowerCase()] = newOverrides[oldKey];
+            delete newOverrides[oldKey];
+        }
         updateRemoteList({
             pantry: newPantry,
             shoppingList: newShoppingList,
             history: newHistory,
+            categoryOverrides: newOverrides,
         });
 
         toastie.update({
@@ -683,7 +690,14 @@ export default function PantryPage({ listId }: { listId: string }) {
     }
 
     if (productName) {
-        updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
+        const key = productName.toLowerCase();
+        const newOverrides = { ...categoryOverrides, [key]: newCategory };
+        updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList, categoryOverrides: newOverrides });
+        try {
+            await improveCategorizationAction({ productName, userSelectedCategory: newCategory });
+        } catch (e) {
+            console.warn('Failed to improve categorization', e);
+        }
         toast({ title: '¡Categoría cambiada!', description: `"${productName}" ahora está en "${newCategory}".` });
     }
   };

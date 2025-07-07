@@ -26,7 +26,7 @@ const DEFAULT_LIST_ID = "nuestra-despensa-compartida";
 
 export function useSharedList(listId: string | null, toast: ToastFn) {
   const finalListId = listId ?? DEFAULT_LIST_ID;
-  const [listData, setListData] = useState<ListData>({ pantry: [], shoppingList: [], history: [] });
+  const [listData, setListData] = useState<ListData>({ pantry: [], shoppingList: [], history: [], categoryOverrides: {} });
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasPendingWrites, setHasPendingWrites] = useState(false);
 
@@ -50,6 +50,7 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
             pantry: sanitizeProductArray(data.pantry),
             shoppingList: sanitizeProductArray(data.shoppingList),
             history: Array.isArray(data.history) ? data.history : [],
+            categoryOverrides: typeof data.categoryOverrides === 'object' ? data.categoryOverrides : {},
           });
         }
         if (first) {
@@ -124,7 +125,11 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
 
       const newProductsFromScratch = await Promise.all(
         namesToCreate.map(async (name) => {
-          const { category } = await categorizeProductAction({ productName: name });
+          const lower = name.toLowerCase();
+          const overrideCat = listData.categoryOverrides[lower];
+          const { category } = overrideCat
+            ? { category: overrideCat }
+            : await categorizeProductAction({ productName: name });
           return {
             id: uuidv4(),
             name,
@@ -201,7 +206,11 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
 
       const newProducts = await Promise.all(
         productsToCreate.map(async (product) => {
-          const { category } = await categorizeProductAction({ productName: product.name });
+          const lower = product.name.toLowerCase();
+          const overrideCat = listData.categoryOverrides[lower];
+          const { category } = overrideCat
+            ? { category: overrideCat }
+            : await categorizeProductAction({ productName: product.name });
           return {
             id: uuidv4(),
             name: product.name,

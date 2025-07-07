@@ -12,6 +12,11 @@ import {
   type RefineCategoryOutput,
 } from "@/ai/flows/refine-category";
 import {
+  improveCategorization,
+  type ImproveCategorizationInput,
+  type ImproveCategorizationOutput,
+} from "@/ai/flows/improve-categorization";
+import {
   handleVoiceCommand,
   type VoiceCommandInput,
   type VoiceCommandOutput,
@@ -76,6 +81,13 @@ export async function refineCategoryAction(
 ): Promise<RefineCategoryOutput> {
   const fallback = { refinedCategory: input.userOverrideCategory };
   return runWithAIFallback(refineCategory, input, fallback, 'refineCategory');
+}
+
+export async function improveCategorizationAction(
+  input: ImproveCategorizationInput
+): Promise<ImproveCategorizationOutput> {
+  const fallback = { success: true, message: '' };
+  return runWithAIFallback(improveCategorization, input, fallback, 'improveCategorization');
 }
 
 export async function handleVoiceCommandAction(
