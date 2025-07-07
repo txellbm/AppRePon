@@ -541,31 +541,12 @@ export default function PantryPage({ listId }: { listId: string }) {
   }, [listId]);
 
   useEffect(() => {
-    try {
-      const savedViewMode = localStorage.getItem('repon-viewMode') as ViewMode | null;
-      if (savedViewMode && ['list', 'grid'].includes(savedViewMode)) {
-        setViewMode(savedViewMode);
-      }
-    } catch (error) {
-        console.warn("Could not access localStorage for viewMode");
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-        localStorage.setItem('repon-viewMode', viewMode);
-    } catch (error) {
-        console.warn("Could not access localStorage for viewMode");
-    }
-  }, [viewMode]);
-
-  const hasOpenedShopping = useRef(false);
-
-  useEffect(() => {
-    if (activeTab === 'shopping-list' && !hasOpenedShopping.current) {
+    if (activeTab === 'pantry') {
+      setViewMode('list');
+      setGroupByCategory(true);
+    } else {
       setViewMode('list');
       setGroupByCategory(false);
-      hasOpenedShopping.current = true;
     }
   }, [activeTab]);
 
@@ -973,13 +954,6 @@ export default function PantryPage({ listId }: { listId: string }) {
           {viewMode === 'list' ? <LayoutGrid className="mr-2" /> : <List className="mr-2" />}
           <span>{viewMode === 'list' ? 'Vista de Cuadrícula' : 'Vista de Lista'}</span>
       </DropdownMenuItem>
-      <DropdownMenuSeparator />
-      <div className="relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-2 text-sm outline-none">
-          <Label htmlFor="group-by-category-mobile" className="flex items-center gap-2 flex-grow pr-2">
-            <Tags className="h-4 w-4" /> <span>Agrupar</span>
-          </Label>
-          <Switch id="group-by-category-mobile" checked={groupByCategory} onCheckedChange={setGroupByCategory} />
-      </div>
     </>
   );
 
@@ -1086,6 +1060,15 @@ export default function PantryPage({ listId }: { listId: string }) {
                           <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowSearch(!showSearch)} aria-label="Buscar productos">
                               <Search className="h-5 w-5" />
                           </Button>
+                          <Button
+                            variant={groupByCategory ? 'secondary' : 'ghost'}
+                            size="icon"
+                            className="h-9 w-9"
+                            onClick={() => setGroupByCategory((v) => !v)}
+                            aria-label="Agrupar por categorías"
+                          >
+                            <Tags className="h-5 w-5" />
+                          </Button>
                           <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="icon" className="h-9 w-9">
@@ -1137,18 +1120,24 @@ export default function PantryPage({ listId }: { listId: string }) {
                           </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
-                     <Label
-                      htmlFor="group-by-category"
-                      className={cn(
-                        "flex cursor-pointer items-center gap-2 rounded-md px-3 h-9 text-sm font-medium ring-offset-background transition-colors",
-                        groupByCategory ?
-                          "bg-accent text-accent-foreground shadow-sm" :
-                          "border border-white/30 bg-secondary/50 text-foreground hover:bg-accent hover:text-accent-foreground"
-                      )}
-                    >
-                      <span>Agrupar</span>
-                      <Switch id="group-by-category" checked={groupByCategory} onCheckedChange={setGroupByCategory} />
-                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant={groupByCategory ? 'secondary' : 'ghost'}
+                            size="icon"
+                            className="h-9 w-9"
+                            onClick={() => setGroupByCategory((v) => !v)}
+                            aria-label="Agrupar por categorías"
+                          >
+                            <Tags className="h-5 w-5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Agrupar por Categorías</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     
                     <Separator orientation="vertical" className="h-6 mx-1" />
 
