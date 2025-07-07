@@ -39,17 +39,21 @@ RePon es una aplicación web pensada para ayudarte a organizar la despensa y la 
 - **Next.js** 15 con App Router
 - **TypeScript**
 - **React** y **shadcn/ui**
-- **Tailwind CSS**
+- **Tailwind CSS** para el diseño y estilos
 - **Firestore** como base de datos
 - **Google AI & Genkit** para las funciones inteligentes
 - **Firebase Hosting** para el despliegue
 
-## Despliegue y entorno
-La aplicación se pensó para ejecutarse siempre online, desde **Firebase Hosting**. El modo local (`npm run dev`) no está mantenido y puede dar errores. Cuando quieras actualizar el código:
+## 🧪 Despliegue y entorno
+
+Durante el desarrollo, la app se ejecuta en modo local (`npm run dev`) para probar los cambios al instante. Una vez validado todo en `localhost`, se despliega la nueva versión mediante Firebase Hosting.
+
+### Pasos para desplegar:
 1. Haz `git commit` y `git push` con tus cambios.
-2. Ejecuta `firebase deploy --only hosting` para publicar una nueva versión.
-3. Vuelve a abrir la app en el navegador o en el móvil. Si la tienes instalada como PWA, puede que debas cerrarla y volverla a abrir para que se actualice.
-Todos los usuarios acceden a la misma lista pública sin autenticación, y Firestore sincroniza las modificaciones en tiempo real (también funciona sin conexión gracias a la caché local).
+2. Ejecuta `firebase deploy --only hosting` para publicar la nueva versión.
+3. Cierra y vuelve a abrir la app, ya sea en el navegador o como PWA, para cargar la versión actualizada.
+
+Todos los usuarios acceden a la misma lista pública sin autenticación, y Firestore sincroniza las modificaciones en tiempo real. También funciona sin conexión gracias a la caché local.
 
 ## Configuración de Firebase y Google Cloud
 - **Servicios de Firebase activos**: se utilizan *Firestore* y *Hosting* (App Hosting con región `us-central1`). Existe una función HTTP mínima (`disabledInitJson`) para desactivar la inicialización automática. Aunque la biblioteca de `auth` está incluida en el código, no se usa porque la lista es pública.
@@ -63,6 +67,18 @@ Todos los usuarios acceden a la misma lista pública sin autenticación, y Fires
 - **APIs de Google Cloud**: están habilitadas *Vertex AI* (para los modelos generativos usados mediante Genkit) y *Cloud Text-to-Speech*. Los flujos de IA se ejecutan en el backend de Next.js.
 - **Variables de entorno**: `NEXT_PUBLIC_FIREBASE_API_KEY` y `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` configuran la app de Firebase. `GOOGLE_API_KEY` puede usarse como alternativa para las funciones de IA. Estas variables se definen en `firebase.env.json` o en la configuración de App Hosting.
 - **Dependencias relevantes**: `firebase`, `firebase-functions`, `genkit` y `@genkit-ai/googleai` para la integración con los servicios de Google.
+
+## 🛡️ Copias de seguridad automáticas
+- Antes de sobrescribir la despensa, se guarda automáticamente una copia en `backup-{listId}`.
+- Estas copias se actualizan en cada escritura y no se van acumulando.
+- La eliminación completa de la despensa solo es posible llamando a `clearPantry(forceClear: true)`.
+- Actualmente no existe un botón de restauración en la interfaz. Si se necesita recuperar una copia, debe hacerse manualmente desde Firestore.
+
+## 🧪 Flujo de trabajo de desarrollo
+- **Codex** actualiza el repositorio con nuevas funcionalidades, mejoras de seguridad, lógica o cambios en el README.
+- **Yo** hago `merge` y actualizo mi carpeta local desde GitHub.
+- Pruebo los cambios en `localhost`.
+- Si todo funciona correctamente, ejecuto `firebase deploy` desde mi máquina.
 
 ## Créditos
 Proyecto mantenido por un pequeño equipo humano con ayuda de la IA.
