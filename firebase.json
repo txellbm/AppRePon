@@ -8,10 +8,6 @@
       {
         "source": "/__/firebase/init.json",
         "function": "disabledInitJson"
-      },
-      {
-        "source": "**",
-        "destination": "/index.html"
       }
     ]
   },
