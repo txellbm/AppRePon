@@ -1,12 +1,13 @@
 import { doc, getDoc, setDoc, updateDoc, onSnapshot, type Unsubscribe } from "firebase/firestore";
 import { db } from "@/lib/firebase-config";
-import type { Product } from "@/lib/types";
+import type { Product, Category } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 
 export interface ListData {
   pantry: Product[];
   shoppingList: Product[];
   history: string[];
+  categoryOverrides: Record<string, Category>;
 }
 
 const listsCollection = "lists";
@@ -15,6 +16,7 @@ const emptyList: ListData = {
   pantry: [],
   shoppingList: [],
   history: [],
+  categoryOverrides: {},
 };
 
 export const sanitizeProductArray = (products: any): Product[] => {
@@ -74,6 +76,7 @@ export async function getOrCreateList(listId: string): Promise<ListData> {
         pantry: sanitizeProductArray(data.pantry),
         shoppingList: sanitizeProductArray(data.shoppingList),
         history: Array.isArray(data.history) ? data.history : [],
+        categoryOverrides: typeof data.categoryOverrides === 'object' ? data.categoryOverrides : {},
       };
     } else {
       // Do not create the document automatically when empty
@@ -122,6 +125,10 @@ export async function updateList(
       sanitizedData.history = rest.history;
     }
 
+    if (rest.categoryOverrides !== undefined) {
+      sanitizedData.categoryOverrides = rest.categoryOverrides;
+    }
+
     if (Object.keys(sanitizedData).length === 0) {
       return;
     }
@@ -159,6 +166,7 @@ export function onListUpdate(listId: string, callback: (data: ListData) => void)
         pantry: sanitizeProductArray(data.pantry),
         shoppingList: sanitizeProductArray(data.shoppingList),
         history: Array.isArray(data.history) ? data.history : [],
+        categoryOverrides: typeof data.categoryOverrides === 'object' ? data.categoryOverrides : {},
       });
     } else {
       callback({ ...emptyList });

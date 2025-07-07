@@ -10,6 +10,8 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getApps, initializeApp, applicationDefault } from 'firebase-admin/app';
 
 const ImproveCategorizationInputSchema = z.object({
   productName: z.string().describe('The name of the product.'),
@@ -34,15 +36,23 @@ const improveCategorizationFlow = ai.defineFlow(
     outputSchema: ImproveCategorizationOutputSchema,
   },
   async input => {
-    // TODO: Implement logic to store the user-selected category for the product
-    // and use this data to improve future categorizations.
-    // This could involve updating a database, calling an external API,
-    // or using the data to fine-tune a machine learning model.
-
-    // For now, we'll just return a success message.
-    return {
-      success: true,
-      message: `Categorization for ${input.productName} updated to ${input.userSelectedCategory}.`,
-    };
+    if (getApps().length === 0) {
+      initializeApp({ credential: applicationDefault() });
+    }
+    const db = getFirestore();
+    try {
+      const docRef = db.collection('lists').doc('nuestra-despensa-compartida');
+      const snap = await docRef.get();
+      const data = snap.exists ? snap.data() || {} : {};
+      const overrides = typeof data.categoryOverrides === 'object' ? data.categoryOverrides : {};
+      overrides[input.productName.toLowerCase()] = input.userSelectedCategory;
+      await docRef.set({ categoryOverrides: overrides }, { merge: true });
+      return {
+        success: true,
+        message: `Categorization for ${input.productName} updated to ${input.userSelectedCategory}.`,
+      };
+    } catch (e) {
+      return { success: false, message: String(e) };
+    }
   }
 );
