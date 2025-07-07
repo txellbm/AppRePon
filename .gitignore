@@ -8,3 +8,4 @@ dist/
 *.log
 out/
 .firebase/
+tsconfig.tsbuildinfo
