@@ -5,8 +5,9 @@ import { getFirestore, enableIndexedDbPersistence, type Firestore } from 'fireba
 // Hardcoded configuration to ensure availability in all environments.
 // These are client-safe variables.
 export const firebaseConfig = {
-  apiKey: "AIzaSyA66O2Gjf2lyUqh6lx1cUK-GAzwNJ-VU1g",
-  authDomain: "apprepon.firebaseapp.com",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain:
+    process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "apprepon.web.app",
   projectId: "apprepon",
   storageBucket: "apprepon.appspot.com",
   messagingSenderId: "165040282600",
@@ -47,3 +48,7 @@ if (typeof window !== 'undefined' && !(window as any).__firebase_persistence_ena
 }
 
 export { db, auth };
+
+if (typeof window !== 'undefined') {
+  (window as any).__FIREBASE_APP__ = app;
+}
