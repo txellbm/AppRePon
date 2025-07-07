@@ -225,7 +225,7 @@ function ProductCard({
         "rounded-md transition-all duration-300 hover:brightness-110 shadow-md mb-2",
         isListView
           ? "p-3 flex items-center justify-between"
-          : "p-2 flex flex-col items-center justify-center text-center min-h-[6rem]",
+          : "relative p-2 flex flex-col items-center justify-center text-center min-h-[6rem]",
         statusStyles,
         "cursor-pointer transition-colors transition-color",
         isPulsing && "pulse bg-amarillo-mostaza"
@@ -234,7 +234,7 @@ function ProductCard({
     >
       <h3 className={cn("font-semibold", isListView ? '' : 'line-clamp-2')}>{product.name}</h3>
 
-      {isListView && (
+      {isListView ? (
         <div className="shrink-0 flex items-center gap-1">
         {product.status === 'low' && (
           product.isPendingPurchase ? (
@@ -296,6 +296,42 @@ function ProductCard({
             </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      ) : (
+        <div className="absolute top-1 right-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="end">
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(product); }}>
+                <Pencil className="mr-2 h-4 w-4" />
+                <span>Editar Nombre</span>
+              </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Tags className="mr-2 h-4 w-4" />
+                  <span>Cambiar Categoría</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuRadioGroup value={product.category} onValueChange={(newCategory) => onUpdateCategory(product.id, newCategory as Category)}>
+                      {categories.map((cat) => (
+                        <DropdownMenuRadioItem key={cat} value={cat}>{cat}</DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-[#FF4C4C] hover:bg-[#2C0000] hover:text-white focus:bg-[#2C0000] focus:text-white" onClick={(e) => { e.stopPropagation(); onDelete(product.id); }}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                <span>Eliminar</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       )}
     </motion.div>
   );
@@ -354,7 +390,7 @@ function ShoppingItemCard({
     >
       <h3 className={cn("font-semibold", isListView ? '' : 'line-clamp-2')}>{item.name}</h3>
 
-      {isListView && (
+      {isListView ? (
       <div className="shrink-0 flex items-center gap-1">
         <TooltipProvider>
              <Tooltip>
@@ -397,6 +433,33 @@ function ShoppingItemCard({
             </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      ) : (
+        <div className="absolute top-1 right-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="end">
+              <DropdownMenuItem onClick={() => onEdit(item)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                <span>Editar Nombre</span>
+              </DropdownMenuItem>
+              {item.status === 'low' && (
+                <DropdownMenuItem onClick={() => onReturnToPantry(item.id)}>
+                  <Undo2 className="mr-2 h-4 w-4" />
+                  <span>Devolver a despensa</span>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-[#FF4C4C] hover:bg-[#2C0000] hover:text-white focus:bg-[#2C0000] focus:text-white" onClick={() => onDelete(item.id)}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                <span>Eliminar</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       )}
     </motion.div>
   );
