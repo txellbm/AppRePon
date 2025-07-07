@@ -95,20 +95,13 @@ Selecciona:
 - **Hosting:** para desplegar
 - **Functions:** si quieres desplegar también IA en cloud (opcional)
 
-4. **Genera la versión estática:**
-
-```bash
-npm run build
-```
-
-Esto creará la carpeta `out/` y copiará su contenido a `.firebase/apprepon/hosting/`.
-
-5. **Lanza el despliegue:**
+4. **Lanza el despliegue:**
 
 ```bash
 firebase deploy --only hosting
 ```
 
+Firebase CLI ejecutará el build de Next.js automáticamente, por lo que no necesitas crear la carpeta `out/` ni copiar archivos manualmente.
 La aplicación quedará disponible en tu dominio Firebase o personalizado si lo configuras.
 
 ---
