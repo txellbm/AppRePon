@@ -1438,9 +1438,12 @@ export default function PantryPage({ listId }: { listId: string }) {
        <Dialog open={showLegendDialog} onOpenChange={setShowLegendDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Leyenda de Colores</DialogTitle>
+            <DialogTitle>🟦 Leyenda de Colores</DialogTitle>
             <DialogDescription>
-              Los colores del borde de cada producto te ayudan a conocer su estado de un vistazo.
+              🔄 Puedes tocar una tarjeta para actualizar su estado.
+              <br />
+              <br />
+              El color de fondo de cada tarjeta indica el estado del producto:
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -1450,11 +1453,11 @@ export default function PantryPage({ listId }: { listId: string }) {
               </div>
               <div className="flex items-center gap-4">
                 <div className="h-4 w-4 rounded-full bg-amarillo-mostaza shrink-0 border"/>
-                <p className="text-sm"><b>Ámbar:</b> Queda poca cantidad del producto.</p>
+                <p className="text-sm"><b>Ámbar:</b> Queda poca cantidad. Puedes tocar el carrito 🛒 para añadirlo manualmente a la lista de la compra.</p>
               </div>
               <div className="flex items-center gap-4">
                 <div className="h-4 w-4 rounded-full bg-rojo-coral shrink-0 border"/>
-                <p className="text-sm"><b>Rojo:</b> Producto agotado o que necesitas comprar.</p>
+                <p className="text-sm"><b>Rojo:</b> Producto agotado. Se añade automáticamente a tu lista de la compra.</p>
               </div>
           </div>
           <DialogFooter>
