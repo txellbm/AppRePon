@@ -9,10 +9,6 @@ import { useSharedList } from "@/hooks/use-shared-list";
 import { IdentifyProductsDialog } from "@/components/identify-products-dialog";
 import { ShareDialog } from "@/components/share-dialog";
 import Image from "next/image";
-import { useAuth } from "@/providers/auth-provider";
-import { useRouter } from 'next/navigation';
-import { signOut } from '@/services/auth-service';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 
 import { Button } from "@/components/ui/button";
@@ -46,7 +42,6 @@ import {
   HelpCircle,
   Settings,
   Filter,
-  LogOut,
   History,
   MoveUp,
   MoreVertical,
@@ -54,7 +49,6 @@ import {
   Package,
   Pencil,
   Cloudy,
-  User,
   Copy,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -405,8 +399,6 @@ function ShoppingItemCard({
 
 export default function PantryPage({ listId }: { listId: string }) {
   var a,s;
-  const { user, loading: authLoading } = useAuth();
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"pantry" | "shopping-list">("pantry");
   const { toast } = useReponToast();
   const { pantry, shoppingList, history, isLoaded, hasPendingWrites, handleAddItem, handleBulkAdd, updateRemoteList, handleShoppingListAddItem } = useSharedList(listId, toast);
@@ -529,11 +521,6 @@ export default function PantryPage({ listId }: { listId: string }) {
     ],
   };
   
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.replace('/');
-    }
-  }, [user, authLoading, router]);
 
   useEffect(() => {
     const validFiltersForTab = filterOptions[activeTab]?.map(f => f.value) || [];
@@ -631,16 +618,6 @@ export default function PantryPage({ listId }: { listId: string }) {
     }
   }, [groupByCategory, pantry, shoppingList]);
 
-  const handleSignOut = async () => {
-    try {
-      localStorage.removeItem('repon-dev-mode');
-    } catch(e) {
-      console.warn("Could not remove dev mode flag from localStorage.");
-    }
-    
-    await signOut();
-    window.location.href = '/';
-  };
 
   const handleUpdateStatus = async (id: string, status: ProductStatus) => {
     const product = pantry.find(p => p.id === id);
@@ -972,7 +949,7 @@ export default function PantryPage({ listId }: { listId: string }) {
   const currentAddItemHandler = activeTab === 'pantry' ? handleAddItem : handleShoppingListAddItem;
   const currentFilterOptions = filterOptions[activeTab] || filterOptions.pantry;
 
-  if (authLoading || !isLoaded || !user) {
+  if (!isLoaded) {
     return (
         <div className="flex min-h-screen w-full items-center justify-center bg-background">
             <div className="flex flex-col items-center gap-4 text-center">
@@ -1079,37 +1056,6 @@ export default function PantryPage({ listId }: { listId: string }) {
                       </Tooltip>
                   </TooltipProvider>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                        <Avatar className="h-9 w-9">
-                           <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'Avatar'} />
-                            <AvatarFallback>
-                                {user.isAnonymous ? <User className="h-5 w-5" /> : (user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || '?')}
-                           </AvatarFallback>
-                        </Avatar>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56" align="end" forceMount>
-                      <DropdownMenuLabel className="font-normal">
-                        <div className="flex flex-col space-y-1">
-                           <p className="text-sm font-medium leading-none">
-                             {user.isAnonymous ? 'Sesión de Invitado' : user.displayName}
-                           </p>
-                           {user.email && (
-                            <p className="text-xs leading-none text-muted-foreground">
-                              {user.email}
-                            </p>
-                           )}
-                        </div>
-                      </DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                       <DropdownMenuItem onClick={handleSignOut} className={user.isAnonymous ? "text-red-500 focus:bg-red-500/20" : ""}>
-                            {user.isAnonymous ? <Trash2 className="mr-2 h-4 w-4" /> : <LogOut className="mr-2 h-4 w-4" />}
-                            <span>{user.isAnonymous ? 'Descartar y Salir' : 'Cerrar sesión'}</span>
-                       </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
               </div>
           </div>
       </header>

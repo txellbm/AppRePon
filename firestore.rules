@@ -3,10 +3,9 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow any authenticated user to read and write to the 'lists' collection.
-    // This includes users signed in with Google and anonymous users.
+    // Temporarily allow public read and write access to the 'lists' collection.
     match /lists/{listId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if true;
     }
   }
 }

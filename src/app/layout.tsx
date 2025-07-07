@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import { AuthProvider } from '@/providers/auth-provider';
 import { Toaster } from '@/components/ui/toaster';
 
 
@@ -37,10 +36,8 @@ export default function RootLayout({
     <html lang="es" className="dark" suppressHydrationWarning>
       <head />
       <body className="font-body antialiased bg-gray-900 text-white">
-        <AuthProvider>
-          <main>{children}</main>
-          <Toaster />
-        </AuthProvider>
+        <main>{children}</main>
+        <Toaster />
       </body>
     </html>
   );
