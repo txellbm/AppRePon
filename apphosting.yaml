@@ -3,10 +3,10 @@
 backend:
   serviceId: apprepon
   region: us-central1
-runConfig:
-  # Increase this value if you'd like to automatically spin up
-  # more instances in response to increased traffic.
-  maxInstances: 1
-  environmentVariables:
-    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: "apprepon.web.app"
-    NEXT_PUBLIC_FIREBASE_API_KEY: "AIzaSyA66O2Gjf2lyUqh6lx1cUK-GAzwNJ-VU1g"
+  runConfig:
+    # Increase this value if you'd like to automatically spin up
+    # more instances in response to increased traffic.
+    maxInstances: 1
+    environmentVariables:
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: "apprepon.web.app"
+      NEXT_PUBLIC_FIREBASE_API_KEY: "AIzaSyA66O2Gjf2lyUqh6lx1cUK-GAzwNJ-VU1g"
