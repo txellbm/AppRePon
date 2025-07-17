@@ -1,6 +1,3 @@
-
-
-
 import {
   categorizeProduct as categorizeProductFlow,
   type CategorizeProductInput,
@@ -11,11 +8,6 @@ import {
   type RefineCategoryInput,
   type RefineCategoryOutput,
 } from "@/ai/flows/refine-category";
-import {
-  improveCategorization as improveCategorizationFlow,
-  type ImproveCategorizationInput,
-  type ImproveCategorizationOutput,
-} from "@/ai/flows/improve-categorization";
 import {
   handleVoiceCommand as handleVoiceCommandFlow,
   type VoiceCommandInput,
@@ -85,12 +77,6 @@ export async function refineCategory(
   return runWithAIFallback(refineCategoryFlow, input, fallback, 'refineCategory');
 }
 
-export async function improveCategorization(
-  input: ImproveCategorizationInput
-): Promise<ImproveCategorizationOutput> {
-  const fallback = { success: true, message: '' };
-  return runWithAIFallback(improveCategorizationFlow, input, fallback, 'improveCategorization');
-}
 
 export async function handleVoiceCommand(
   input: VoiceCommandInput

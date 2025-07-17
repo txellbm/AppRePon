@@ -45,6 +45,7 @@ Las funciones de reconocimiento de productos, categorización y generación de r
 - **Firestore** como base de datos
 - **Google AI & Genkit** para las funciones inteligentes
 - **Firebase Hosting** para el despliegue
+- **Sin dependencias de servidor**: la app no usa `firebase-admin` ni Cloud Functions; toda la lógica se ejecuta en el navegador
 
 ## 🧪 Despliegue y entorno
 
