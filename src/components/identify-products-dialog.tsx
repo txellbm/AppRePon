@@ -1,13 +1,12 @@
 
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useReponToast } from "@/hooks/use-repon-toast";
 import { identifyProductsFromPhotoAction } from "@/lib/actions";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Camera, AlertTriangle, Upload, Check, Loader2, RefreshCw } from "lucide-react";
+import { Camera, Upload, Check, Loader2, RefreshCw } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
@@ -22,66 +21,22 @@ type DialogState = "capture" | "processing" | "confirm";
 export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: IdentifyProductsDialogProps) {
   const { toast } = useReponToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
 
   const [dialogState, setDialogState] = useState<DialogState>("capture");
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [identifiedProducts, setIdentifiedProducts] = useState<string[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
-
-  const stopCameraStream = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-  }, []);
 
   const resetState = () => {
     setDialogState("capture");
     setIdentifiedProducts([]);
     setSelectedProducts(new Set());
-    if (hasCameraPermission === null) {
-        requestCameraPermission();
-    }
   };
 
-  const requestCameraPermission = async () => {
-    if (typeof navigator.mediaDevices?.getUserMedia !== "function") {
-      setHasCameraPermission(false);
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { exact: "environment" } },
-      });
-      streamRef.current = stream;
-      setHasCameraPermission(true);
-      // stream will be used directly for capturing photos
-    } catch (error) {
-      console.error("Error accessing rear camera", error);
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        streamRef.current = stream;
-        setHasCameraPermission(true);
-        // stream will be used directly for capturing photos
-      } catch (err) {
-        console.error("Error accessing camera", err);
-        setHasCameraPermission(false);
-      }
-    }
-  };
-  
   useEffect(() => {
     if (open) {
       resetState();
-    } else {
-      stopCameraStream();
     }
-
-    return () => {
-      stopCameraStream();
-    };
-  }, [open, stopCameraStream]);
+  }, [open]);
 
   const handleIdentify = async (dataUri: string) => {
     setDialogState("processing");
@@ -103,19 +58,20 @@ export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: Id
   };
   
   const handleCapture = async () => {
-    if (streamRef.current) {
-      const track = streamRef.current.getVideoTracks()[0];
-      if (track) {
-        try {
-          const imageCapture = new (window as any).ImageCapture(track);
-          const blob = await imageCapture.takePhoto();
-          const reader = new FileReader();
-          reader.onloadend = () => handleIdentify(reader.result as string);
-          reader.readAsDataURL(blob);
-        } catch (err) {
-          console.error('Error capturing photo', err);
-        }
-      }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: "environment" } },
+      });
+      const track = stream.getVideoTracks()[0];
+      const imageCapture = new (window as any).ImageCapture(track);
+      const blob = await imageCapture.takePhoto();
+      stream.getTracks().forEach((t) => t.stop());
+
+      const reader = new FileReader();
+      reader.onloadend = () => handleIdentify(reader.result as string);
+      reader.readAsDataURL(blob);
+    } catch (err) {
+      console.error("Error capturing photo", err);
     }
   };
 
@@ -161,22 +117,8 @@ export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: Id
 
         {dialogState === 'capture' && (
           <div className="space-y-4">
-            <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted border">
-              {hasCameraPermission === false && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
-                  <AlertTriangle className="h-8 w-8 text-destructive mb-2" />
-                  <p className="font-semibold">Cámara no disponible</p>
-                  <p className="text-sm text-muted-foreground">Por favor, permite el acceso a la cámara en tu navegador para usar esta función.</p>
-                </div>
-              )}
-               {hasCameraPermission === null && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
-              )}
-            </div>
             <div className="flex gap-2">
-              <Button onClick={handleCapture} disabled={!hasCameraPermission} className="w-full">
+              <Button onClick={handleCapture} className="w-full">
                 <Camera className="mr-2" /> Tomar Foto
               </Button>
               <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full">
