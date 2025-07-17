@@ -63,7 +63,7 @@ Puedes añadir o modificar productos sin internet.
 Cuando se recupere la conexión, los cambios se sincronizan automáticamente con la lista compartida.
 
 ## Configuración de Firebase y Google Cloud
-- **Servicios de Firebase activos**: se utilizan *Firestore* y *Hosting* (App Hosting con región `us-central1`). Existe una función HTTP mínima (`disabledInitJson`) para desactivar la inicialización automática. Aunque la biblioteca de `auth` está incluida en el código, no se usa porque la lista es pública.
+- **Servicios de Firebase activos**: se utilizan *Firestore* y *Hosting* (App Hosting con región `us-central1`). Aunque la biblioteca de `auth` está incluida en el código, no se usa porque la lista es pública.
 - **Estructura y reglas de Firestore**: toda la información se guarda en la colección `lists`. La app consulta siempre el documento `nuestra-despensa-compartida`. Las reglas actuales permiten lectura y escritura a cualquiera:
   ```
   match /lists/{listId} {
@@ -73,7 +73,7 @@ Cuando se recupere la conexión, los cambios se sincronizan automáticamente con
 - **Hosting**: el despliegue se hace sobre Firebase Hosting/App Hosting y la aplicación se sirve en `https://app-repon.vercel.app`. No hay dominio personalizado definido en este repositorio.
 - **APIs de Google Cloud**: están habilitadas *Vertex AI* (para los modelos generativos usados mediante Genkit) y *Cloud Text-to-Speech*. Los flujos de IA se ejecutan en el backend de Next.js.
 - **Variables de entorno**: `NEXT_PUBLIC_FIREBASE_API_KEY` y `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` configuran la app de Firebase. `GOOGLE_API_KEY` o `NEXT_PUBLIC_GOOGLE_API_KEY` pueden usarse como alternativa para las funciones de IA. Estas variables se definen en `firebase.env.json` o en la configuración de App Hosting.
-- **Dependencias relevantes**: `firebase`, `firebase-functions`, `genkit` y `@genkit-ai/googleai` para la integración con los servicios de Google.
+- **Dependencias relevantes**: `firebase`, `genkit` y `@genkit-ai/googleai` para la integración con los servicios de Google.
 
 ## 🛡️ Copias de seguridad automáticas
 - Antes de sobrescribir la despensa, se guarda automáticamente una copia en `backup-{listId}`.
