@@ -35,6 +35,7 @@ RePon es una aplicación web pensada para ayudarte a organizar la despensa y la 
 - **Identificación de productos en una foto** para añadirlos en bloque.
 - **Generación de mensajes gramaticales** y notificaciones.
 - **Creación de recetas** basadas en lo que está disponible en la despensa.
+Las funciones de reconocimiento de productos, categorización y generación de recetas ahora se ejecutan **íntegramente en el navegador**, sin pasar por el backend.
 
 ## Pila tecnológica
 - **Next.js** 15 con App Router
@@ -61,6 +62,7 @@ Todos los usuarios acceden a la misma lista pública sin autenticación, y Fires
 Sí. RePon funciona como PWA y utiliza la caché local de Firestore.
 Puedes añadir o modificar productos sin internet.
 Cuando se recupere la conexión, los cambios se sincronizan automáticamente con la lista compartida.
+Estas capacidades sin conexión se mantienen sin cambios.
 
 ## Configuración de Firebase y Google Cloud
 - **Servicios de Firebase activos**: se utilizan *Firestore* y *Hosting* (App Hosting con región `us-central1`). Existe una función HTTP mínima (`disabledInitJson`) para desactivar la inicialización automática. Aunque la biblioteca de `auth` está incluida en el código, no se usa porque la lista es pública.
@@ -71,7 +73,7 @@ Cuando se recupere la conexión, los cambios se sincronizan automáticamente con
   }
   ```
 - **Hosting**: el despliegue se hace sobre Firebase Hosting/App Hosting y la aplicación se sirve en `https://app-repon.vercel.app`. No hay dominio personalizado definido en este repositorio.
-- **APIs de Google Cloud**: están habilitadas *Vertex AI* (para los modelos generativos usados mediante Genkit) y *Cloud Text-to-Speech*. Los flujos de IA se ejecutan en el backend de Next.js.
+- **APIs de Google Cloud**: están habilitadas *Vertex AI* (para los modelos generativos usados mediante Genkit) y *Cloud Text-to-Speech*. Las tareas de reconocimiento de productos, categorización y recetas se procesan ahora directamente en el navegador.
 - **Variables de entorno**: `NEXT_PUBLIC_FIREBASE_API_KEY` y `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` configuran la app de Firebase. `GOOGLE_API_KEY` o `NEXT_PUBLIC_GOOGLE_API_KEY` pueden usarse como alternativa para las funciones de IA. Estas variables se definen en `firebase.env.json` o en la configuración de App Hosting.
 - **Dependencias relevantes**: `firebase`, `firebase-functions`, `genkit` y `@genkit-ai/googleai` para la integración con los servicios de Google.
 
