@@ -1,4 +1,4 @@
-
+'use server';
 
 /**
  * @fileOverview This file defines a Genkit flow for manually overriding the category of an item.
@@ -9,7 +9,7 @@
  * - RefineCategoryOutput - The return type for the refineCategory function.
  */
 
-import {generateText} from '@/lib/gemini';
+import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const RefineCategoryInputSchema = z.object({
@@ -25,24 +25,41 @@ const RefineCategoryOutputSchema = z.object({
 export type RefineCategoryOutput = z.infer<typeof RefineCategoryOutputSchema>;
 
 export async function refineCategory(input: RefineCategoryInput): Promise<RefineCategoryOutput> {
-  const prompt = `Eres un asistente de categorización. El usuario quiere cambiar la categoría de un producto. Tu única tarea es aceptar la nueva categoría propuesta por el usuario.
-
-Nombre del Producto: ${input.itemName}
-Categoría Actual: ${input.currentCategory}
-Categoría Deseada por el Usuario: ${input.userOverrideCategory}
-
-Devuelve únicamente un objeto JSON con la clave "refinedCategory" y el valor de la categoría deseada por el usuario (${input.userOverrideCategory}).`;
-
-  try {
-    const text = await generateText(prompt);
-    const parsed = JSON.parse(text);
-    if (parsed?.refinedCategory) {
-      return parsed as RefineCategoryOutput;
-    }
-  } catch (error) {
-    console.warn('AI for category refinement failed, using user override directly.', error);
-  }
-
-  return { refinedCategory: input.userOverrideCategory };
+  return refineCategoryFlow(input);
 }
 
+const refineCategoryPrompt = ai.definePrompt({
+  name: 'refineCategoryPrompt',
+  input: {schema: RefineCategoryInputSchema},
+  output: {schema: RefineCategoryOutputSchema},
+  prompt: `Eres un asistente de categorización. El usuario quiere cambiar la categoría de un producto. Tu única tarea es aceptar la nueva categoría propuesta por el usuario.
+
+Nombre del Producto: {{{itemName}}}
+Categoría Actual: {{{currentCategory}}}
+Categoría Deseada por el Usuario: {{{userOverrideCategory}}}
+
+Devuelve únicamente un objeto JSON con la clave "refinedCategory" y el valor de la categoría deseada por el usuario ({{{userOverrideCategory}}}).`,
+});
+
+const refineCategoryFlow = ai.defineFlow(
+  {
+    name: 'refineCategoryFlow',
+    inputSchema: RefineCategoryInputSchema,
+    outputSchema: RefineCategoryOutputSchema,
+  },
+  async (input) => {
+    // For now, we will just honor the user's override.
+    // The prompt will guide the model to do this, but we add a fallback.
+    try {
+        const {output} = await refineCategoryPrompt(input);
+        if (output?.refinedCategory) {
+            return output;
+        }
+    } catch (error) {
+        console.warn("AI for category refinement failed, using user override directly.", error);
+    }
+    
+    // Fallback to simply returning what the user selected.
+    return { refinedCategory: input.userOverrideCategory };
+  }
+);
