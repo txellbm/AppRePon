@@ -72,7 +72,7 @@ Cuando se recupere la conexión, los cambios se sincronizan automáticamente con
   ```
 - **Hosting**: el despliegue se hace sobre Firebase Hosting/App Hosting y la aplicación se sirve en `https://app-repon.vercel.app`. No hay dominio personalizado definido en este repositorio.
 - **APIs de Google Cloud**: están habilitadas *Vertex AI* (para los modelos generativos usados mediante Genkit) y *Cloud Text-to-Speech*. Los flujos de IA se ejecutan en el backend de Next.js.
-- **Variables de entorno**: `NEXT_PUBLIC_FIREBASE_API_KEY` y `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` configuran la app de Firebase. `GOOGLE_API_KEY` puede usarse como alternativa para las funciones de IA. Estas variables se definen en `firebase.env.json` o en la configuración de App Hosting.
+- **Variables de entorno**: `NEXT_PUBLIC_FIREBASE_API_KEY` y `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` configuran la app de Firebase. `GOOGLE_API_KEY` o `NEXT_PUBLIC_GOOGLE_API_KEY` pueden usarse como alternativa para las funciones de IA. Estas variables se definen en `firebase.env.json` o en la configuración de App Hosting.
 - **Dependencias relevantes**: `firebase`, `firebase-functions`, `genkit` y `@genkit-ai/googleai` para la integración con los servicios de Google.
 
 ## 🛡️ Copias de seguridad automáticas
