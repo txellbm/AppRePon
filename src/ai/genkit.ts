@@ -2,7 +2,10 @@ import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
 import type {GenkitOptions} from 'genkit';
 
-const apiKey = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+const apiKey =
+  process.env.GOOGLE_API_KEY ||
+  process.env.NEXT_PUBLIC_GOOGLE_API_KEY ||
+  process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 
 // Base config object.
 const config: GenkitOptions = {
@@ -16,7 +19,7 @@ if (apiKey) {
   config.model = 'googleai/gemini-1.5-flash-latest';
 } else {
   console.warn(
-    'GOOGLE_API_KEY or NEXT_PUBLIC_FIREBASE_API_KEY is not set. AI features will be disabled.'
+    'GOOGLE_API_KEY, NEXT_PUBLIC_GOOGLE_API_KEY or NEXT_PUBLIC_FIREBASE_API_KEY is not set. AI features will be disabled.'
   );
 }
 
