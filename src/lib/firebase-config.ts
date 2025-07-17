@@ -7,7 +7,7 @@ import { getFirestore, enableIndexedDbPersistence, type Firestore } from 'fireba
 export const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain:
-    process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "apprepon.web.app",
+    process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "https://app-repon.vercel.app",
   projectId: "apprepon",
   storageBucket: "apprepon.appspot.com",
   messagingSenderId: "165040282600",
