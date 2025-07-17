@@ -1,53 +1,53 @@
 
-"use server";
+
 
 import {
-  categorizeProduct,
+  categorizeProduct as categorizeProductFlow,
   type CategorizeProductInput,
   type CategorizeProductOutput,
 } from "@/ai/flows/categorize-product";
 import {
-  refineCategory,
+  refineCategory as refineCategoryFlow,
   type RefineCategoryInput,
   type RefineCategoryOutput,
 } from "@/ai/flows/refine-category";
 import {
-  improveCategorization,
+  improveCategorization as improveCategorizationFlow,
   type ImproveCategorizationInput,
   type ImproveCategorizationOutput,
 } from "@/ai/flows/improve-categorization";
 import {
-  handleVoiceCommand,
+  handleVoiceCommand as handleVoiceCommandFlow,
   type VoiceCommandInput,
   type VoiceCommandOutput,
 } from "@/ai/flows/voice-command-handler";
 import {
-  correctProductName,
+  correctProductName as correctProductNameFlow,
   type CorrectProductNameInput,
   type CorrectProductNameOutput,
 } from "@/ai/flows/correct-product-name";
 import { COMMON_PRODUCTS } from "@/data/common-products";
 import { levenshtein } from "@/lib/levenshtein";
 import {
-  identifyProductsFromPhoto,
+  identifyProductsFromPhoto as identifyProductsFromPhotoFlow,
   type IdentifyProductsFromPhotoInput,
   type IdentifyProductsFromPhotoOutput,
 } from '@/ai/flows/identify-products-from-photo';
 import {
-  textToSpeech,
+  textToSpeech as textToSpeechFlow,
   type TextToSpeechInput,
   type TextToSpeechOutput,
 } from "@/ai/flows/text-to-speech";
 
-import { generateGrammaticalMessage } from '@/ai/flows/generate-grammatical-message';
+import { generateGrammaticalMessage as generateGrammaticalMessageFlow } from '@/ai/flows/generate-grammatical-message';
 import type { GenerateGrammaticalMessageInput, GenerateGrammaticalMessageOutput } from '@/lib/types';
 import {
-  generateRecipe,
+  generateRecipe as generateRecipeFlow,
   type GenerateRecipeInput,
   type GenerateRecipeOutput,
 } from '@/ai/flows/generate-recipe';
 import {
-  conversationalAssistant,
+  conversationalAssistant as conversationalAssistantFlow,
   type AssistantInput,
   type AssistantOutput,
 } from '@/ai/flows/conversational-assistant';
@@ -72,37 +72,37 @@ async function runWithAIFallback<T, U>(
   }
 }
 
-export async function categorizeProductAction(
+export async function categorizeProduct(
   input: CategorizeProductInput
 ): Promise<CategorizeProductOutput> {
-  return runWithAIFallback(categorizeProduct, input, { category: 'Otros' }, 'categorizeProduct');
+  return runWithAIFallback(categorizeProductFlow, input, { category: 'Otros' }, 'categorizeProduct');
 }
 
-export async function refineCategoryAction(
+export async function refineCategory(
   input: RefineCategoryInput
 ): Promise<RefineCategoryOutput> {
   const fallback = { refinedCategory: input.userOverrideCategory };
-  return runWithAIFallback(refineCategory, input, fallback, 'refineCategory');
+  return runWithAIFallback(refineCategoryFlow, input, fallback, 'refineCategory');
 }
 
-export async function improveCategorizationAction(
+export async function improveCategorization(
   input: ImproveCategorizationInput
 ): Promise<ImproveCategorizationOutput> {
   const fallback = { success: true, message: '' };
-  return runWithAIFallback(improveCategorization, input, fallback, 'improveCategorization');
+  return runWithAIFallback(improveCategorizationFlow, input, fallback, 'improveCategorization');
 }
 
-export async function handleVoiceCommandAction(
+export async function handleVoiceCommand(
   input: VoiceCommandInput
 ): Promise<VoiceCommandOutput> {
   const fallback = {
     operations: [],
     response: 'No he podido procesar el comando de voz en este momento.',
   };
-  return runWithAIFallback(handleVoiceCommand, input, fallback, 'handleVoiceCommand');
+  return runWithAIFallback(handleVoiceCommandFlow, input, fallback, 'handleVoiceCommand');
 }
 
-export async function correctProductNameAction(
+export async function correctProductName(
   input: CorrectProductNameInput
 ): Promise<CorrectProductNameOutput> {
   const correctedName =
@@ -120,21 +120,21 @@ export async function correctProductNameAction(
   if (bestMatch.dist <= 2) {
     fallback = { correctedName: bestMatch.name };
   }
-  return runWithAIFallback(correctProductName, input, fallback, 'correctProductName');
+  return runWithAIFallback(correctProductNameFlow, input, fallback, 'correctProductName');
 }
 
-export async function identifyProductsFromPhotoAction(
+export async function identifyProductsFromPhoto(
   input: IdentifyProductsFromPhotoInput
 ): Promise<IdentifyProductsFromPhotoOutput> {
-  return runWithAIFallback(identifyProductsFromPhoto, input, { products: [] }, 'identifyProductsFromPhoto');
+  return runWithAIFallback(identifyProductsFromPhotoFlow, input, { products: [] }, 'identifyProductsFromPhoto');
 }
 
-export async function textToSpeechAction(input: TextToSpeechInput): Promise<TextToSpeechOutput> {
-    return runWithAIFallback(textToSpeech, input, { audioDataUri: undefined }, 'textToSpeech');
+export async function textToSpeech(input: TextToSpeechInput): Promise<TextToSpeechOutput> {
+    return runWithAIFallback(textToSpeechFlow, input, { audioDataUri: undefined }, 'textToSpeech');
 }
 
 
-export async function generateGrammaticalMessageAction(
+export async function generateGrammaticalMessage(
   input: GenerateGrammaticalMessageInput
 ): Promise<GenerateGrammaticalMessageOutput> {
     let fallbackMessage = "";
@@ -147,10 +147,10 @@ export async function generateGrammaticalMessageAction(
         case 'added_to_pantry': fallbackMessage = `"${input.productName}" se ha añadido a la despensa.`; break;
         case 'available': fallbackMessage = `"${input.productName}" ahora está disponible.`; break;
     }
-    return runWithAIFallback(generateGrammaticalMessage, input, { message: fallbackMessage }, 'generateGrammaticalMessage');
+    return runWithAIFallback(generateGrammaticalMessageFlow, input, { message: fallbackMessage }, 'generateGrammaticalMessage');
 }
 
-export async function generateRecipeAction(
+export async function generateRecipe(
   input: GenerateRecipeInput
 ): Promise<GenerateRecipeOutput> {
   const fallback = {
@@ -161,10 +161,10 @@ export async function generateRecipeAction(
     ],
     note: 'El servicio de IA no está disponible en este momento. Por favor, inténtelo de nuevo más tarde.',
   };
-  return runWithAIFallback(generateRecipe, input, fallback, 'generateRecipe');
+  return runWithAIFallback(generateRecipeFlow, input, fallback, 'generateRecipe');
 }
 
-export async function conversationalAssistantAction(
+export async function conversationalAssistant(
   input: AssistantInput
 ): Promise<AssistantOutput> {
   const fallback = {
@@ -173,6 +173,6 @@ export async function conversationalAssistantAction(
     operations: [],
     uiActions: [],
   };
-  return runWithAIFallback(conversationalAssistant, input, fallback, 'conversationalAssistant');
+  return runWithAIFallback(conversationalAssistantFlow, input, fallback, 'conversationalAssistant');
 }
 

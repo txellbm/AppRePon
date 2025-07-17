@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useReponToast } from "@/hooks/use-repon-toast";
-import { identifyProductsFromPhotoAction } from "@/lib/actions";
+import { identifyProductsFromPhoto } from "@/lib/actions";
 import { Camera, Upload, Check, Loader2, RefreshCw } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -41,7 +41,7 @@ export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: Id
   const handleIdentify = async (dataUri: string) => {
     setDialogState("processing");
     try {
-      const result = await identifyProductsFromPhotoAction({ photoDataUri: dataUri });
+      const result = await identifyProductsFromPhoto({ photoDataUri: dataUri });
       if (result.products.length > 0) {
         await (onAddProducts as any)(result.products);
         toast({ title: "Productos añadidos", description: `${result.products.length} producto(s) añadido(s) a tu despensa.` });

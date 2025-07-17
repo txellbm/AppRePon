@@ -7,8 +7,8 @@ import { updateList, type ListData, sanitizeProductArray } from "@/services/fire
 import { type Product, type Category } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import {
-  categorizeProductAction,
-  correctProductNameAction,
+  categorizeProduct,
+  correctProductName,
 } from "@/lib/actions";
 import type { Toast } from "@/hooks/use-toast";
 
@@ -106,7 +106,7 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
 
       const correctedNamesMap = new Map<string, string>();
       for (const name of names) {
-        const { correctedName } = await correctProductNameAction({ productName: name });
+        const { correctedName } = await correctProductName({ productName: name });
         correctedNamesMap.set(name, correctedName);
       }
 
@@ -129,7 +129,7 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
           const overrideCat = listData.categoryOverrides[lower];
           const { category } = overrideCat
             ? { category: overrideCat }
-            : await categorizeProductAction({ productName: name });
+            : await categorizeProduct({ productName: name });
           return {
             id: uuidv4(),
             name,
@@ -184,7 +184,7 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
 
       const productsToCreate: { name: string }[] = [];
 
-      const correctedNames = await Promise.all(names.map((name) => correctProductNameAction({ productName: name })));
+      const correctedNames = await Promise.all(names.map((name) => correctProductName({ productName: name })));
       const uniqueCorrectedNames = [
         ...new Map(correctedNames.map((item) => [item.correctedName.toLowerCase(), item.correctedName])).values(),
       ];
@@ -210,7 +210,7 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
           const overrideCat = listData.categoryOverrides[lower];
           const { category } = overrideCat
             ? { category: overrideCat }
-            : await categorizeProductAction({ productName: product.name });
+            : await categorizeProduct({ productName: product.name });
           return {
             id: uuidv4(),
             name: product.name,
