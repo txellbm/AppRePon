@@ -44,16 +44,16 @@ Las funciones de reconocimiento de productos, categorización y generación de r
 - **Tailwind CSS** para el diseño y estilos
 - **Firestore** como base de datos
 - **Google AI & Genkit** para las funciones inteligentes
-- **Firebase Hosting** para el despliegue
+- **Vercel** para el despliegue
 
 ## 🧪 Despliegue y entorno
 
-Durante el desarrollo, la app se ejecuta en modo local (`npm run dev`) para probar los cambios al instante. Una vez validado todo en `localhost`, se despliega la nueva versión mediante Firebase Hosting.
+Durante el desarrollo, la app se ejecuta en modo local (`npm run dev`) para probar los cambios al instante. Una vez validado todo en `localhost`, el código se publica directamente en Vercel.
 
 ### Pasos para desplegar:
 1. Haz `git commit` y `git push` con tus cambios.
-2. Ejecuta `firebase deploy --only hosting` para publicar la nueva versión.
-3. Cierra y vuelve a abrir la app, ya sea en el navegador o como PWA, para cargar la versión actualizada.
+2. Vercel realizará automáticamente el despliegue de la rama principal.
+3. Abre la aplicación en `https://app-repon.vercel.app` para comprobar la nueva versión.
 
 Todos los usuarios acceden a la misma lista pública sin autenticación, y Firestore sincroniza las modificaciones en tiempo real. También funciona sin conexión gracias a la caché local.
 
@@ -65,17 +65,26 @@ Cuando se recupere la conexión, los cambios se sincronizan automáticamente con
 Estas capacidades sin conexión se mantienen sin cambios.
 
 ## Configuración de Firebase y Google Cloud
-- **Servicios de Firebase activos**: se utilizan *Firestore* y *Hosting* (App Hosting con región `us-central1`). Aunque la biblioteca de `auth` está incluida en el código, no se usa porque la lista es pública.
+- **Servicios de Firebase activos**: solo se utiliza *Firestore*. Aunque la biblioteca de `auth` está incluida en el código, no se usa porque la lista es pública.
 - **Estructura y reglas de Firestore**: toda la información se guarda en la colección `lists`. La app consulta siempre el documento `nuestra-despensa-compartida`. Las reglas actuales permiten lectura y escritura a cualquiera:
   ```
   match /lists/{listId} {
     allow read, write: if true;
   }
   ```
-- **Hosting**: el despliegue se hace sobre Firebase Hosting/App Hosting y la aplicación se sirve en `https://app-repon.vercel.app`. No hay dominio personalizado definido en este repositorio.
+- **Hosting**: el despliegue se realiza con Vercel y la aplicación se sirve en `https://app-repon.vercel.app`. No hay dominio personalizado definido en este repositorio.
 - **APIs de Google Cloud**: están habilitadas *Vertex AI* (para los modelos generativos usados mediante Genkit) y *Cloud Text-to-Speech*. Las tareas de reconocimiento de productos, categorización y recetas se procesan ahora directamente en el navegador.
-- **Variables de entorno**: `NEXT_PUBLIC_FIREBASE_API_KEY` y `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` configuran la app de Firebase. `GOOGLE_API_KEY` o `NEXT_PUBLIC_GOOGLE_API_KEY` pueden usarse como alternativa para las funciones de IA. Estas variables se definen en `firebase.env.json` o en la configuración de App Hosting.
+- **Variables de entorno**: `NEXT_PUBLIC_FIREBASE_API_KEY` y `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` configuran la app de Firebase. `NEXT_PUBLIC_GOOGLE_API_KEY` se usa en el cliente para llamar a los servicios de IA (opcionalmente también `GOOGLE_API_KEY` en el servidor). Estas variables se definen en `firebase.env.json` o directamente en Vercel.
 - **Dependencias relevantes**: `firebase`, `genkit` y `@genkit-ai/googleai` para la integración con los servicios de Google.
+
+### Variables de entorno necesarias
+
+Configura en Vercel (o en un archivo `.env.local` para desarrollo) las siguientes claves:
+
+- `NEXT_PUBLIC_FIREBASE_API_KEY`
+- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
+- `NEXT_PUBLIC_GOOGLE_API_KEY` (o `GOOGLE_API_KEY` para uso en el servidor)
+
 
 ## 🛡️ Copias de seguridad automáticas
 - Antes de sobrescribir la despensa, se guarda automáticamente una copia en `backup-{listId}`.
@@ -87,7 +96,7 @@ Estas capacidades sin conexión se mantienen sin cambios.
 - **Codex** actualiza el repositorio con nuevas funcionalidades, mejoras de seguridad, lógica o cambios en el README.
 - **Yo** hago `merge` y actualizo mi carpeta local desde GitHub.
 - Pruebo los cambios en `localhost`.
-- Si todo funciona correctamente, ejecuto `firebase deploy` desde mi máquina.
+- Si todo funciona correctamente, Vercel despliega automáticamente la nueva versión.
 
 ## Créditos
 Proyecto mantenido por un pequeño equipo humano con ayuda de la IA.
