@@ -11,3 +11,5 @@ env:
     value: 165040282600
   - key: NEXT_PUBLIC_FIREBASE_APP_ID
     value: 1:165040282600:web:3869fbbfee23f559fce25d
+  - key: NEXT_PUBLIC_GOOGLE_API_KEY
+    value: AIzaSyA66062GjY21yq6k1uicUK-cGAzNJ-U1iQ
