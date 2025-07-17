@@ -1,11 +1,11 @@
-'use server';
+
 /**
  * @fileOverview A Genkit flow to generate grammatically correct notification messages.
  *
  * - generateGrammaticalMessage - A function that takes a product name and message type and returns a correct sentence.
  */
 
-import {ai} from '@/ai/genkit';
+import {generateText} from '@/lib/gemini';
 import {z} from 'genkit';
 import type { GenerateGrammaticalMessageInput, GenerateGrammaticalMessageOutput } from '@/lib/types';
 
@@ -29,14 +29,7 @@ const GenerateGrammaticalMessageOutputSchema = z.object({
 });
 
 export async function generateGrammaticalMessage(input: GenerateGrammaticalMessageInput): Promise<GenerateGrammaticalMessageOutput> {
-  return generateGrammaticalMessageFlow(input);
-}
-
-const prompt = ai.definePrompt({
-  name: 'generateGrammaticalMessagePrompt',
-  input: {schema: GenerateGrammaticalMessageInputSchema},
-  output: {schema: GenerateGrammaticalMessageOutputSchema},
-  prompt: `Eres un asistente experto en gramática española. Tu tarea es generar una frase corta y natural para una notificación en una aplicación de gestión de despensa. Tu principal objetivo es que la frase tenga la concordancia de género (masculino/femenino) y número (singular/plural) PERFECTA con el producto.
+  const prompt = `Eres un asistente experto en gramática española. Tu tarea es generar una frase corta y natural para una notificación en una aplicación de gestión de despensa. Tu principal objetivo es que la frase tenga la concordancia de género (masculino/femenino) y número (singular/plural) PERFECTA con el producto.
 
 **PROCESO OBLIGATORIO:**
 1.  Identifica el género y número del producto: "{{{productName}}}".
@@ -76,17 +69,15 @@ const prompt = ai.definePrompt({
     *   Ejemplo para "Leche": "La leche ahora está disponible."
 
 **RESPUESTA:**
-Responde únicamente con un objeto JSON que contenga la clave "message" y el valor de la frase generada. No añadas explicaciones ni texto adicional.`,
-});
-
-const generateGrammaticalMessageFlow = ai.defineFlow(
-  {
-    name: 'generateGrammaticalMessageFlow',
-    inputSchema: GenerateGrammaticalMessageInputSchema,
-    outputSchema: GenerateGrammaticalMessageOutputSchema,
-  },
-  async (input) => {
-    const {output} = await prompt(input);
-    return output!;
+Responde únicamente con un objeto JSON que contenga la clave "message" y el valor de la frase generada. No añadas explicaciones ni texto adicional.`;
+  const text = await generateText(
+    prompt
+      .replace(/{{{productName}}}/g, input.productName)
+      .replace(/{{{messageType}}}/g, input.messageType)
+  );
+  try {
+    return JSON.parse(text) as GenerateGrammaticalMessageOutput;
+  } catch {
+    return { message: text } as GenerateGrammaticalMessageOutput;
   }
-);
+}
