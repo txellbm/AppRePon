@@ -1,4 +1,4 @@
-
+'use server';
 /**
  * @fileOverview A Genkit flow to generate a recipe from a list of ingredients.
  *
@@ -7,7 +7,7 @@
  * - GenerateRecipeOutput - The return type for the generateRecipe function.
  */
 
-import {generateText} from '@/lib/gemini';
+import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateRecipeInputSchema = z.object({
@@ -25,7 +25,14 @@ const GenerateRecipeOutputSchema = z.object({
 export type GenerateRecipeOutput = z.infer<typeof GenerateRecipeOutputSchema>;
 
 export async function generateRecipe(input: GenerateRecipeInput): Promise<GenerateRecipeOutput> {
-  const prompt = `Eres un nutricionista y chef experto en cocina saludable y estética corporal. Tu tarea es generar una receta de plato único y equilibrado para una persona, utilizando exclusivamente los ingredientes disponibles en la despensa del usuario.
+  return generateRecipeFlow(input);
+}
+
+const prompt = ai.definePrompt({
+  name: 'generateRecipePrompt',
+  input: {schema: GenerateRecipeInputSchema},
+  output: {schema: GenerateRecipeOutputSchema},
+  prompt: `Eres un nutricionista y chef experto en cocina saludable y estética corporal. Tu tarea es generar una receta de plato único y equilibrado para una persona, utilizando exclusivamente los ingredientes disponibles en la despensa del usuario.
 
 **Condiciones de la receta:**
 1.  **Estructura Harvard:** La receta debe seguir la estructura del Plato de Harvard: 50% verduras, 25% proteína saludable y 25% hidratos de carbono complejos.
@@ -48,20 +55,17 @@ Al final, en el campo 'note', añade una nota explicando brevemente cómo esta r
 - {{{this}}}
 {{/each}}
 
-Recuerda, no inventes ingredientes que no estén en la lista. Usa solo lo que hay en la despensa.`;
-  const text = await generateText(
-    prompt
-      .replace(/{{#each products}}\n- {{{this}}}\n{{\/each}}/, input.products.map(p => `- ${p}`).join('\n'))
-      .replace(/{{#if previousRecipeTitles}}[^]*{{\/if}}/, input.previousRecipeTitles && input.previousRecipeTitles.length ? `Recetas a Evitar: ${input.previousRecipeTitles.join(', ')}` : '')
-  );
-  try {
-    return JSON.parse(text) as GenerateRecipeOutput;
-  } catch {
-    return {
-      title: 'Receta',
-      ingredients: input.products,
-      instructions: [text],
-      note: ''
-    } as GenerateRecipeOutput;
+Recuerda, no inventes ingredientes que no estén en la lista. Usa solo lo que hay en la despensa.`,
+});
+
+const generateRecipeFlow = ai.defineFlow(
+  {
+    name: 'generateRecipeFlow',
+    inputSchema: GenerateRecipeInputSchema,
+    outputSchema: GenerateRecipeOutputSchema,
+  },
+  async (input) => {
+    const {output} = await prompt(input);
+    return output!;
   }
-}
+);
