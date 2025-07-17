@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { generateRecipe, generateGrammaticalMessage, correctProductName, improveCategorization } from "@/lib/actions";
+import { generateRecipe, generateGrammaticalMessage, correctProductName } from "@/lib/actions";
 import { type Product, type Category, type ProductStatus, type ViewMode, type GenerateRecipeOutput } from "@/lib/types";
 import { useReponToast } from "@/hooks/use-repon-toast";
 import { useSharedList } from "@/hooks/use-shared-list";
@@ -776,11 +776,6 @@ export default function PantryPage({ listId }: { listId: string }) {
         const key = productName.toLowerCase();
         const newOverrides = { ...categoryOverrides, [key]: newCategory };
         updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList, categoryOverrides: newOverrides });
-        try {
-            await improveCategorization({ productName, userSelectedCategory: newCategory });
-        } catch (e) {
-            console.warn('Failed to improve categorization', e);
-        }
         toast({ title: '¡Categoría cambiada!', description: `"${productName}" ahora está en "${newCategory}".` });
     }
   };
