@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { generateRecipeAction, generateGrammaticalMessageAction, correctProductNameAction, improveCategorizationAction } from "@/lib/actions";
+import { generateRecipe, generateGrammaticalMessage, correctProductName, improveCategorization } from "@/lib/actions";
 import { type Product, type Category, type ProductStatus, type ViewMode, type GenerateRecipeOutput } from "@/lib/types";
 import { useReponToast } from "@/hooks/use-repon-toast";
 import { useSharedList } from "@/hooks/use-shared-list";
@@ -541,7 +541,7 @@ export default function PantryPage({ listId }: { listId: string }) {
     const toastie = toast({ title: "Actualizando nombre...", duration: 5000 });
 
     try {
-        const { correctedName } = await correctProductNameAction({ productName: finalNewName });
+        const { correctedName } = await correctProductName({ productName: finalNewName });
         
         const oldName = editingProduct.name;
         
@@ -777,7 +777,7 @@ export default function PantryPage({ listId }: { listId: string }) {
         const newOverrides = { ...categoryOverrides, [key]: newCategory };
         updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList, categoryOverrides: newOverrides });
         try {
-            await improveCategorizationAction({ productName, userSelectedCategory: newCategory });
+            await improveCategorization({ productName, userSelectedCategory: newCategory });
         } catch (e) {
             console.warn('Failed to improve categorization', e);
         }
@@ -842,7 +842,7 @@ export default function PantryPage({ listId }: { listId: string }) {
 
     updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
     if (!silent) {
-      const { message } = await generateGrammaticalMessageAction({ productName: boughtItem.name, messageType: 'added_to_pantry' });
+      const { message } = await generateGrammaticalMessage({ productName: boughtItem.name, messageType: 'added_to_pantry' });
       toast({ title: '¡A la saca!', description: message, audioText: message });
     }
   };
@@ -888,7 +888,7 @@ export default function PantryPage({ listId }: { listId: string }) {
     const newPantry = pantry.map(p => p.id === id ? { ...p, isPendingPurchase: true } : p);
     updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
 
-    const { message } = await generateGrammaticalMessageAction({ productName: product.name, messageType: 'added_to_shopping_list' });
+    const { message } = await generateGrammaticalMessage({ productName: product.name, messageType: 'added_to_shopping_list' });
     toast({ title: '¡Anotado!', description: message, audioText: message });
   };
 
@@ -945,7 +945,7 @@ export default function PantryPage({ listId }: { listId: string }) {
     setIsRecipeDialogOpen(true);
 
     try {
-      const result = await generateRecipeAction({
+      const result = await generateRecipe({
         products: availableProducts
       });
       setRecipe(result);

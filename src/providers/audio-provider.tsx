@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import { textToSpeechAction } from '@/lib/actions';
+import { textToSpeech } from '@/lib/actions';
 
 interface AudioContextType {
   isAudioEnabled: boolean;
@@ -136,7 +136,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       };
       
       try {
-        const result = await textToSpeechAction({ text });
+        const result = await textToSpeech({ text });
         const audioDataUri = result?.audioDataUri;
         
         if (!audioDataUri || !audioContextRef.current) {
