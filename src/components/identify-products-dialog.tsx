@@ -21,8 +21,6 @@ type DialogState = "capture" | "processing" | "confirm";
 
 export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: IdentifyProductsDialogProps) {
   const { toast } = useReponToast();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -35,9 +33,6 @@ export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: Id
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
-    }
-    if (videoRef.current) {
-        videoRef.current.srcObject = null;
     }
   }, []);
 
@@ -61,18 +56,14 @@ export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: Id
       });
       streamRef.current = stream;
       setHasCameraPermission(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
+      // stream will be used directly for capturing photos
     } catch (error) {
       console.error("Error accessing rear camera", error);
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         streamRef.current = stream;
         setHasCameraPermission(true);
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
+        // stream will be used directly for capturing photos
       } catch (err) {
         console.error("Error accessing camera", err);
         setHasCameraPermission(false);
@@ -97,9 +88,9 @@ export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: Id
     try {
       const result = await identifyProductsFromPhotoAction({ photoDataUri: dataUri });
       if (result.products.length > 0) {
-        setIdentifiedProducts(result.products);
-        setSelectedProducts(new Set(result.products)); 
-        setDialogState("confirm");
+        await (onAddProducts as any)(result.products);
+        toast({ title: "Productos añadidos", description: `${result.products.length} producto(s) añadido(s) a tu despensa.` });
+        onOpenChange(false);
       } else {
         toast({ title: "No se encontraron productos", description: "Prueba con otra foto más clara o con más productos.", variant: "destructive" });
         setDialogState("capture");
@@ -111,17 +102,19 @@ export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: Id
     }
   };
   
-  const handleCapture = () => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const context = canvas.getContext('2d');
-      if (context) {
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataUri = canvas.toDataURL('image/jpeg');
-        handleIdentify(dataUri);
+  const handleCapture = async () => {
+    if (streamRef.current) {
+      const track = streamRef.current.getVideoTracks()[0];
+      if (track) {
+        try {
+          const imageCapture = new (window as any).ImageCapture(track);
+          const blob = await imageCapture.takePhoto();
+          const reader = new FileReader();
+          reader.onloadend = () => handleIdentify(reader.result as string);
+          reader.readAsDataURL(blob);
+        } catch (err) {
+          console.error('Error capturing photo', err);
+        }
       }
     }
   };
@@ -169,8 +162,6 @@ export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: Id
         {dialogState === 'capture' && (
           <div className="space-y-4">
             <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted border">
-              <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
-              <canvas ref={canvasRef} className="hidden" />
               {hasCameraPermission === false && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
                   <AlertTriangle className="h-8 w-8 text-destructive mb-2" />
