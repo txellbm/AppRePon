@@ -518,6 +518,34 @@ function ShoppingItemCard({
   );
 }
 
+// Badge visual para depuración de Firestore offline/online
+function BadgeFirestoreStatus({ isOnline, hasPendingWrites }: { isOnline: boolean, hasPendingWrites: boolean }) {
+  let color = 'bg-blue-600';
+  let text = 'Online';
+  if (!isOnline && !hasPendingWrites) {
+    color = 'bg-orange-500';
+    text = 'Offline';
+  } else if (!isOnline && hasPendingWrites) {
+    color = 'bg-red-600';
+    text = 'Offline (pendiente)';
+  } else if (isOnline && hasPendingWrites) {
+    color = 'bg-yellow-500';
+    text = 'Online (pendiente)';
+  }
+  return (
+    <div style={{ position: 'fixed', bottom: 16, right: 16, zIndex: 9999 }}>
+      <div className={`flex items-center gap-2 px-3 py-1 rounded-full shadow-lg text-white text-xs font-semibold ${color}`}
+        style={{ minWidth: 120, justifyContent: 'center' }}>
+        {color === 'bg-blue-600' && '🔵'}
+        {color === 'bg-orange-500' && '🟠'}
+        {color === 'bg-red-600' && '🔴'}
+        {color === 'bg-yellow-500' && '🟡'}
+        <span>{text}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function PantryPage({ listId }: { listId: string }) {
   console.log('💡 Render iniciado');
   var a,s;
@@ -1353,610 +1381,613 @@ export default function PantryPage({ listId }: { listId: string }) {
   console.log("groupedPantry", groupedPantry);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-20 w-full border-b bg-background/80 backdrop-blur-sm">
-          <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center">
-              <span className="font-headline text-3xl font-bold text-primary">RePon</span>
-            </div>
-              <div className="flex items-center gap-1">
-                  {hasPendingWrites && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                           <Cloudy className="h-5 w-5 animate-spin text-amber-500" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Guardando cambios...</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" disabled={pantry.filter(p => p.status === 'available' || p.status === 'low').length === 0} onClick={handleGenerateRecipe}>
-                          <ChefHat className="h-5 w-5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                          <p>Generar Receta</p>
-                      </TooltipContent>
-                    </Tooltip>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" onClick={() => setShowLegendDialog(true)}>
-                                  <HelpCircle className="h-5 w-5" />
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                              <p>Ayuda</p>
-                          </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" onClick={handleShareLink}>
-                                  <Link className="h-5 w-5" />
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                              <p>Compartir enlace de la lista</p>
-                          </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" onClick={() => setShowShareDialog(true)}>
-                                  <Share2 className="h-5 w-5" />
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                              <p>Compartir/Copiar contenido</p>
-                          </TooltipContent>
-                      </Tooltip>
-                  </TooltipProvider>
-
+    <>
+      <BadgeFirestoreStatus isOnline={isOnline} hasPendingWrites={hasPendingWrites} />
+      <div className="min-h-screen bg-background text-foreground">
+        <header className="sticky top-0 z-20 w-full border-b bg-background/80 backdrop-blur-sm">
+            <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center">
+                <span className="font-headline text-3xl font-bold text-primary">RePon</span>
               </div>
-          </div>
-      </header>
-      
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
-          <div className="sticky top-20 z-10 bg-background/95 backdrop-blur-sm -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 border-b mb-6">
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                  <TabsList>
-                      <TabsTrigger value="pantry" data-testid="pantry-tab">Mi Despensa</TabsTrigger>
-                      <TabsTrigger value="shopping-list" data-testid="shopping-list-tab">Lista de compra ({shoppingList.length})</TabsTrigger>
-                  </TabsList>
-                  
-                  <div className="flex sm:hidden w-full items-center justify-between">
-                      <div className="flex items-center">
-                           <TooltipProvider>
-                              <Tooltip>
-                                  <TooltipTrigger asChild>
-                                      <Button size="icon" className="h-9 w-9" onClick={() => setShowIdentifyDialog(true)} aria-label="Añadir producto con foto">
-                                          <Camera className="h-5 w-5" />
-                                      </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent><p>Añadir producto con foto</p></TooltipContent>
-                              </Tooltip>
-                          </TooltipProvider>
-                      </div>
-                      <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowSearch(!showSearch)} aria-label="Buscar productos">
-                              <Search className="h-5 w-5" />
-                          </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-9 w-9">
-                                    <Filter className="h-5 w-5" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                               <FilterOptions />
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                          <TooltipProvider>
-                              <Tooltip>
-                                  <TooltipTrigger asChild>
-                                      <Button variant={sortConfig.by === 'name' ? 'secondary' : 'ghost'} size="icon" className="h-9 w-9" onClick={handleNameSortToggle} aria-label="Ordenar por nombre">
-                                          {sortConfig.order === 'desc' ? <ArrowUpAZ className="h-5 w-5" /> : <ArrowDownAZ className="h-5 w-5" />}
-                                      </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                      <p>Ordenar por Nombre ({sortConfig.order === 'asc' ? 'A-Z' : 'Z-A'})</p>
-                                  </TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                  <TooltipTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setViewMode(v => v === 'list' ? 'grid' : 'list')} aria-label="Cambiar vista">
-                                          {viewMode === 'list' ? <LayoutGrid className="h-5 w-5" /> : <List className="h-5 w-5" />}
-                                      </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                      <p>{viewMode === 'list' ? 'Vista de Cuadrícula' : 'Vista de Lista'}</p>
-                                  </TooltipContent>
-                              </Tooltip>
-                          </TooltipProvider>
-                          <TooltipProvider>
-                              <Tooltip>
-                                  <TooltipTrigger asChild>
-                                      <Button
-                                        variant={groupByCategory ? 'secondary' : 'ghost'}
-                                        size="icon"
-                                        className="h-9 w-9"
-                                        onClick={() => setGroupByCategory((v) => !v)}
-                                        aria-label="Agrupar por categorías"
-                                      >
-                                        <Tags className="h-5 w-5" />
-                                      </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                      <p>Agrupar por Categorías</p>
-                                  </TooltipContent>
-                              </Tooltip>
-                          </TooltipProvider>
-                      </div>
-                  </div>
-
-                  <div className="hidden sm:flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowSearch(!showSearch)} aria-label="Buscar productos">
-                        <Search className="h-5 w-5" />
-                    </Button>
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-9 w-9">
-                                <Filter className="h-5 w-5" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                           <FilterOptions />
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    <TooltipProvider>
-                      <Tooltip>
+                <div className="flex items-center gap-1">
+                    {hasPendingWrites && (
+                      <TooltipProvider>
+                        <Tooltip>
                           <TooltipTrigger asChild>
-                              <Button variant={sortConfig.by === 'name' ? 'secondary' : 'ghost'} size="icon" className="h-9 w-9" onClick={handleNameSortToggle} aria-label="Ordenar por nombre">
-                                  {sortConfig.order === 'desc' ? <ArrowUpAZ className="h-5 w-5" /> : <ArrowDownAZ className="h-5 w-5" />}
-                              </Button>
+                             <Cloudy className="h-5 w-5 animate-spin text-amber-500" />
                           </TooltipTrigger>
                           <TooltipContent>
-                              <p>Ordenar por Nombre ({sortConfig.order === 'asc' ? 'A-Z' : 'Z-A'})</p>
-                          </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setViewMode(v => v === 'list' ? 'grid' : 'list')} aria-label="Cambiar vista">
-                                  {viewMode === 'list' ? <LayoutGrid className="h-5 w-5" /> : <List className="h-5 w-5" />}
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                              <p>{viewMode === 'list' ? 'Vista de Cuadrícula' : 'Vista de Lista'}</p>
+                              <p>Guardando cambios...</p>
                           </TooltipContent>
                         </Tooltip>
-                    </TooltipProvider>
+                      </TooltipProvider>
+                    )}
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button
-                            variant={groupByCategory ? 'secondary' : 'ghost'}
-                            size="icon"
-                            className="h-9 w-9"
-                            onClick={() => setGroupByCategory((v) => !v)}
-                            aria-label="Agrupar por categorías"
-                          >
-                            <Tags className="h-5 w-5" />
+                          <Button variant="ghost" size="icon" disabled={pantry.filter(p => p.status === 'available' || p.status === 'low').length === 0} onClick={handleGenerateRecipe}>
+                            <ChefHat className="h-5 w-5" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Agrupar por Categorías</p>
+                            <p>Generar Receta</p>
                         </TooltipContent>
                       </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" onClick={() => setShowLegendDialog(true)}>
+                                    <HelpCircle className="h-5 w-5" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Ayuda</p>
+                            </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" onClick={handleShareLink}>
+                                    <Link className="h-5 w-5" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Compartir enlace de la lista</p>
+                            </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" onClick={() => setShowShareDialog(true)}>
+                                    <Share2 className="h-5 w-5" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Compartir/Copiar contenido</p>
+                            </TooltipContent>
+                        </Tooltip>
                     </TooltipProvider>
+
+                </div>
+            </div>
+        </header>
+        
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
+            <div className="sticky top-20 z-10 bg-background/95 backdrop-blur-sm -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 border-b mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <TabsList>
+                        <TabsTrigger value="pantry" data-testid="pantry-tab">Mi Despensa</TabsTrigger>
+                        <TabsTrigger value="shopping-list" data-testid="shopping-list-tab">Lista de compra ({shoppingList.length})</TabsTrigger>
+                    </TabsList>
                     
-                    <Separator orientation="vertical" className="h-6 mx-1" />
-
-                    <TooltipProvider>
-                       <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button size="icon" className="h-9 w-9" onClick={() => setShowIdentifyDialog(true)} aria-label="Añadir producto con foto">
-                                <Camera className="h-5 w-5" />
+                    <div className="flex sm:hidden w-full items-center justify-between">
+                        <div className="flex items-center">
+                             <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button size="icon" className="h-9 w-9" onClick={() => setShowIdentifyDialog(true)} aria-label="Añadir producto con foto">
+                                            <Camera className="h-5 w-5" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>Añadir producto con foto</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowSearch(!showSearch)} aria-label="Buscar productos">
+                                <Search className="h-5 w-5" />
                             </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Añadir producto con foto</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-              </div>
-
-              <AnimatePresence>
-                {showSearch && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="relative mt-4"
-                  >
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      type="text"
-                      placeholder="Buscar productos..."
-                      className="pl-10 w-full bg-gray-800 text-white placeholder-gray-400"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                    <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8" onClick={() => { setShowSearch(false); setSearchQuery(""); }}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            <AddItemForm
-              onAddItem={handleAddItemHybrid}
-              history={history}
-              pantry={pantry}
-              shoppingList={shoppingList}
-              activeTab={activeTab}
-              onDeleteHistoryItem={handleDeleteHistoryItem}
-            />
-          </div>
-          
-          <TabsContent value="pantry">
-            <div className="mt-6">
-              {pantry.length > 0 ? (
-                filteredPantry.length > 0 ? (
-                  !groupByCategory ? (
-                    <div className={cn("gap-2", viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" : "flex flex-col")}>
-                      <AnimatePresence>
-                        {filteredPantry.map(product => (
-                          <ProductCard
-                            key={`pantry-${product.id}`}
-                            product={product}
-                            viewMode={viewMode}
-                            isPulsing={product.id === pulsingProductId}
-                            isExiting={product.id === exitingProductId}
-                            onUpdateStatus={handleUpdateStatusHybrid}
-                            onDelete={handleDeleteHybrid}
-                            onAddToShoppingList={handleLowStockToShoppingList}
-                            onUpdateCategory={handleUpdateCategory}
-                            onEdit={setEditingProduct}
-                          />
-                        ))}
-                      </AnimatePresence>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                                      <Filter className="h-5 w-5" />
+                                  </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                 <FilterOptions />
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant={sortConfig.by === 'name' ? 'secondary' : 'ghost'} size="icon" className="h-9 w-9" onClick={handleNameSortToggle} aria-label="Ordenar por nombre">
+                                            {sortConfig.order === 'desc' ? <ArrowUpAZ className="h-5 w-5" /> : <ArrowDownAZ className="h-5 w-5" />}
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Ordenar por Nombre ({sortConfig.order === 'asc' ? 'A-Z' : 'Z-A'})</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setViewMode(v => v === 'list' ? 'grid' : 'list')} aria-label="Cambiar vista">
+                                            {viewMode === 'list' ? <LayoutGrid className="h-5 w-5" /> : <List className="h-5 w-5" />}
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{viewMode === 'list' ? 'Vista de Cuadrícula' : 'Vista de Lista'}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                          variant={groupByCategory ? 'secondary' : 'ghost'}
+                                          size="icon"
+                                          className="h-9 w-9"
+                                          onClick={() => setGroupByCategory((v) => !v)}
+                                          aria-label="Agrupar por categorías"
+                                        >
+                                          <Tags className="h-5 w-5" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Agrupar por Categorías</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
                     </div>
+
+                    <div className="hidden sm:flex items-center gap-2">
+                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowSearch(!showSearch)} aria-label="Buscar productos">
+                          <Search className="h-5 w-5" />
+                      </Button>
+                       <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-9 w-9">
+                                  <Filter className="h-5 w-5" />
+                              </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                             <FilterOptions />
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant={sortConfig.by === 'name' ? 'secondary' : 'ghost'} size="icon" className="h-9 w-9" onClick={handleNameSortToggle} aria-label="Ordenar por nombre">
+                                    {sortConfig.order === 'desc' ? <ArrowUpAZ className="h-5 w-5" /> : <ArrowDownAZ className="h-5 w-5" />}
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Ordenar por Nombre ({sortConfig.order === 'asc' ? 'A-Z' : 'Z-A'})</p>
+                            </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setViewMode(v => v === 'list' ? 'grid' : 'list')} aria-label="Cambiar vista">
+                                    {viewMode === 'list' ? <LayoutGrid className="h-5 w-5" /> : <List className="h-5 w-5" />}
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{viewMode === 'list' ? 'Vista de Cuadrícula' : 'Vista de Lista'}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant={groupByCategory ? 'secondary' : 'ghost'}
+                              size="icon"
+                              className="h-9 w-9"
+                              onClick={() => setGroupByCategory((v) => !v)}
+                              aria-label="Agrupar por categorías"
+                            >
+                              <Tags className="h-5 w-5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Agrupar por Categorías</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      
+                      <Separator orientation="vertical" className="h-6 mx-1" />
+
+                      <TooltipProvider>
+                         <Tooltip>
+                          <TooltipTrigger asChild>
+                              <Button size="icon" className="h-9 w-9" onClick={() => setShowIdentifyDialog(true)} aria-label="Añadir producto con foto">
+                                  <Camera className="h-5 w-5" />
+                              </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                              <p>Añadir producto con foto</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                </div>
+
+                <AnimatePresence>
+                  {showSearch && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className="relative mt-4"
+                    >
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder="Buscar productos..."
+                        className="pl-10 w-full bg-gray-800 text-white placeholder-gray-400"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                      <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8" onClick={() => { setShowSearch(false); setSearchQuery(""); }}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              <AddItemForm
+                onAddItem={handleAddItemHybrid}
+                history={history}
+                pantry={pantry}
+                shoppingList={shoppingList}
+                activeTab={activeTab}
+                onDeleteHistoryItem={handleDeleteHistoryItem}
+              />
+            </div>
+            
+            <TabsContent value="pantry">
+              <div className="mt-6">
+                {pantry.length > 0 ? (
+                  filteredPantry.length > 0 ? (
+                    !groupByCategory ? (
+                      <div className={cn("gap-2", viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" : "flex flex-col")}>
+                        <AnimatePresence>
+                          {filteredPantry.map(product => (
+                            <ProductCard
+                              key={`pantry-${product.id}`}
+                              product={product}
+                              viewMode={viewMode}
+                              isPulsing={product.id === pulsingProductId}
+                              isExiting={product.id === exitingProductId}
+                              onUpdateStatus={handleUpdateStatusHybrid}
+                              onDelete={handleDeleteHybrid}
+                              onAddToShoppingList={handleLowStockToShoppingList}
+                              onUpdateCategory={handleUpdateCategory}
+                              onEdit={setEditingProduct}
+                            />
+                          ))}
+                        </AnimatePresence>
+                      </div>
+                    ) : (
+                      <Accordion type="multiple" value={openCategories} onValueChange={setOpenCategories} className="w-full space-y-2">
+                         <AnimatePresence>
+                          {sortedPantryCategories.map(category => (
+                            groupedPantry?.[category] && (
+                              <AccordionItem key={`pantry-cat-${category}`} value={category} className="border-none">
+                                <AccordionTrigger className="text-sm font-semibold text-muted-foreground uppercase tracking-wider hover:no-underline rounded-md p-2">
+                                    <div className="flex items-center gap-2">{categoryIcons[category as Category]} {category}</div>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" : "flex flex-col")}>
+                                    <AnimatePresence>
+                                        {(groupedPantry?.[category] || []).map((product) => (
+                                        <ProductCard
+                                          key={`pantry-grouped-${product.id}`}
+                                          product={product}
+                                          viewMode={viewMode}
+                                          isPulsing={product.id === pulsingProductId}
+                                          isExiting={product.id === exitingProductId}
+                                          onUpdateStatus={handleUpdateStatusHybrid}
+                                          onDelete={handleDeleteHybrid}
+                                          onAddToShoppingList={handleLowStockToShoppingList}
+                                          onUpdateCategory={handleUpdateCategory}
+                                          onEdit={setEditingProduct}
+                                        />
+                                        ))}
+                                    </AnimatePresence>
+                                    </div>
+                                </AccordionContent>
+                                <Separator className="mt-2" />
+                              </AccordionItem>
+                            )
+                          ))}
+                        </AnimatePresence>
+                      </Accordion>
+                    )
                   ) : (
-                    <Accordion type="multiple" value={openCategories} onValueChange={setOpenCategories} className="w-full space-y-2">
-                       <AnimatePresence>
-                        {sortedPantryCategories.map(category => (
-                          groupedPantry?.[category] && (
-                            <AccordionItem key={`pantry-cat-${category}`} value={category} className="border-none">
-                              <AccordionTrigger className="text-sm font-semibold text-muted-foreground uppercase tracking-wider hover:no-underline rounded-md p-2">
-                                  <div className="flex items-center gap-2">{categoryIcons[category as Category]} {category}</div>
-                              </AccordionTrigger>
-                              <AccordionContent>
-                                  <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" : "flex flex-col")}>
-                                  <AnimatePresence>
-                                      {(groupedPantry?.[category] || []).map((product) => (
-                                      <ProductCard
-                                        key={`pantry-grouped-${product.id}`}
-                                        product={product}
-                                        viewMode={viewMode}
-                                        isPulsing={product.id === pulsingProductId}
-                                        isExiting={product.id === exitingProductId}
-                                        onUpdateStatus={handleUpdateStatusHybrid}
-                                        onDelete={handleDeleteHybrid}
-                                        onAddToShoppingList={handleLowStockToShoppingList}
-                                        onUpdateCategory={handleUpdateCategory}
-                                        onEdit={setEditingProduct}
-                                      />
-                                      ))}
-                                  </AnimatePresence>
-                                  </div>
-                              </AccordionContent>
-                              <Separator className="mt-2" />
-                            </AccordionItem>
-                          )
-                        ))}
-                      </AnimatePresence>
-                    </Accordion>
+                    <div className="text-center py-10 bg-card rounded-lg">
+                      <p className="text-muted-foreground">No se encontraron productos con los filtros actuales.</p>
+                    </div>
                   )
                 ) : (
                   <div className="text-center py-10 bg-card rounded-lg">
-                    <p className="text-muted-foreground">No se encontraron productos con los filtros actuales.</p>
+                    <p className="text-muted-foreground">Tu despensa está vacía. ¡Añade algunos productos!</p>
                   </div>
-                )
-              ) : (
-                <div className="text-center py-10 bg-card rounded-lg">
-                  <p className="text-muted-foreground">Tu despensa está vacía. ¡Añade algunos productos!</p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="shopping-list">
-            {shoppingList.length === 0 ? (
-                <div className="text-center py-10 bg-card rounded-lg mt-6">
-                <p className="text-muted-foreground">¡Tu lista de compra está vacía!</p>
-                </div>
-            ) : (
-                <>
-                {filteredShoppingList.length === 0 ? (
-                    <div className="text-center py-10 bg-card rounded-lg mt-6">
-                    <p className="text-muted-foreground">No se encontraron productos con los filtros actuales.</p>
-                    </div>
-                ) : (
-                    <>
-                    {shoppingListNow.length > 0 && (
-                        <div className="mt-6">
-                        <h2 className="mb-4 text-lg font-semibold tracking-tight">Para comprar ahora ({shoppingListNow.length})</h2>
-                        {!groupByCategory ? (
-                            <div className={cn("gap-2", viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" : "flex flex-col")}>
-                            <AnimatePresence>
-                                {shoppingListNow.map(item => (
-                                <ShoppingItemCard
-                                    key={`shopping-now-${item.id}`}
-                                    layoutId={`shopping-now-${item.id}`}
-                                    item={item}
-                                    viewMode={viewMode}
-                                    onCardClick={handleCardClick}
-                                    onToggleBuyLater={handleToggleBuyLater}
-                                    onDelete={handleDeleteHybrid}
-                                    onReturnToPantry={handleReturnToPantry}
-                                    onEdit={setEditingProduct}
-                                    isChecking={item.id === checkingItemId}
-                                    isSliding={item.id === slidingRightId}
-                                />
-                                ))}
-                            </AnimatePresence>
-                            </div>
-                        ) : (
-                            <Accordion type="multiple" value={openShoppingSections} onValueChange={setOpenShoppingSections} className="w-full space-y-2">
-                                <AnimatePresence>
-                                {sortedShoppingListNowCategories.filter(category => groupedShoppingListNow?.[category]).map(category => (
-                                    <AccordionItem key={`shopping-now-cat-${category}`} value={category} className="border-none">
-                                    <AccordionTrigger className="text-sm font-semibold text-muted-foreground uppercase tracking-wider hover:no-underline rounded-md p-2">
-                                        <div className="flex items-center gap-2">{categoryIcons[category as Category]} {category}</div>
-                                    </AccordionTrigger>
-                                    <AccordionContent>
-                                        <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" : "flex flex-col")}>
-                                        <AnimatePresence>
-                                            {(groupedShoppingListNow?.[category] || []).map((item) => (
-                                                <ShoppingItemCard
-                                                    key={`shopping-now-grouped-${item.id}`}
-                                                    layoutId={`shopping-now-grouped-${item.id}`}
-                                                    item={item} viewMode={viewMode}
-                                                    onCardClick={handleCardClick}
-                                                    onToggleBuyLater={handleToggleBuyLater} onDelete={handleDeleteHybrid}
-                                                    onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
-                                                    isChecking={item.id === checkingItemId}
-                                                    isSliding={item.id === slidingRightId}
-                                                />
-                                            ))}
-                                        </AnimatePresence>
-                                        </div>
-                                    </AccordionContent>
-                                    <Separator className="mt-2" />
-                                    </AccordionItem>
-                                ))}
-                                </AnimatePresence>
-                            </Accordion>
-                        )}
-                        </div>
-                    )}
-
-                    {shoppingListLater.length > 0 && (
-                        <>
-                            <Separator className="my-8" />
-                            <Accordion type="multiple" value={openShoppingSections} onValueChange={setOpenShoppingSections} className="w-full">
-                                <AccordionItem value="buy-later-section" className="border-none">
-                                    <AccordionTrigger className="hover:no-underline">
-                                    <h2 className="text-lg font-semibold tracking-tight text-foreground">Comprar otro día ({shoppingListLater.length})</h2>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="pt-4">
-                                        {!groupByCategory ? (
-                                            <div className={cn("gap-2", viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" : "flex flex-col")}>
-                                            <AnimatePresence>
-                                                {shoppingListLater.map(item => (
-                                                    <ShoppingItemCard
-                                                        key={`shopping-later-${item.id}`}
-                                                        layoutId={`shopping-later-${item.id}`}
-                                                        item={item} viewMode={viewMode}
-                                                        onCardClick={handleCardClick}
-                                                        onToggleBuyLater={handleToggleBuyLater} onDelete={handleDeleteHybrid}
-                                                        onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
-                                                        isChecking={item.id === checkingItemId}
-                                                        isSliding={item.id === slidingRightId}
-                                                    />
-                                                ))}
-                                            </AnimatePresence>
-                                            </div>
-                                        ) : (
-                                            <Accordion type="multiple" value={openShoppingSections} onValueChange={setOpenShoppingSections} className="w-full space-y-2">
-                                                <AnimatePresence>
-                                                {sortedShoppingListLaterCategories.filter(category => groupedShoppingListLater?.[category]).map(category => (
-                                                    <AccordionItem key={`shopping-later-cat-${category}`} value={category} className="border-none">
-                                                    <AccordionTrigger className="text-sm font-semibold text-muted-foreground uppercase tracking-wider hover:no-underline rounded-md p-2">
-                                                        <div className="flex items-center gap-2">{categoryIcons[category as Category]} {category}</div>
-                                                    </AccordionTrigger>
-                                                    <AccordionContent>
-                                                        <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" : "flex flex-col")}>
-                                                        <AnimatePresence>
-                                                            {(groupedShoppingListLater?.[category] || []).map((item) => (
-                                                                <ShoppingItemCard
-                                                                    key={`shopping-later-grouped-${item.id}`}
-                                                                    layoutId={`shopping-later-grouped-${item.id}`}
-                                                                    item={item} viewMode={viewMode}
-                                                                    onCardClick={handleCardClick}
-                                                                    onToggleBuyLater={handleToggleBuyLater} onDelete={handleDeleteHybrid}
-                                                                    onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
-                                                                    isChecking={item.id === checkingItemId}
-                                                                    isSliding={item.id === slidingRightId}
-                                                                />
-                                                            ))}
-                                                        </AnimatePresence>
-                                                        </div>
-                                                    </AccordionContent>
-                                                    <Separator className="mt-2"/>
-                                                    </AccordionItem>
-                                                ))}
-                                                </AnimatePresence>
-                                            </Accordion>
-                                        )}
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Accordion>
-                        </>
-                    )}
-                    </>
                 )}
-                </>
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
-      
-      <ShareDialog 
-        open={showShareDialog} 
-        onOpenChange={setShowShareDialog} 
-        pantry={pantry}
-        shoppingList={shoppingList}
-      />
+              </div>
+            </TabsContent>
 
-      <IdentifyProductsDialog open={showIdentifyDialog} onOpenChange={setShowIdentifyDialog} onAddProducts={handleBulkAdd} />
-      
+            <TabsContent value="shopping-list">
+              {shoppingList.length === 0 ? (
+                  <div className="text-center py-10 bg-card rounded-lg mt-6">
+                  <p className="text-muted-foreground">¡Tu lista de compra está vacía!</p>
+                  </div>
+              ) : (
+                  <>
+                  {filteredShoppingList.length === 0 ? (
+                      <div className="text-center py-10 bg-card rounded-lg mt-6">
+                      <p className="text-muted-foreground">No se encontraron productos con los filtros actuales.</p>
+                      </div>
+                  ) : (
+                      <>
+                      {shoppingListNow.length > 0 && (
+                          <div className="mt-6">
+                          <h2 className="mb-4 text-lg font-semibold tracking-tight">Para comprar ahora ({shoppingListNow.length})</h2>
+                          {!groupByCategory ? (
+                              <div className={cn("gap-2", viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" : "flex flex-col")}>
+                              <AnimatePresence>
+                                  {shoppingListNow.map(item => (
+                                  <ShoppingItemCard
+                                      key={`shopping-now-${item.id}`}
+                                      layoutId={`shopping-now-${item.id}`}
+                                      item={item}
+                                      viewMode={viewMode}
+                                      onCardClick={handleCardClick}
+                                      onToggleBuyLater={handleToggleBuyLater}
+                                      onDelete={handleDeleteHybrid}
+                                      onReturnToPantry={handleReturnToPantry}
+                                      onEdit={setEditingProduct}
+                                      isChecking={item.id === checkingItemId}
+                                      isSliding={item.id === slidingRightId}
+                                  />
+                                  ))}
+                              </AnimatePresence>
+                              </div>
+                          ) : (
+                              <Accordion type="multiple" value={openShoppingSections} onValueChange={setOpenShoppingSections} className="w-full space-y-2">
+                                  <AnimatePresence>
+                                  {sortedShoppingListNowCategories.filter(category => groupedShoppingListNow?.[category]).map(category => (
+                                      <AccordionItem key={`shopping-now-cat-${category}`} value={category} className="border-none">
+                                      <AccordionTrigger className="text-sm font-semibold text-muted-foreground uppercase tracking-wider hover:no-underline rounded-md p-2">
+                                          <div className="flex items-center gap-2">{categoryIcons[category as Category]} {category}</div>
+                                      </AccordionTrigger>
+                                      <AccordionContent>
+                                          <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" : "flex flex-col")}>
+                                          <AnimatePresence>
+                                              {(groupedShoppingListNow?.[category] || []).map((item) => (
+                                                  <ShoppingItemCard
+                                                      key={`shopping-now-grouped-${item.id}`}
+                                                      layoutId={`shopping-now-grouped-${item.id}`}
+                                                      item={item} viewMode={viewMode}
+                                                      onCardClick={handleCardClick}
+                                                      onToggleBuyLater={handleToggleBuyLater} onDelete={handleDeleteHybrid}
+                                                      onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
+                                                      isChecking={item.id === checkingItemId}
+                                                      isSliding={item.id === slidingRightId}
+                                                  />
+                                              ))}
+                                          </AnimatePresence>
+                                          </div>
+                                      </AccordionContent>
+                                      <Separator className="mt-2" />
+                                      </AccordionItem>
+                                  ))}
+                                  </AnimatePresence>
+                              </Accordion>
+                          )}
+                          </div>
+                      )}
 
-      <Dialog open={!!confirmDeleteId} onOpenChange={() => setConfirmDeleteId(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>¿Estás seguro?</DialogTitle>
-            <DialogDescription>Esta acción no se puede deshacer. Esto eliminará permanentemente el producto.</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDeleteId(null)}>Cancelar</Button>
-            <Button
-              variant="destructive"
-              className="bg-[#2C0000] text-white hover:bg-[#2C0000]/90"
-              onClick={() => confirmDeleteId && handleDelete(confirmDeleteId)}
-            >
-              Eliminar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-       <Dialog open={showLegendDialog} onOpenChange={setShowLegendDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>🟦 Leyenda de Colores</DialogTitle>
-            <DialogDescription>
-              🔄 Puedes tocar una tarjeta para actualizar su estado.
-              <br />
-              Si lo haces desde la lista de la compra se pondrá en verde y volverá a la despensa automáticamente.
-              <br />
-              También puedes elegir guardar para otro día sin moverlo todavía.
-              <br />
-              <br />
-              El color de fondo de cada tarjeta indica el estado del producto:
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-              <div className="flex items-center gap-4">
-                <div className="h-4 w-4 rounded-full bg-verde-eucalipto shrink-0 border"/>
-                <p className="text-sm"><b>Verde:</b> Producto disponible en tu despensa.</p>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="h-4 w-4 rounded-full bg-amarillo-mostaza shrink-0 border"/>
-                <p className="text-sm"><b>Ámbar:</b> Queda poca cantidad. Puedes tocar el carrito 🛒 para añadirlo manualmente a la lista de la compra.</p>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="h-4 w-4 rounded-full bg-rojo-coral shrink-0 border"/>
-                <p className="text-sm"><b>Rojo:</b> Producto agotado. Se añade automáticamente a tu lista de la compra.</p>
-              </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setShowLegendDialog(false)}>Entendido</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      <Dialog open={isRecipeDialogOpen} onOpenChange={setIsRecipeDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Receta Sugerida</DialogTitle>
-            <DialogDescription>
-              {isGeneratingRecipe && !recipe ? "Buscando una receta deliciosa con tus ingredientes..." : (recipe ? recipe.title : "")}
-            </DialogDescription>
-          </DialogHeader>
-          {isGeneratingRecipe ? (
-            <div className="flex justify-center items-center py-10">
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            </div>
-          ) : recipe ? (
-            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-              <div>
-                <h3 className="font-semibold mb-2 text-primary">Ingredientes</h3>
-                <ul className="list-disc list-inside space-y-1 text-sm">
-                  {recipe.ingredients.map((ing, i) => <li key={`recipe-ing-${i}-${ing}`}>{ing}</li>)}
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-semibold mb-2 text-primary">Instrucciones</h3>
-                <ol className="list-decimal list-inside space-y-2 text-sm">
-                  {recipe.instructions.map((step, i) => <li key={`recipe-step-${i}`}>{step}</li>)}
-                </ol>
-              </div>
-               <div>
-                <h3 className="font-semibold mb-2 text-primary">Nota del Chef</h3>
-                <p className="text-sm text-muted-foreground italic">{recipe.note}</p>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-10">
-              <p className="text-muted-foreground">No se pudo generar la receta. Inténtalo de nuevo.</p>
-            </div>
-          )}
-          <DialogFooter className="flex-row justify-between sm:justify-between w-full">
-             <Button variant="outline" onClick={() => setIsRecipeDialogOpen(false)}>Cerrar</Button>
-             <Button
-              variant="secondary"
-              onClick={handleGenerateRecipe}
-              disabled={isGeneratingRecipe}
-            >
-              {isGeneratingRecipe ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4"/>}
-              Probar otra
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                      {shoppingListLater.length > 0 && (
+                          <>
+                              <Separator className="my-8" />
+                              <Accordion type="multiple" value={openShoppingSections} onValueChange={setOpenShoppingSections} className="w-full">
+                                  <AccordionItem value="buy-later-section" className="border-none">
+                                      <AccordionTrigger className="hover:no-underline">
+                                      <h2 className="text-lg font-semibold tracking-tight text-foreground">Comprar otro día ({shoppingListLater.length})</h2>
+                                      </AccordionTrigger>
+                                      <AccordionContent className="pt-4">
+                                          {!groupByCategory ? (
+                                              <div className={cn("gap-2", viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" : "flex flex-col")}>
+                                              <AnimatePresence>
+                                                  {shoppingListLater.map(item => (
+                                                      <ShoppingItemCard
+                                                          key={`shopping-later-${item.id}`}
+                                                          layoutId={`shopping-later-${item.id}`}
+                                                          item={item} viewMode={viewMode}
+                                                          onCardClick={handleCardClick}
+                                                          onToggleBuyLater={handleToggleBuyLater} onDelete={handleDeleteHybrid}
+                                                          onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
+                                                          isChecking={item.id === checkingItemId}
+                                                          isSliding={item.id === slidingRightId}
+                                                      />
+                                                  ))}
+                                              </AnimatePresence>
+                                              </div>
+                                          ) : (
+                                              <Accordion type="multiple" value={openShoppingSections} onValueChange={setOpenShoppingSections} className="w-full space-y-2">
+                                                  <AnimatePresence>
+                                                  {sortedShoppingListLaterCategories.filter(category => groupedShoppingListLater?.[category]).map(category => (
+                                                      <AccordionItem key={`shopping-later-cat-${category}`} value={category} className="border-none">
+                                                      <AccordionTrigger className="text-sm font-semibold text-muted-foreground uppercase tracking-wider hover:no-underline rounded-md p-2">
+                                                          <div className="flex items-center gap-2">{categoryIcons[category as Category]} {category}</div>
+                                                      </AccordionTrigger>
+                                                      <AccordionContent>
+                                                          <div className={cn("gap-2 pt-2", viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" : "flex flex-col")}>
+                                                          <AnimatePresence>
+                                                              {(groupedShoppingListLater?.[category] || []).map((item) => (
+                                                                  <ShoppingItemCard
+                                                                      key={`shopping-later-grouped-${item.id}`}
+                                                                      layoutId={`shopping-later-grouped-${item.id}`}
+                                                                      item={item} viewMode={viewMode}
+                                                                      onCardClick={handleCardClick}
+                                                                      onToggleBuyLater={handleToggleBuyLater} onDelete={handleDeleteHybrid}
+                                                                      onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
+                                                                      isChecking={item.id === checkingItemId}
+                                                                      isSliding={item.id === slidingRightId}
+                                                                  />
+                                                              ))}
+                                                          </AnimatePresence>
+                                                          </div>
+                                                      </AccordionContent>
+                                                      <Separator className="mt-2"/>
+                                                      </AccordionItem>
+                                                  ))}
+                                                  </AnimatePresence>
+                                              </Accordion>
+                                          )}
+                                      </AccordionContent>
+                                  </AccordionItem>
+                              </Accordion>
+                          </>
+                      )}
+                      </>
+                  )}
+                  </>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+        
+        <ShareDialog 
+          open={showShareDialog} 
+          onOpenChange={setShowShareDialog} 
+          pantry={pantry}
+          shoppingList={shoppingList}
+        />
 
-      <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
-        <DialogContent>
+        <IdentifyProductsDialog open={showIdentifyDialog} onOpenChange={setShowIdentifyDialog} onAddProducts={handleBulkAdd} />
+        
+
+        <Dialog open={!!confirmDeleteId} onOpenChange={() => setConfirmDeleteId(null)}>
+          <DialogContent>
             <DialogHeader>
-                <DialogTitle>Editar nombre del producto</DialogTitle>
-                <DialogDescription>
-                    Cambia el nombre de "{editingProduct?.name}" y pulsa guardar.
-                </DialogDescription>
+              <DialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>¿Estás seguro?</DialogTitle>
+              <DialogDescription>Esta acción no se puede deshacer. Esto eliminará permanentemente el producto.</DialogDescription>
             </DialogHeader>
-            <div className="pt-4">
-                <Label htmlFor="product-name-edit" className="sr-only">
-                    Nuevo nombre
-                </Label>
-                <Input
-                    id="product-name-edit"
-                    value={newProductName}
-                    onChange={(e) => setNewProductName(e.target.value)}
-                    onKeyDown={(e) => {if (e.key === 'Enter') { e.preventDefault(); handleUpdateName()}}}
-                    placeholder="Nuevo nombre del producto"
-                    className="bg-gray-800 text-white placeholder-gray-400"
-                />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmDeleteId(null)}>Cancelar</Button>
+              <Button
+                variant="destructive"
+                className="bg-[#2C0000] text-white hover:bg-[#2C0000]/90"
+                onClick={() => confirmDeleteId && handleDelete(confirmDeleteId)}
+              >
+                Eliminar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+         <Dialog open={showLegendDialog} onOpenChange={setShowLegendDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>🟦 Leyenda de Colores</DialogTitle>
+              <DialogDescription>
+                🔄 Puedes tocar una tarjeta para actualizar su estado.
+                <br />
+                Si lo haces desde la lista de la compra se pondrá en verde y volverá a la despensa automáticamente.
+                <br />
+                También puedes elegir guardar para otro día sin moverlo todavía.
+                <br />
+                <br />
+                El color de fondo de cada tarjeta indica el estado del producto:
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+                <div className="flex items-center gap-4">
+                  <div className="h-4 w-4 rounded-full bg-verde-eucalipto shrink-0 border"/>
+                  <p className="text-sm"><b>Verde:</b> Producto disponible en tu despensa.</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="h-4 w-4 rounded-full bg-amarillo-mostaza shrink-0 border"/>
+                  <p className="text-sm"><b>Ámbar:</b> Queda poca cantidad. Puedes tocar el carrito 🛒 para añadirlo manualmente a la lista de la compra.</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="h-4 w-4 rounded-full bg-rojo-coral shrink-0 border"/>
+                  <p className="text-sm"><b>Rojo:</b> Producto agotado. Se añade automáticamente a tu lista de la compra.</p>
+                </div>
             </div>
             <DialogFooter>
-                <Button variant="outline" onClick={() => setEditingProduct(null)}>Cancelar</Button>
-                <Button onClick={handleUpdateName}>Guardar cambios</Button>
+              <Button onClick={() => setShowLegendDialog(false)}>Entendido</Button>
             </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+          </DialogContent>
+        </Dialog>
+        
+        <Dialog open={isRecipeDialogOpen} onOpenChange={setIsRecipeDialogOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Receta Sugerida</DialogTitle>
+              <DialogDescription>
+                {isGeneratingRecipe && !recipe ? "Buscando una receta deliciosa con tus ingredientes..." : (recipe ? recipe.title : "")}
+              </DialogDescription>
+            </DialogHeader>
+            {isGeneratingRecipe ? (
+              <div className="flex justify-center items-center py-10">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              </div>
+            ) : recipe ? (
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                <div>
+                  <h3 className="font-semibold mb-2 text-primary">Ingredientes</h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    {recipe.ingredients.map((ing, i) => <li key={`recipe-ing-${i}-${ing}`}>{ing}</li>)}
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-2 text-primary">Instrucciones</h3>
+                  <ol className="list-decimal list-inside space-y-2 text-sm">
+                    {recipe.instructions.map((step, i) => <li key={`recipe-step-${i}`}>{step}</li>)}
+                  </ol>
+                </div>
+                 <div>
+                  <h3 className="font-semibold mb-2 text-primary">Nota del Chef</h3>
+                  <p className="text-sm text-muted-foreground italic">{recipe.note}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-10">
+                <p className="text-muted-foreground">No se pudo generar la receta. Inténtalo de nuevo.</p>
+              </div>
+            )}
+            <DialogFooter className="flex-row justify-between sm:justify-between w-full">
+               <Button variant="outline" onClick={() => setIsRecipeDialogOpen(false)}>Cerrar</Button>
+               <Button
+                variant="secondary"
+                onClick={handleGenerateRecipe}
+                disabled={isGeneratingRecipe}
+              >
+                {isGeneratingRecipe ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4"/>}
+                Probar otra
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
+          <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>Editar nombre del producto</DialogTitle>
+                  <DialogDescription>
+                      Cambia el nombre de "{editingProduct?.name}" y pulsa guardar.
+                  </DialogDescription>
+              </DialogHeader>
+              <div className="pt-4">
+                  <Label htmlFor="product-name-edit" className="sr-only">
+                      Nuevo nombre
+                  </Label>
+                  <Input
+                      id="product-name-edit"
+                      value={newProductName}
+                      onChange={(e) => setNewProductName(e.target.value)}
+                      onKeyDown={(e) => {if (e.key === 'Enter') { e.preventDefault(); handleUpdateName()}}}
+                      placeholder="Nuevo nombre del producto"
+                      className="bg-gray-800 text-white placeholder-gray-400"
+                  />
+              </div>
+              <DialogFooter>
+                  <Button variant="outline" onClick={() => setEditingProduct(null)}>Cancelar</Button>
+                  <Button onClick={handleUpdateName}>Guardar cambios</Button>
+              </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </>
   );
 }

@@ -43,7 +43,10 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
       docRef,
       { includeMetadataChanges: true },
       (snap) => {
+        // 1. Log de metadata para depuración
+        console.log('Firestore snapshot metadata:', snap.metadata);
         setHasPendingWrites(snap.metadata.hasPendingWrites);
+        // 2. Procesar SIEMPRE todos los snapshots, sin filtrar por hasPendingWrites ni fromCache
         if (snap.exists()) {
           const data = snap.data();
           setListData({
