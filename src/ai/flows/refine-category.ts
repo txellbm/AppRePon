@@ -1,14 +1,5 @@
 'use server';
 
-/**
- * @fileOverview This file defines a Genkit flow for manually overriding the category of an item.
- * It has been simplified to use a direct prompt instead of a tool to ensure deployment stability.
- *
- * - refineCategory - A function that handles the category refinement process.
- * - RefineCategoryInput - The input type for the refineCategory function.
- * - RefineCategoryOutput - The return type for the refineCategory function.
- */
-
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
@@ -20,7 +11,7 @@ const RefineCategoryInputSchema = z.object({
 export type RefineCategoryInput = z.infer<typeof RefineCategoryInputSchema>;
 
 const RefineCategoryOutputSchema = z.object({
-  refinedCategory: z.string().describe('The refined category for the item.'),
+  refinedCategory: z.string(),
 });
 export type RefineCategoryOutput = z.infer<typeof RefineCategoryOutputSchema>;
 
@@ -48,8 +39,6 @@ const refineCategoryFlow = ai.defineFlow(
     outputSchema: RefineCategoryOutputSchema,
   },
   async (input) => {
-    // For now, we will just honor the user's override.
-    // The prompt will guide the model to do this, but we add a fallback.
     try {
         const {output} = await refineCategoryPrompt(input);
         if (output?.refinedCategory) {
@@ -58,8 +47,6 @@ const refineCategoryFlow = ai.defineFlow(
     } catch (error) {
         console.warn("AI for category refinement failed, using user override directly.", error);
     }
-    
-    // Fallback to simply returning what the user selected.
     return { refinedCategory: input.userOverrideCategory };
   }
 );

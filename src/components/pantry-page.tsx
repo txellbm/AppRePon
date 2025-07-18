@@ -9,12 +9,10 @@ import { IdentifyProductsDialog } from "@/components/identify-products-dialog";
 import { ShareDialog } from "@/components/share-dialog";
 import Image from "next/image";
 
-
 import { Button } from "@/components/ui/button";
 import {
   Plus,
   Trash2,
-  List,
   LayoutGrid,
   Link,
   AlertTriangle,
@@ -39,7 +37,6 @@ import {
   RefreshCw,
   ChefHat,
   HelpCircle,
-  Settings,
   Filter,
   History,
   MoveUp,

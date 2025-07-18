@@ -1,10 +1,3 @@
-import { config } from 'dotenv';
-import { resolve } from 'path';
-// Load variables from `.env.local` (at the project root) to enable AI features
-// in development.
-config({ path: resolve(process.cwd(), '.env.local') });
-
-
 (async () => {
   await import('@/ai/flows/categorize-product.ts');
   await import('@/ai/flows/refine-category.ts');

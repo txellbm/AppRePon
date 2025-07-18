@@ -1,11 +1,4 @@
 'use server';
-/**
- * @fileOverview A Genkit flow to generate a recipe from a list of ingredients.
- *
- * - generateRecipe - A function that takes a list of products and returns a recipe.
- * - GenerateRecipeInput - The input type for the generateRecipe function.
- * - GenerateRecipeOutput - The return type for the generateRecipe function.
- */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
@@ -17,10 +10,10 @@ const GenerateRecipeInputSchema = z.object({
 export type GenerateRecipeInput = z.infer<typeof GenerateRecipeInputSchema>;
 
 const GenerateRecipeOutputSchema = z.object({
-  title: z.string().describe('The creative and appealing title of the recipe.'),
-  ingredients: z.array(z.string()).describe('A list of ingredients required for the recipe. Each string should include the ingredient name and its quantity in both metric units (grams, ml) and common household measures (e.g., "1 cucharada", "1/2 taza").'),
-  instructions: z.array(z.string()).describe('Step-by-step instructions to prepare the dish.'),
-  note: z.string().describe("A brief explanation of how the recipe contributes to the user's health goals."),
+  title: z.string(),
+  ingredients: z.array(z.string()),
+  instructions: z.array(z.string()),
+  note: z.string(),
 });
 export type GenerateRecipeOutput = z.infer<typeof GenerateRecipeOutputSchema>;
 
@@ -41,7 +34,7 @@ const prompt = ai.definePrompt({
 4.  **Cantidades Precisas:** En la lista de 'ingredients', especifica las cantidades tanto en unidades métricas (gramos, ml) como en medidas caseras (cucharadas, tazas, etc.). Las cantidades deben estar calculadas con precisión para una ración.
 5.  **Fácil y Rápida:** La preparación debe ser sencilla, ideal para alguien que cuida su alimentación.
 6.  **Especias y Grasas Saludables:** Utiliza, si es posible, especias o aceites saludables presentes en la despensa (como cúrcuma, jengibre, canela, romero, aceite de oliva).
-7.  **Formato de Salida:** Presenta el plato con un \`title\` (nombre), \`ingredients\` (lista de ingredientes) y \`instructions\` (pasos claros).
+7.  **Formato de Salida:** Presenta el plato con un `title` (nombre), `ingredients` (lista de ingredientes) y `instructions`
 
 {{#if previousRecipeTitles}}
 **Recetas a Evitar:** No sugieras recetas con los siguientes títulos: {{#each previousRecipeTitles}}"{{{this}}}"{{#unless @last}}, {{/unless}}{{/each}}. Sé creativo y ofrece una alternativa completamente diferente.
