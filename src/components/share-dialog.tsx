@@ -80,6 +80,21 @@ export function ShareDialog({ open, onOpenChange, pantry, shoppingList }: ShareD
     );
   };
   
+  const INSTALL_MESSAGE = `🧼 **¡Importante!**  
+Si ya tienes instalada otra versión de la app RePon, **bórrala primero** antes de instalar esta nueva, para que funcione bien y no tengas dos apps mezcladas.
+
+📲 **Aquí tienes el nuevo enlace** para instalar RePon en tu móvil como si fuera una app:
+
+https://apprepon.vercel.app
+
+1. Abre este enlace en **Google Chrome**.
+2. Pulsa el icono de los **tres puntitos** (arriba a la derecha).
+3. Selecciona **“Añadir a pantalla de inicio”**.
+4. Pulsa **“Añadir”**.
+
+¡Y listo! Ya tendrás la app instalada en tu móvil.  
+Si tienes dudas, dímelo y te ayudo. 📦📲😊`;
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -100,8 +115,8 @@ export function ShareDialog({ open, onOpenChange, pantry, shoppingList }: ShareD
           </div>
         </div>
         <DialogFooter className="sm:justify-end gap-2">
-          <Button variant="outline" onClick={() => copyToClipboard(generateShareableText())}>
-            <Copy className="mr-2 h-4 w-4" /> Copiar al portapapeles
+          <Button variant="outline" onClick={() => copyToClipboard(INSTALL_MESSAGE)}>
+            <Copy className="mr-2 h-4 w-4" /> 📋 Copiar instrucciones de instalación
           </Button>
         </DialogFooter>
       </DialogContent>
