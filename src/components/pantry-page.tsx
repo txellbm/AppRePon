@@ -559,6 +559,7 @@ export default function PantryPage({ listId }: { listId: string }) {
   const [optimisticShoppingList, setOptimisticShoppingList] = useState<Product[] | undefined>(undefined);
 
   const isOnline = useOnlineStatus();
+  console.log('isOnline', isOnline);
 
   useEffect(() => {
     if (editingProduct) {
