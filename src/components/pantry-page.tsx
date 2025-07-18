@@ -1131,24 +1131,23 @@ export default function PantryPage({ listId }: { listId: string }) {
   // Arrays seguros para evitar crash por undefined
   const safeArray = <T,>(arr: T[] | undefined | null): T[] => Array.isArray(arr) ? arr : [];
 
-  // Siempre renderizar arrays definidos y priorizar el estado optimista
-  const pantryToRender = safeArray(optimisticPantry) ?? safeArray(pantry);
-  const shoppingListToRender = safeArray(optimisticShoppingList) ?? safeArray(shoppingList);
+  // 1. Patrón condicional para arrays a renderizar
+  const pantryToRender = isOnline ? pantry : optimisticPantry ?? pantry;
+  const shoppingListToRender = isOnline ? shoppingList : optimisticShoppingList ?? shoppingList;
 
-  // Derivados SIEMPRE arrays
+  // 2. Cálculos derivados condicionales
   const filteredPantry = useMemo(() => {
     return safeArray(sortedAndFiltered(safeArray(pantryToRender)));
-  }, [pantryToRender, sortConfig, statusFilter, searchQuery]);
+  }, [isOnline, pantry, optimisticPantry, sortConfig, statusFilter, searchQuery]);
   const filteredShoppingList = useMemo(() => {
     return safeArray(sortedAndFiltered(safeArray(shoppingListToRender)));
-  }, [shoppingListToRender, sortConfig, statusFilter, searchQuery]);
+  }, [isOnline, shoppingList, optimisticShoppingList, sortConfig, statusFilter, searchQuery]);
   const shoppingListNow = useMemo(() => {
     return safeArray(filteredShoppingList).filter(p => !p.buyLater);
   }, [filteredShoppingList]);
   const shoppingListLater = useMemo(() => {
     return safeArray(filteredShoppingList).filter(p => p.buyLater);
   }, [filteredShoppingList]);
-
   const groupedPantry = useMemo(() => {
     if (!groupByCategory) return {} as Record<string, Product[]>;
     return safeArray(filteredPantry).reduce((acc, product) => {
@@ -1158,9 +1157,7 @@ export default function PantryPage({ listId }: { listId: string }) {
       return acc;
     }, {} as Record<string, Product[]>);
   }, [filteredPantry, groupByCategory]);
-
   const sortedPantryCategories = useMemo(() => Object.keys(groupedPantry).sort(), [groupedPantry]);
-
   const groupedShoppingListNow = useMemo(() => {
     if (!groupByCategory) return {} as Record<string, Product[]>;
     return safeArray(shoppingListNow).reduce((acc, product) => {
@@ -1170,9 +1167,7 @@ export default function PantryPage({ listId }: { listId: string }) {
       return acc;
     }, {} as Record<string, Product[]>);
   }, [shoppingListNow, groupByCategory]);
-
   const sortedShoppingListNowCategories = useMemo(() => Object.keys(groupedShoppingListNow).sort(), [groupedShoppingListNow]);
-
   const groupedShoppingListLater = useMemo(() => {
     if (!groupByCategory) return {} as Record<string, Product[]>;
     return safeArray(shoppingListLater).reduce((acc, product) => {
@@ -1182,7 +1177,6 @@ export default function PantryPage({ listId }: { listId: string }) {
       return acc;
     }, {} as Record<string, Product[]>);
   }, [shoppingListLater, groupByCategory]);
-
   const sortedShoppingListLaterCategories = useMemo(() => Object.keys(groupedShoppingListLater).sort(), [groupedShoppingListLater]);
 
   const getInstallMessage = () => {
@@ -1317,6 +1311,17 @@ export default function PantryPage({ listId }: { listId: string }) {
     }
     prevOnline.current = isOnline;
   }, [isOnline, pantryToRender, shoppingListToRender, pantry, shoppingList, updateRemoteList]);
+
+  useEffect(() => {
+    if (!isOnline) {
+      toast({
+        title: "Modo offline",
+        description: "Estás sin conexión. Los cambios se sincronizarán cuando vuelvas a estar online.",
+        variant: "default",
+        duration: 4000
+      });
+    }
+  }, [isOnline]);
 
   if (!isLoaded) {
     return (
