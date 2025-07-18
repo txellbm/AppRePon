@@ -535,6 +535,10 @@ export default function PantryPage({ listId }: { listId: string }) {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [newProductName, setNewProductName] = useState("");
 
+  // Estados optimistas inicializados como undefined
+  const [optimisticPantry, setOptimisticPantry] = useState<Product[] | undefined>(undefined);
+  const [optimisticShoppingList, setOptimisticShoppingList] = useState<Product[] | undefined>(undefined);
+
   useEffect(() => {
     if (editingProduct) {
         setNewProductName(editingProduct.name);
@@ -718,55 +722,58 @@ export default function PantryPage({ listId }: { listId: string }) {
   }, [activeTab, groupByCategory, shoppingList]);
 
 
-  const handleUpdateStatus = async (id: string, status: ProductStatus) => {
-    const product = pantry.find(p => p.id === id);
+  const handleUpdateStatus = (id: string, status: ProductStatus) => {
+    const product = pantryToRender.find(p => p.id === id);
     if (!product) return;
 
     setPulsingProductId(id);
     setTimeout(() => setPulsingProductId(null), 500);
-    
-    let newPantry = [...pantry];
-    let newShoppingList = [...shoppingList];
+
+    let newPantry = [...pantryToRender];
+    let newShoppingList = [...shoppingListToRender];
 
     if (status === 'out of stock') {
-        const interimPantry = pantry.map(p => p.id === id ? { ...p, status: 'out of stock' as ProductStatus } : p);
-        updateRemoteList({ pantry: interimPantry });
+      const interimPantry = pantryToRender.map(p => p.id === id ? { ...p, status: 'out of stock' as ProductStatus } : p);
+      setOptimisticPantry(interimPantry);
+      updateRemoteList({ pantry: interimPantry });
+      setTimeout(() => {
+        setExitingProductId(id);
         setTimeout(() => {
-            setExitingProductId(id);
-            setTimeout(() => {
-                const finalPantry = pantry.filter(p => p.id !== id);
-                let finalShoppingList = [...shoppingList];
-                const existingShoppingItem = shoppingList.find(item => item.id === product.id);
-                if (existingShoppingItem) {
-                    finalShoppingList = shoppingList.map(item => item.id === product.id ? { ...item, status: 'out of stock', reason: 'out of stock' } : item);
-                } else {
-                    const { isPendingPurchase, ...restOfProduct } = product;
-                    finalShoppingList.push({
-                        ...restOfProduct,
-                        status: 'out of stock',
-                        reason: 'out of stock',
-                        isPendingPurchase: false,
-                        buyLater: false,
-                    });
-                }
-                updateRemoteList({ pantry: finalPantry, shoppingList: finalShoppingList });
-                setExitingProductId(null);
-            }, 500);
-        }, 2000);
-        return;
+          const finalPantry = pantryToRender.filter(p => p.id !== id);
+          let finalShoppingList = [...shoppingListToRender];
+          const existingShoppingItem = shoppingListToRender.find(item => item.id === product.id);
+          if (existingShoppingItem) {
+            finalShoppingList = shoppingListToRender.map(item => item.id === product.id ? { ...item, status: 'out of stock', reason: 'out of stock' } : item);
+          } else {
+            const { isPendingPurchase, ...restOfProduct } = product;
+            finalShoppingList.push({
+              ...restOfProduct,
+              status: 'out of stock',
+              reason: 'out of stock',
+              isPendingPurchase: false,
+              buyLater: false,
+            });
+          }
+          setOptimisticPantry(finalPantry);
+          setOptimisticShoppingList(finalShoppingList);
+          updateRemoteList({ pantry: finalPantry, shoppingList: finalShoppingList });
+          setExitingProductId(null);
+        }, 500);
+      }, 2000);
+      return;
     }
 
-    newPantry = pantry.map(p => (p.id === id ? { ...p, status, isPendingPurchase: status === 'available' ? false : p.isPendingPurchase } : p));
-    
+    newPantry = pantryToRender.map(p => (p.id === id ? { ...p, status, isPendingPurchase: status === 'available' ? false : p.isPendingPurchase } : p));
+
     if (status === 'available') {
-      const shoppingListItem = shoppingList.find(item => item.id === product.id);
+      const shoppingListItem = shoppingListToRender.find(item => item.id === product.id);
       if (shoppingListItem && shoppingListItem.reason === 'low') {
-        newShoppingList = shoppingList.filter(item => item.id !== product.id);
+        newShoppingList = shoppingListToRender.filter(item => item.id !== product.id);
       }
     }
 
-
-
+    setOptimisticPantry(newPantry);
+    setOptimisticShoppingList(newShoppingList);
     updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
   };
 
@@ -1069,6 +1076,10 @@ export default function PantryPage({ listId }: { listId: string }) {
   const currentAddItemHandler = activeTab === 'pantry' ? handleAddItem : handleShoppingListAddItem;
   const currentFilterOptions = filterOptions[activeTab] || filterOptions.pantry;
 
+  // Siempre renderizar arrays definidos
+  const pantryToRender = optimisticPantry ?? pantry ?? [];
+  const shoppingListToRender = optimisticShoppingList ?? shoppingList ?? [];
+
   if (!isLoaded) {
     return (
         <div className="flex min-h-screen w-full items-center justify-center bg-background">
@@ -1105,6 +1116,27 @@ export default function PantryPage({ listId }: { listId: string }) {
         ))}
      </DropdownMenuRadioGroup>
   );
+
+  // Efecto para limpiar los estados optimistas cuando Firestore sincroniza
+  useEffect(() => {
+    // Solo comparamos si ambos arrays existen y tienen la misma longitud
+    if (
+      optimisticPantry &&
+      pantry &&
+      optimisticPantry.length === pantry.length &&
+      JSON.stringify(optimisticPantry) === JSON.stringify(pantry)
+    ) {
+      setOptimisticPantry(undefined);
+    }
+    if (
+      optimisticShoppingList &&
+      shoppingList &&
+      optimisticShoppingList.length === shoppingList.length &&
+      JSON.stringify(optimisticShoppingList) === JSON.stringify(shoppingList)
+    ) {
+      setOptimisticShoppingList(undefined);
+    }
+  }, [pantry, shoppingList]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
