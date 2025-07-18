@@ -1064,7 +1064,7 @@ export default function PantryPage({ listId }: { listId: string }) {
   // Arrays seguros para evitar crash por undefined
   const safeArray = <T,>(arr: T[] | undefined | null): T[] => Array.isArray(arr) ? arr : [];
 
-  // Siempre renderizar arrays definidos
+  // Siempre renderizar arrays definidos y priorizar el estado optimista
   const pantryToRender = safeArray(optimisticPantry) ?? safeArray(pantry);
   const shoppingListToRender = safeArray(optimisticShoppingList) ?? safeArray(shoppingList);
 
@@ -1520,8 +1520,8 @@ export default function PantryPage({ listId }: { listId: string }) {
             <AddItemForm
               onAddItem={handleAddItemHybrid}
               history={history}
-              pantry={safeArray(pantry)}
-              shoppingList={safeArray(shoppingList)}
+              pantry={pantryToRender}
+              shoppingList={shoppingListToRender}
               activeTab={activeTab}
               onDeleteHistoryItem={handleDeleteHistoryItem}
             />
