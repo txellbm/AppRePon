@@ -41,17 +41,20 @@ export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: Id
   const handleIdentify = async (dataUri: string) => {
     setDialogState("processing");
     try {
+      console.log('[IA] Enviando imagen a la IA para identificar productos...');
       const result = await identifyProductsFromPhoto({ photoDataUri: dataUri });
+      console.log('[IA] Respuesta de la IA:', result);
       if (result.products.length > 0) {
         await (onAddProducts as any)(result.products);
         toast({ title: "Productos añadidos", description: `${result.products.length} producto(s) añadido(s) a tu despensa.` });
         onOpenChange(false);
       } else {
+        console.warn('[IA] No se encontraron productos en la imagen.');
         toast({ title: "No se encontraron productos", description: "Prueba con otra foto más clara o con más productos.", variant: "destructive" });
         setDialogState("capture");
       }
     } catch (error) {
-      console.error("Identification failed", error);
+      console.error("[IA] Error en la identificación de productos", error);
       toast({ title: "Error en la identificación", description: "No se pudieron identificar los productos.", variant: "destructive" });
       setDialogState("capture");
     }
@@ -59,19 +62,37 @@ export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: Id
   
   const handleCapture = async () => {
     try {
+      console.log('[CÁMARA] Solicitando acceso a la cámara...');
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: "environment" } },
       });
+      // Mostrar el stream en un elemento de vídeo temporal para depuración
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.play();
+      setTimeout(() => {
+        // Si el vídeo sigue en negro tras 2 segundos, log de advertencia
+        if (video.videoWidth === 0 || video.videoHeight === 0) {
+          console.warn('[CÁMARA] El stream de vídeo está en negro o no se inicializó correctamente.');
+        } else {
+          console.log('[CÁMARA] Stream de vídeo inicializado:', video.videoWidth, 'x', video.videoHeight);
+        }
+        video.pause();
+        video.srcObject = null;
+      }, 2000);
       const track = stream.getVideoTracks()[0];
       const imageCapture = new (window as any).ImageCapture(track);
       const blob = await imageCapture.takePhoto();
       stream.getTracks().forEach((t) => t.stop());
-
+      console.log('[CÁMARA] Foto capturada, tamaño:', blob.size, 'bytes');
       const reader = new FileReader();
-      reader.onloadend = () => handleIdentify(reader.result as string);
+      reader.onloadend = () => {
+        console.log('[CÁMARA] Imagen convertida a DataURL, enviando a IA...');
+        handleIdentify(reader.result as string);
+      };
       reader.readAsDataURL(blob);
     } catch (err) {
-      console.error("Error capturing photo", err);
+      console.error('[CÁMARA] Error al capturar foto', err);
     }
   };
 

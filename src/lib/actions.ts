@@ -75,7 +75,38 @@ async function runWithAIFallback<T, U>(
 export async function categorizeProduct(
   input: CategorizeProductInput
 ): Promise<CategorizeProductOutput> {
-  return runWithAIFallback(categorizeProductFlow, input, { category: 'Otros' }, 'categorizeProduct');
+  try {
+    const result = await categorizeProductFlow(input);
+    const validCategories = [
+      "Frutas y Verduras",
+      "Lácteos y Huevos",
+      "Proteínas",
+      "Panadería y Cereales",
+      "Aperitivos",
+      "Bebidas",
+      "Hogar y Limpieza",
+      "Condimentos y Especias",
+      "Conservas y Despensa",
+      "Otros"
+    ];
+    if (!result || !result.category) {
+      console.error('[CATEGORIZACIÓN] La IA no devolvió ninguna categoría para', input.productName, '->', result);
+      console.warn('[CATEGORIZACIÓN] Usando fallback: "Otros"');
+      return { category: 'Otros' };
+    }
+    if (!validCategories.includes(result.category)) {
+      console.error('[CATEGORIZACIÓN] La IA devolvió una categoría no válida para', input.productName, ':', result.category);
+      console.warn('[CATEGORIZACIÓN] Usando fallback: "Otros"');
+      return { category: 'Otros' };
+    }
+    // Log de éxito
+    console.log('[CATEGORIZACIÓN] Categoría IA para', input.productName, ':', result.category);
+    return result;
+  } catch (error) {
+    console.error('[CATEGORIZACIÓN] Error al llamar a la IA para', input.productName, ':', error);
+    console.warn('[CATEGORIZACIÓN] Usando fallback: "Otros"');
+    return { category: 'Otros' };
+  }
 }
 
 export async function refineCategory(
@@ -105,21 +136,36 @@ export async function handleVoiceCommand(
 export async function correctProductName(
   input: CorrectProductNameInput
 ): Promise<CorrectProductNameOutput> {
-  const correctedName =
-    input.productName.charAt(0).toUpperCase() +
-    input.productName.slice(1).toLowerCase();
-  let fallback = { correctedName };
+  const normalizedInput = input.productName.trim().toLowerCase();
+  // Comprobar si el nombre ya existe en la lista de productos comunes
+  const exactMatch = COMMON_PRODUCTS.find(
+    (candidate) => candidate.toLowerCase() === normalizedInput
+  );
+  let correctedName: string;
+  if (exactMatch) {
+    // Si existe, solo capitalizar correctamente
+    correctedName =
+      exactMatch.charAt(0).toUpperCase() + exactMatch.slice(1).toLowerCase();
+    return { correctedName };
+  }
 
-  const bestMatch = COMMON_PRODUCTS.reduce<{name: string; dist: number}>(
+  // Si no existe, buscar el mejor match por Levenshtein
+  const bestMatch = COMMON_PRODUCTS.reduce<{ name: string; dist: number }>(
     (acc, candidate) => {
-      const d = levenshtein(candidate.toLowerCase(), input.productName.toLowerCase());
+      const d = levenshtein(candidate.toLowerCase(), normalizedInput);
       return d < acc.dist ? { name: candidate, dist: d } : acc;
     },
-    { name: correctedName, dist: Infinity }
+    { name: input.productName, dist: Infinity }
   );
+
   if (bestMatch.dist <= 2) {
-    fallback = { correctedName: bestMatch.name };
+    correctedName = bestMatch.name.charAt(0).toUpperCase() + bestMatch.name.slice(1).toLowerCase();
+  } else {
+    correctedName =
+      input.productName.charAt(0).toUpperCase() + input.productName.slice(1).toLowerCase();
   }
+
+  let fallback = { correctedName };
   return runWithAIFallback(correctProductNameFlow, input, fallback, 'correctProductName');
 }
 
@@ -161,7 +207,21 @@ export async function generateRecipe(
     ],
     note: 'El servicio de IA no está disponible en este momento. Por favor, inténtelo de nuevo más tarde.',
   };
-  return runWithAIFallback(generateRecipeFlow, input, fallback, 'generateRecipe');
+  try {
+    const result = await generateRecipeFlow(input);
+    if (!result || !result.title || !result.ingredients || !result.instructions) {
+      console.error('[RECETA] La IA no devolvió una receta válida para', input.products, '->', result);
+      console.warn('[RECETA] Usando fallback de error');
+      return fallback;
+    }
+    // Log de éxito
+    console.log('[RECETA] Receta generada por IA:', result.title);
+    return result;
+  } catch (error) {
+    console.error('[RECETA] Error al llamar a la IA para generar receta:', error);
+    console.warn('[RECETA] Usando fallback de error');
+    return fallback;
+  }
 }
 
 export async function conversationalAssistant(
