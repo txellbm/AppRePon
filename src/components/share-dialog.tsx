@@ -115,8 +115,8 @@ Si tienes dudas, dímelo y te ayudo. 📦📲😊`;
           </div>
         </div>
         <DialogFooter className="sm:justify-end gap-2">
-          <Button variant="outline" onClick={() => copyToClipboard(INSTALL_MESSAGE)}>
-            <Copy className="mr-2 h-4 w-4" /> 📋 Copiar instrucciones de instalación
+          <Button variant="outline" onClick={() => copyToClipboard(generateShareableText())}>
+            <Copy className="mr-2 h-4 w-4" /> Copiar al portapapeles
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1028,17 +1028,20 @@ export default function PantryPage({ listId }: { listId: string }) {
   
   const sortedShoppingListLaterCategories = useMemo(() => groupedShoppingListLater ? Object.keys(groupedShoppingListLater).sort() : [], [groupedShoppingListLater]);
 
-  const handleShareLink = () => {
+  const getInstallMessage = () => {
     const appBaseUrl = window.location.origin;
-    const fullLink = `${appBaseUrl}/pantry/nuestra-despensa-compartida`;
+    return `📲 **Instrucciones para instalar la app RePon:**\n\n⚠️ Si ya tienes otra versión instalada, elimínala antes de continuar.\n\n1. Abre este enlace en tu navegador del móvil:  \n👉 ${appBaseUrl}\n\n2. Pulsa en “Compartir” o los tres puntos del navegador.\n\n3. Toca “Añadir a pantalla de inicio”.\n\n¡Y listo! Ya tendrás la app instalada como si fuera una app nativa.`;
+  };
 
-    navigator.clipboard.writeText(fullLink).then(
+  const handleShareLink = () => {
+    const message = getInstallMessage();
+    navigator.clipboard.writeText(message).then(
       () => {
-        toast({ title: "Enlace copiado al portapapeles", duration: 2500 });
+        toast({ title: "Instrucciones copiadas al portapapeles", duration: 2500 });
       },
       () => {
         toast({
-          title: "No se pudo copiar el enlace",
+          title: "No se pudo copiar el mensaje",
           description:
             "Esta función podría no estar disponible en tu navegador. Intenta copiar la URL manualmente.",
           duration: 5000,
