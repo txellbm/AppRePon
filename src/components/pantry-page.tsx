@@ -1137,24 +1137,19 @@ export default function PantryPage({ listId }: { listId: string }) {
 
   // Derivados SIEMPRE arrays
   const filteredPantry = useMemo(() => {
-    console.log('▶️ Calculando filteredPantry:', pantry);
-    return safeArray(sortedAndFiltered(safeArray(pantry)));
-  }, [pantry, sortConfig, statusFilter, searchQuery]);
+    return safeArray(sortedAndFiltered(safeArray(pantryToRender)));
+  }, [pantryToRender, sortConfig, statusFilter, searchQuery]);
   const filteredShoppingList = useMemo(() => {
-    console.log('▶️ Calculando filteredShoppingList:', shoppingList);
-    return safeArray(sortedAndFiltered(safeArray(shoppingList)));
-  }, [shoppingList, sortConfig, statusFilter, searchQuery]);
+    return safeArray(sortedAndFiltered(safeArray(shoppingListToRender)));
+  }, [shoppingListToRender, sortConfig, statusFilter, searchQuery]);
   const shoppingListNow = useMemo(() => {
-    console.log('▶️ Calculando shoppingListNow:', filteredShoppingList);
     return safeArray(filteredShoppingList).filter(p => !p.buyLater);
   }, [filteredShoppingList]);
   const shoppingListLater = useMemo(() => {
-    console.log('▶️ Calculando shoppingListLater:', filteredShoppingList);
     return safeArray(filteredShoppingList).filter(p => p.buyLater);
   }, [filteredShoppingList]);
 
   const groupedPantry = useMemo(() => {
-    console.log('▶️ Calculando groupedPantry:', filteredPantry);
     if (!groupByCategory) return {} as Record<string, Product[]>;
     return safeArray(filteredPantry).reduce((acc, product) => {
       const category = product.category || "Otros";
@@ -1164,13 +1159,9 @@ export default function PantryPage({ listId }: { listId: string }) {
     }, {} as Record<string, Product[]>);
   }, [filteredPantry, groupByCategory]);
 
-  const sortedPantryCategories = useMemo(() => {
-    console.log('▶️ Calculando sortedPantryCategories:', groupedPantry);
-    return Object.keys(groupedPantry).sort();
-  }, [groupedPantry]);
+  const sortedPantryCategories = useMemo(() => Object.keys(groupedPantry).sort(), [groupedPantry]);
 
   const groupedShoppingListNow = useMemo(() => {
-    console.log('▶️ Calculando groupedShoppingListNow:', shoppingListNow);
     if (!groupByCategory) return {} as Record<string, Product[]>;
     return safeArray(shoppingListNow).reduce((acc, product) => {
       const category = product.category || "Otros";
@@ -1180,13 +1171,9 @@ export default function PantryPage({ listId }: { listId: string }) {
     }, {} as Record<string, Product[]>);
   }, [shoppingListNow, groupByCategory]);
 
-  const sortedShoppingListNowCategories = useMemo(() => {
-    console.log('▶️ Calculando sortedShoppingListNowCategories:', groupedShoppingListNow);
-    return Object.keys(groupedShoppingListNow).sort();
-  }, [groupedShoppingListNow]);
+  const sortedShoppingListNowCategories = useMemo(() => Object.keys(groupedShoppingListNow).sort(), [groupedShoppingListNow]);
 
   const groupedShoppingListLater = useMemo(() => {
-    console.log('▶️ Calculando groupedShoppingListLater:', shoppingListLater);
     if (!groupByCategory) return {} as Record<string, Product[]>;
     return safeArray(shoppingListLater).reduce((acc, product) => {
       const category = product.category || "Otros";
@@ -1196,10 +1183,7 @@ export default function PantryPage({ listId }: { listId: string }) {
     }, {} as Record<string, Product[]>);
   }, [shoppingListLater, groupByCategory]);
 
-  const sortedShoppingListLaterCategories = useMemo(() => {
-    console.log('▶️ Calculando sortedShoppingListLaterCategories:', groupedShoppingListLater);
-    return Object.keys(groupedShoppingListLater).sort();
-  }, [groupedShoppingListLater]);
+  const sortedShoppingListLaterCategories = useMemo(() => Object.keys(groupedShoppingListLater).sort(), [groupedShoppingListLater]);
 
   const getInstallMessage = () => {
     const appBaseUrl = window.location.origin;
@@ -1297,6 +1281,42 @@ export default function PantryPage({ listId }: { listId: string }) {
       handleAddItemOptimistic(name);
     }
   }, [isOnline, handleAddItem, handleAddItemOptimistic]);
+
+  // useEffect para relanzar categorización IA al volver online
+  const prevOnline = useRef(isOnline);
+  useEffect(() => {
+    if (prevOnline.current === false && isOnline === true) {
+      // Volvemos online: relanzar categorización IA para productos con 'Otros'
+      const relanzarCategorizacion = async () => {
+        const productosOtros = [
+          ...safeArray(pantryToRender),
+          ...safeArray(shoppingListToRender)
+        ].filter(p => p.category === 'Otros');
+        for (const producto of productosOtros) {
+          try {
+            const result = await categorizeProduct({ productName: producto.name });
+            if (result && result.category && result.category !== 'Otros') {
+              // Actualizar en Firestore
+              const isPantry = safeArray(pantryToRender).some(p => p.id === producto.id);
+              const isShopping = safeArray(shoppingListToRender).some(p => p.id === producto.id);
+              if (isPantry) {
+                const newPantry = safeArray(pantry).map(p => p.id === producto.id ? { ...p, category: result.category as Category } : p);
+                updateRemoteList({ pantry: newPantry });
+              }
+              if (isShopping) {
+                const newShoppingList = safeArray(shoppingList).map(p => p.id === producto.id ? { ...p, category: result.category as Category } : p);
+                updateRemoteList({ shoppingList: newShoppingList });
+              }
+            }
+          } catch (e) {
+            // Si falla, mantener 'Otros'
+          }
+        }
+      };
+      relanzarCategorizacion();
+    }
+    prevOnline.current = isOnline;
+  }, [isOnline, pantryToRender, shoppingListToRender, pantry, shoppingList, updateRemoteList]);
 
   if (!isLoaded) {
     return (
