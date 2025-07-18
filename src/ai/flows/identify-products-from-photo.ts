@@ -36,6 +36,16 @@ const prompt = ai.definePrompt({
   output: {schema: IdentifyProductsFromPhotoOutputSchema},
   prompt: `Eres un experto en identificar productos de supermercado a partir de imágenes. Analiza la foto proporcionada.
 
+**Instrucciones clave:**
+1. Identifica el tipo de producto, no la marca comercial (salvo en casos populares).
+2. Genera nombres genéricos y descriptivos, por ejemplo:
+   - "vinagre de Módena"
+   - "galletas tipo María"
+   - "detergente para lavadora"
+   - "leche vegetal"
+3. Evita incluir marcas como "Borges", "Hacendado", "Colhogar", etc., salvo que la marca sea parte del nombre con el que el producto se identifica popularmente (por ejemplo: "galletas Oreo", "ColaCao", "Nesquik", "Actimel").
+4. El objetivo es que la app RePon pueda gestionar productos de forma flexible, sin importar la marca concreta que se compre en cada ocasión.
+
 Identifica todos los productos de alimentación o de hogar visibles. Ignora objetos que no sean productos de supermercado.
 
 Devuelve únicamente un objeto JSON con una clave "products" que contenga un array con los nombres de los productos identificados. Si no identificas ninguno, devuelve un array vacío.
