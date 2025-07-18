@@ -1008,47 +1008,54 @@ export default function PantryPage({ listId }: { listId: string }) {
         .filter(p => !searchQuery || normalize(p.name).includes(normalize(searchQuery)));
   }
 
-  const filteredPantry = useMemo(() => sortedAndFiltered(pantry), [pantry, sortConfig, statusFilter, searchQuery]);
-  const filteredShoppingList = useMemo(() => sortedAndFiltered(shoppingList), [shoppingList, sortConfig, statusFilter, searchQuery]);
+  // Arrays seguros para evitar crash por undefined
+  const safeArray = <T,>(arr: T[] | undefined | null): T[] => Array.isArray(arr) ? arr : [];
 
-  const shoppingListNow = useMemo(() => filteredShoppingList.filter(p => !p.buyLater), [filteredShoppingList]);
-  const shoppingListLater = useMemo(() => filteredShoppingList.filter(p => p.buyLater), [filteredShoppingList]);
+  // Siempre renderizar arrays definidos
+  const pantryToRender = safeArray(optimisticPantry) ?? safeArray(pantry);
+  const shoppingListToRender = safeArray(optimisticShoppingList) ?? safeArray(shoppingList);
+
+  // Derivados SIEMPRE arrays
+  const filteredPantry = useMemo(() => safeArray(sortedAndFiltered(safeArray(pantry))), [pantry, sortConfig, statusFilter, searchQuery]);
+  const filteredShoppingList = useMemo(() => safeArray(sortedAndFiltered(safeArray(shoppingList))), [shoppingList, sortConfig, statusFilter, searchQuery]);
+  const shoppingListNow = useMemo(() => safeArray(filteredShoppingList).filter(p => !p.buyLater), [filteredShoppingList]);
+  const shoppingListLater = useMemo(() => safeArray(filteredShoppingList).filter(p => p.buyLater), [filteredShoppingList]);
 
   const groupedPantry = useMemo(() => {
-    if (!groupByCategory) return null;
-    return filteredPantry.reduce((acc, product) => {
+    if (!groupByCategory) return {} as Record<string, Product[]>;
+    return safeArray(filteredPantry).reduce((acc, product) => {
       const category = product.category || "Otros";
       if (!acc[category]) acc[category] = [];
       acc[category].push(product);
       return acc;
     }, {} as Record<string, Product[]>);
   }, [filteredPantry, groupByCategory]);
-  
-  const sortedPantryCategories = useMemo(() => groupedPantry ? Object.keys(groupedPantry).sort() : [], [groupedPantry]);
-  
+
+  const sortedPantryCategories = useMemo(() => Object.keys(groupedPantry).sort(), [groupedPantry]);
+
   const groupedShoppingListNow = useMemo(() => {
-    if (!groupByCategory) return null;
-    return shoppingListNow.reduce((acc, product) => {
+    if (!groupByCategory) return {} as Record<string, Product[]>;
+    return safeArray(shoppingListNow).reduce((acc, product) => {
       const category = product.category || "Otros";
       if (!acc[category]) acc[category] = [];
       acc[category].push(product);
       return acc;
     }, {} as Record<string, Product[]>);
   }, [shoppingListNow, groupByCategory]);
-  
-  const sortedShoppingListNowCategories = useMemo(() => groupedShoppingListNow ? Object.keys(groupedShoppingListNow).sort() : [], [groupedShoppingListNow]);
-  
+
+  const sortedShoppingListNowCategories = useMemo(() => Object.keys(groupedShoppingListNow).sort(), [groupedShoppingListNow]);
+
   const groupedShoppingListLater = useMemo(() => {
-    if (!groupByCategory) return null;
-    return shoppingListLater.reduce((acc, product) => {
+    if (!groupByCategory) return {} as Record<string, Product[]>;
+    return safeArray(shoppingListLater).reduce((acc, product) => {
       const category = product.category || "Otros";
       if (!acc[category]) acc[category] = [];
       acc[category].push(product);
       return acc;
     }, {} as Record<string, Product[]>);
   }, [shoppingListLater, groupByCategory]);
-  
-  const sortedShoppingListLaterCategories = useMemo(() => groupedShoppingListLater ? Object.keys(groupedShoppingListLater).sort() : [], [groupedShoppingListLater]);
+
+  const sortedShoppingListLaterCategories = useMemo(() => Object.keys(groupedShoppingListLater).sort(), [groupedShoppingListLater]);
 
   const getInstallMessage = () => {
     const appBaseUrl = window.location.origin;
@@ -1075,10 +1082,6 @@ export default function PantryPage({ listId }: { listId: string }) {
 
   const currentAddItemHandler = activeTab === 'pantry' ? handleAddItem : handleShoppingListAddItem;
   const currentFilterOptions = filterOptions[activeTab] || filterOptions.pantry;
-
-  // Siempre renderizar arrays definidos
-  const pantryToRender = optimisticPantry ?? pantry ?? [];
-  const shoppingListToRender = optimisticShoppingList ?? shoppingList ?? [];
 
   if (!isLoaded) {
     return (
