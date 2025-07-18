@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import {
   Plus,
   Trash2,
+  List,
   LayoutGrid,
   Link,
   AlertTriangle,
