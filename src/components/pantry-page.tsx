@@ -1119,18 +1119,20 @@ export default function PantryPage({ listId }: { listId: string }) {
 
   // Efecto para limpiar los estados optimistas cuando Firestore sincroniza
   useEffect(() => {
-    // Solo comparamos si ambos arrays existen y tienen la misma longitud
+    const isValidArray = (arr: unknown): arr is Product[] => Array.isArray(arr);
+
     if (
-      optimisticPantry &&
-      pantry &&
+      isValidArray(optimisticPantry) &&
+      isValidArray(pantry) &&
       optimisticPantry.length === pantry.length &&
       JSON.stringify(optimisticPantry) === JSON.stringify(pantry)
     ) {
       setOptimisticPantry(undefined);
     }
+
     if (
-      optimisticShoppingList &&
-      shoppingList &&
+      isValidArray(optimisticShoppingList) &&
+      isValidArray(shoppingList) &&
       optimisticShoppingList.length === shoppingList.length &&
       JSON.stringify(optimisticShoppingList) === JSON.stringify(shoppingList)
     ) {
