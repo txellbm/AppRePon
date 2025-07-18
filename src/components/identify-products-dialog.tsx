@@ -21,15 +21,23 @@ type DialogState = "capture" | "processing" | "confirm";
 export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: IdentifyProductsDialogProps) {
   const { toast } = useReponToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const [dialogState, setDialogState] = useState<DialogState>("capture");
   const [identifiedProducts, setIdentifiedProducts] = useState<string[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [cameraActive, setCameraActive] = useState(false);
 
   const resetState = () => {
     setDialogState("capture");
     setIdentifiedProducts([]);
     setSelectedProducts(new Set());
+    setCameraActive(false);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
   };
 
   useEffect(() => {
@@ -60,39 +68,42 @@ export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: Id
     }
   };
   
-  const handleCapture = async () => {
+  // Iniciar cámara y mostrar vista previa
+  const handleStartCamera = async () => {
     try {
-      console.log('[CÁMARA] Solicitando acceso a la cámara...');
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: "environment" } },
       });
-      // Mostrar el stream en un elemento de vídeo temporal para depuración
-      const video = document.createElement('video');
-      video.srcObject = stream;
-      video.play();
-      setTimeout(() => {
-        // Si el vídeo sigue en negro tras 2 segundos, log de advertencia
-        if (video.videoWidth === 0 || video.videoHeight === 0) {
-          console.warn('[CÁMARA] El stream de vídeo está en negro o no se inicializó correctamente.');
-        } else {
-          console.log('[CÁMARA] Stream de vídeo inicializado:', video.videoWidth, 'x', video.videoHeight);
-        }
-        video.pause();
-        video.srcObject = null;
-      }, 2000);
-      const track = stream.getVideoTracks()[0];
-      const imageCapture = new (window as any).ImageCapture(track);
-      const blob = await imageCapture.takePhoto();
-      stream.getTracks().forEach((t) => t.stop());
-      console.log('[CÁMARA] Foto capturada, tamaño:', blob.size, 'bytes');
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        console.log('[CÁMARA] Imagen convertida a DataURL, enviando a IA...');
-        handleIdentify(reader.result as string);
-      };
-      reader.readAsDataURL(blob);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
+      streamRef.current = stream;
+      setCameraActive(true);
     } catch (err) {
-      console.error('[CÁMARA] Error al capturar foto', err);
+      toast({ title: "Error de cámara", description: "No se pudo acceder a la cámara.", variant: "destructive" });
+      setCameraActive(false);
+    }
+  };
+
+  // Capturar imagen de la vista previa
+  const handleCapturePhoto = async () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg');
+      // Detener la cámara después de capturar
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+      setCameraActive(false);
+      handleIdentify(dataUrl);
     }
   };
 
@@ -139,14 +150,24 @@ export function IdentifyProductsDialog({ open, onOpenChange, onAddProducts }: Id
         {dialogState === 'capture' && (
           <div className="space-y-4">
             <div className="flex gap-2">
-              <Button onClick={handleCapture} className="w-full">
-                <Camera className="mr-2" /> Tomar Foto
-              </Button>
+              {!cameraActive && (
+                <Button onClick={handleStartCamera} className="w-full">
+                  <Camera className="mr-2" /> Activar cámara
+                </Button>
+              )}
               <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full">
                 <Upload className="mr-2" /> Subir Imagen
               </Button>
               <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
             </div>
+            {cameraActive && (
+              <div className="flex flex-col items-center gap-2">
+                <video ref={videoRef} autoPlay playsInline style={{ width: '100%', maxHeight: 320, borderRadius: 8, background: '#000' }} />
+                <Button onClick={handleCapturePhoto} className="mt-2 w-full">
+                  📸 Capturar
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
