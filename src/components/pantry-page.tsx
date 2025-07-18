@@ -1143,6 +1143,15 @@ export default function PantryPage({ listId }: { listId: string }) {
     }
   }, [pantry, shoppingList]);
 
+  // Logs al inicio del render
+  console.log("pantry", pantry);
+  console.log("shoppingList", shoppingList);
+  console.log("filteredPantry", filteredPantry);
+  console.log("filteredShoppingList", filteredShoppingList);
+  console.log("shoppingListNow", shoppingListNow);
+  console.log("shoppingListLater", shoppingListLater);
+  console.log("groupedPantry", groupedPantry);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-20 w-full border-b bg-background/80 backdrop-blur-sm">
