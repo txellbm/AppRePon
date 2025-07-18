@@ -501,6 +501,7 @@ function ShoppingItemCard({
 }
 
 export default function PantryPage({ listId }: { listId: string }) {
+  console.log('💡 Render iniciado');
   var a,s;
   const [activeTab, setActiveTab] = useState<"pantry" | "shopping-list">("pantry");
   const { toast } = useReponToast();
@@ -666,6 +667,7 @@ export default function PantryPage({ listId }: { listId: string }) {
 
 
   useEffect(() => {
+    console.log('🟢 useEffect: pantry o groupByCategory cambian', pantry, groupByCategory);
     if (groupByCategory) {
         const prevPantrySet = new Set(prevPantryRef.current.map(p => p.id));
         const newProducts = pantry.filter(p => !prevPantrySet.has(p.id));
@@ -681,6 +683,7 @@ export default function PantryPage({ listId }: { listId: string }) {
   }, [pantry, groupByCategory, openCategories.length]);
 
   useEffect(() => {
+    console.log('🟢 useEffect: pantry cambia', pantry);
     const prevIds = new Set(prevPantryRef.current.map(p => p.id));
     const newItems = pantry.filter(p => !prevIds.has(p.id));
     if (newItems.length > 0) {
@@ -694,6 +697,7 @@ export default function PantryPage({ listId }: { listId: string }) {
   }, [pantry]);
 
   useEffect(() => {
+    console.log('🟢 useEffect: shoppingList cambia', shoppingList);
     const prevIds = new Set(prevShoppingRef.current.map(p => p.id));
     const newItems = shoppingList.filter(p => !prevIds.has(p.id));
     if (newItems.length > 0) {
@@ -707,6 +711,7 @@ export default function PantryPage({ listId }: { listId: string }) {
   }, [shoppingList]);
   
   useEffect(() => {
+    console.log('🟢 useEffect: groupByCategory, pantry, shoppingList cambian', groupByCategory, pantry, shoppingList);
     if (groupByCategory) {
       const allCategories = [...new Set([...pantry.map(p => p.category), ...shoppingList.map(p => p.category)])];
       setOpenCategories(allCategories.filter((c): c is Category => c !== undefined));
@@ -714,6 +719,7 @@ export default function PantryPage({ listId }: { listId: string }) {
   }, [groupByCategory, pantry, shoppingList]);
 
   useEffect(() => {
+    console.log('🟢 useEffect: activeTab, groupByCategory, shoppingList cambian', activeTab, groupByCategory, shoppingList);
     if (activeTab === 'shopping-list' && groupByCategory) {
       const categoriesSet = new Set<string>(['buy-later-section']);
       shoppingList.forEach(p => categoriesSet.add(p.category || 'Otros'));
@@ -721,6 +727,27 @@ export default function PantryPage({ listId }: { listId: string }) {
     }
   }, [activeTab, groupByCategory, shoppingList]);
 
+  useEffect(() => {
+    const isValidArray = (arr: unknown): arr is Product[] => Array.isArray(arr);
+    console.log('🟢 useEffect: limpieza optimista', optimisticPantry, pantry, optimisticShoppingList, shoppingList);
+    if (
+      isValidArray(optimisticPantry) &&
+      isValidArray(pantry) &&
+      optimisticPantry.length === pantry.length &&
+      JSON.stringify(optimisticPantry) === JSON.stringify(pantry)
+    ) {
+      setOptimisticPantry(undefined);
+    }
+
+    if (
+      isValidArray(optimisticShoppingList) &&
+      isValidArray(shoppingList) &&
+      optimisticShoppingList.length === shoppingList.length &&
+      JSON.stringify(optimisticShoppingList) === JSON.stringify(shoppingList)
+    ) {
+      setOptimisticShoppingList(undefined);
+    }
+  }, [pantry, shoppingList]);
 
   const handleUpdateStatus = (id: string, status: ProductStatus) => {
     const product = pantryToRender.find(p => p.id === id);
@@ -1016,12 +1043,25 @@ export default function PantryPage({ listId }: { listId: string }) {
   const shoppingListToRender = safeArray(optimisticShoppingList) ?? safeArray(shoppingList);
 
   // Derivados SIEMPRE arrays
-  const filteredPantry = useMemo(() => safeArray(sortedAndFiltered(safeArray(pantry))), [pantry, sortConfig, statusFilter, searchQuery]);
-  const filteredShoppingList = useMemo(() => safeArray(sortedAndFiltered(safeArray(shoppingList))), [shoppingList, sortConfig, statusFilter, searchQuery]);
-  const shoppingListNow = useMemo(() => safeArray(filteredShoppingList).filter(p => !p.buyLater), [filteredShoppingList]);
-  const shoppingListLater = useMemo(() => safeArray(filteredShoppingList).filter(p => p.buyLater), [filteredShoppingList]);
+  const filteredPantry = useMemo(() => {
+    console.log('▶️ Calculando filteredPantry:', pantry);
+    return safeArray(sortedAndFiltered(safeArray(pantry)));
+  }, [pantry, sortConfig, statusFilter, searchQuery]);
+  const filteredShoppingList = useMemo(() => {
+    console.log('▶️ Calculando filteredShoppingList:', shoppingList);
+    return safeArray(sortedAndFiltered(safeArray(shoppingList)));
+  }, [shoppingList, sortConfig, statusFilter, searchQuery]);
+  const shoppingListNow = useMemo(() => {
+    console.log('▶️ Calculando shoppingListNow:', filteredShoppingList);
+    return safeArray(filteredShoppingList).filter(p => !p.buyLater);
+  }, [filteredShoppingList]);
+  const shoppingListLater = useMemo(() => {
+    console.log('▶️ Calculando shoppingListLater:', filteredShoppingList);
+    return safeArray(filteredShoppingList).filter(p => p.buyLater);
+  }, [filteredShoppingList]);
 
   const groupedPantry = useMemo(() => {
+    console.log('▶️ Calculando groupedPantry:', filteredPantry);
     if (!groupByCategory) return {} as Record<string, Product[]>;
     return safeArray(filteredPantry).reduce((acc, product) => {
       const category = product.category || "Otros";
@@ -1031,9 +1071,13 @@ export default function PantryPage({ listId }: { listId: string }) {
     }, {} as Record<string, Product[]>);
   }, [filteredPantry, groupByCategory]);
 
-  const sortedPantryCategories = useMemo(() => Object.keys(groupedPantry).sort(), [groupedPantry]);
+  const sortedPantryCategories = useMemo(() => {
+    console.log('▶️ Calculando sortedPantryCategories:', groupedPantry);
+    return Object.keys(groupedPantry).sort();
+  }, [groupedPantry]);
 
   const groupedShoppingListNow = useMemo(() => {
+    console.log('▶️ Calculando groupedShoppingListNow:', shoppingListNow);
     if (!groupByCategory) return {} as Record<string, Product[]>;
     return safeArray(shoppingListNow).reduce((acc, product) => {
       const category = product.category || "Otros";
@@ -1043,9 +1087,13 @@ export default function PantryPage({ listId }: { listId: string }) {
     }, {} as Record<string, Product[]>);
   }, [shoppingListNow, groupByCategory]);
 
-  const sortedShoppingListNowCategories = useMemo(() => Object.keys(groupedShoppingListNow).sort(), [groupedShoppingListNow]);
+  const sortedShoppingListNowCategories = useMemo(() => {
+    console.log('▶️ Calculando sortedShoppingListNowCategories:', groupedShoppingListNow);
+    return Object.keys(groupedShoppingListNow).sort();
+  }, [groupedShoppingListNow]);
 
   const groupedShoppingListLater = useMemo(() => {
+    console.log('▶️ Calculando groupedShoppingListLater:', shoppingListLater);
     if (!groupByCategory) return {} as Record<string, Product[]>;
     return safeArray(shoppingListLater).reduce((acc, product) => {
       const category = product.category || "Otros";
@@ -1055,7 +1103,10 @@ export default function PantryPage({ listId }: { listId: string }) {
     }, {} as Record<string, Product[]>);
   }, [shoppingListLater, groupByCategory]);
 
-  const sortedShoppingListLaterCategories = useMemo(() => Object.keys(groupedShoppingListLater).sort(), [groupedShoppingListLater]);
+  const sortedShoppingListLaterCategories = useMemo(() => {
+    console.log('▶️ Calculando sortedShoppingListLaterCategories:', groupedShoppingListLater);
+    return Object.keys(groupedShoppingListLater).sort();
+  }, [groupedShoppingListLater]);
 
   const getInstallMessage = () => {
     const appBaseUrl = window.location.origin;
@@ -1119,29 +1170,6 @@ export default function PantryPage({ listId }: { listId: string }) {
         ))}
      </DropdownMenuRadioGroup>
   );
-
-  // Efecto para limpiar los estados optimistas cuando Firestore sincroniza
-  useEffect(() => {
-    const isValidArray = (arr: unknown): arr is Product[] => Array.isArray(arr);
-
-    if (
-      isValidArray(optimisticPantry) &&
-      isValidArray(pantry) &&
-      optimisticPantry.length === pantry.length &&
-      JSON.stringify(optimisticPantry) === JSON.stringify(pantry)
-    ) {
-      setOptimisticPantry(undefined);
-    }
-
-    if (
-      isValidArray(optimisticShoppingList) &&
-      isValidArray(shoppingList) &&
-      optimisticShoppingList.length === shoppingList.length &&
-      JSON.stringify(optimisticShoppingList) === JSON.stringify(shoppingList)
-    ) {
-      setOptimisticShoppingList(undefined);
-    }
-  }, [pantry, shoppingList]);
 
   // Logs al inicio del render
   console.log("pantry", pantry);
