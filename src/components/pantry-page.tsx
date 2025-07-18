@@ -1266,16 +1266,16 @@ export default function PantryPage({ listId }: { listId: string }) {
       // Volvemos online: relanzar categorización IA para productos con 'Otros'
       const relanzarCategorizacion = async () => {
         const productosOtros = [
-          ...safeArray(pantryToRender),
-          ...safeArray(shoppingListToRender)
+          ...safeArray(pantry),
+          ...safeArray(shoppingList)
         ].filter(p => p.category === 'Otros');
         for (const producto of productosOtros) {
           try {
             const result = await categorizeProduct({ productName: producto.name });
             if (result && result.category && result.category !== 'Otros') {
               // Actualizar en Firestore
-              const isPantry = safeArray(pantryToRender).some(p => p.id === producto.id);
-              const isShopping = safeArray(shoppingListToRender).some(p => p.id === producto.id);
+              const isPantry = safeArray(pantry).some(p => p.id === producto.id);
+              const isShopping = safeArray(shoppingList).some(p => p.id === producto.id);
               if (isPantry) {
                 const newPantry = safeArray(pantry).map(p => p.id === producto.id ? { ...p, category: result.category as Category } : p);
                 updateRemoteList({ pantry: newPantry });
@@ -1293,7 +1293,7 @@ export default function PantryPage({ listId }: { listId: string }) {
       relanzarCategorizacion();
     }
     prevOnline.current = isOnline;
-  }, [isOnline, pantryToRender, shoppingListToRender, pantry, shoppingList, updateRemoteList]);
+  }, [isOnline, pantry, shoppingList, updateRemoteList]);
 
   useEffect(() => {
     if (!isOnline) {
