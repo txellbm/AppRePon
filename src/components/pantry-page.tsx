@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { generateRecipe, generateGrammaticalMessage, correctProductName, improveCategorization } from "@/lib/actions";
+import { generateRecipe, generateGrammaticalMessage, correctProductName, improveCategorization, categorizeProduct } from "@/lib/actions";
 import { type Product, type Category, type ProductStatus, type ViewMode, type GenerateRecipeOutput } from "@/lib/types";
 import { useReponToast } from "@/hooks/use-repon-toast";
 import { useSharedList } from "@/hooks/use-shared-list";
@@ -102,6 +102,8 @@ type SortConfig = {
 
 // Función para normalizar cadenas (eliminar tildes y pasar a minúsculas)
 const normalize = (str: string) => str.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+
+const normalizeName = (str: string) => str.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
 function AddItemForm({ onAddItem, history, pantry, shoppingList, activeTab, onDeleteHistoryItem }: {
 onAddItem: (name: string) => void,
@@ -1141,34 +1143,61 @@ export default function PantryPage({ listId }: { listId: string }) {
   const currentFilterOptions = filterOptions[activeTab] || filterOptions.pantry;
 
   // 2. ADICIÓN DE PRODUCTO COMPLETAMENTE OPTIMISTA
-  const handleAddItemOptimistic = useCallback((name: string) => {
+  const handleAddItemOptimistic = useCallback(async (name: string) => {
     // Permitir varios productos separados por coma
     const productNames = name.split(',').map((n) => n.trim()).filter(Boolean);
     if (productNames.length === 0) return;
 
-    // Añadir productos optimistas
-    setOptimisticPantry(prev => {
-      const base = prev ?? safeArray(pantry);
-      const now = Date.now();
-      const newProducts = productNames.map((n, i) => ({
+    // Arrays actuales para evitar duplicados
+    const allPantry = safeArray(optimisticPantry ?? pantry);
+    const allShopping = safeArray(optimisticShoppingList ?? shoppingList);
+
+    // Normalizar nombres existentes
+    const existingNames = new Set([
+      ...allPantry.map(p => normalizeName(p.name)),
+      ...allShopping.map(p => normalizeName(p.name)),
+    ]);
+
+    // Filtrar productos que ya existen
+    const uniqueNames = productNames.filter(n => !existingNames.has(normalizeName(n)));
+    if (uniqueNames.length === 0) return;
+
+    // Añadir productos optimistas con categorización
+    const now = Date.now();
+    const newProducts: Product[] = [];
+    for (let i = 0; i < uniqueNames.length; i++) {
+      const n = uniqueNames[i];
+      let category: Category = 'Otros';
+      try {
+        const result = await categorizeProduct({ productName: n });
+        if (result && result.category) category = result.category as Category;
+      } catch (e) {
+        category = 'Otros';
+      }
+      newProducts.push({
         id: `temp-${now}-${i}`,
         name: n.charAt(0).toUpperCase() + n.slice(1),
-        category: 'Otros',
+        category,
         status: 'available',
         isPendingPurchase: false,
         buyLater: false,
-      }));
-      // Scroll al último producto tras render
-      setTimeout(() => {
-        const el = document.getElementById(`product-temp-${now}-${newProducts.length - 1}`);
-        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 100);
+      });
+    }
+    setOptimisticPantry(prev => {
+      const base = prev ?? safeArray(pantry);
       return [...base, ...newProducts];
     });
+    // Scroll al último producto tras render
+    setTimeout(() => {
+      const el = document.getElementById(`product-temp-${now}-${newProducts.length - 1}`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
 
-    // Lanza la operación real (esto actualizará Firestore y el hook lo sincronizará)
-    handleAddItem(name);
-  }, [pantry, handleAddItem]);
+    // Lanza la operación real solo para los productos únicos
+    if (uniqueNames.length > 0) {
+      handleAddItem(uniqueNames.join(', '));
+    }
+  }, [pantry, shoppingList, optimisticPantry, optimisticShoppingList, handleAddItem]);
 
   if (!isLoaded) {
     return (
