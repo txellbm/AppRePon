@@ -79,7 +79,6 @@ export async function getOrCreateList(listId: string): Promise<ListData> {
         categoryOverrides: typeof data.categoryOverrides === 'object' ? data.categoryOverrides : {},
       };
     } else {
-      // Do not create the document automatically when empty
       return { ...emptyList };
     }
   } catch (error) {
