@@ -105,6 +105,22 @@ const normalize = (str: string) => str.normalize("NFD").replace(/\p{Diacritic}/g
 
 const normalizeName = (str: string) => str.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
+// Hook para detectar conexión online/offline
+function useOnlineStatus() {
+  const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? window.navigator.onLine : true);
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
+  return isOnline;
+}
+
 function AddItemForm({ onAddItem, history, pantry, shoppingList, activeTab, onDeleteHistoryItem }: {
 onAddItem: (name: string) => void,
 history: string[],
@@ -541,6 +557,8 @@ export default function PantryPage({ listId }: { listId: string }) {
   // Estados optimistas inicializados como undefined
   const [optimisticPantry, setOptimisticPantry] = useState<Product[] | undefined>(undefined);
   const [optimisticShoppingList, setOptimisticShoppingList] = useState<Product[] | undefined>(undefined);
+
+  const isOnline = useOnlineStatus();
 
   useEffect(() => {
     if (editingProduct) {
@@ -1204,6 +1222,15 @@ export default function PantryPage({ listId }: { listId: string }) {
     }
   }, [pantry, shoppingList, optimisticPantry, optimisticShoppingList, handleAddItem]);
 
+  // Handler de añadir híbrido
+  const handleAddItemHybrid = useCallback((name: string) => {
+    if (isOnline) {
+      handleAddItem(name);
+    } else {
+      handleAddItemOptimistic(name);
+    }
+  }, [isOnline, handleAddItem, handleAddItemOptimistic]);
+
   if (!isLoaded) {
     return (
         <div className="flex min-h-screen w-full items-center justify-center bg-background">
@@ -1491,7 +1518,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                 )}
               </AnimatePresence>
             <AddItemForm
-              onAddItem={handleAddItemOptimistic}
+              onAddItem={handleAddItemHybrid}
               history={history}
               pantry={safeArray(pantry)}
               shoppingList={safeArray(shoppingList)}
@@ -1514,8 +1541,8 @@ export default function PantryPage({ listId }: { listId: string }) {
                             viewMode={viewMode}
                             isPulsing={product.id === pulsingProductId}
                             isExiting={product.id === exitingProductId}
-                            onUpdateStatus={handleUpdateStatus}
-                            onDelete={() => setConfirmDeleteId(product.id)}
+                            onUpdateStatus={handleUpdateStatusHybrid}
+                            onDelete={handleDeleteHybrid}
                             onAddToShoppingList={handleLowStockToShoppingList}
                             onUpdateCategory={handleUpdateCategory}
                             onEdit={setEditingProduct}
@@ -1542,8 +1569,8 @@ export default function PantryPage({ listId }: { listId: string }) {
                                         viewMode={viewMode}
                                         isPulsing={product.id === pulsingProductId}
                                         isExiting={product.id === exitingProductId}
-                                        onUpdateStatus={handleUpdateStatus}
-                                        onDelete={() => setConfirmDeleteId(product.id)}
+                                        onUpdateStatus={handleUpdateStatusHybrid}
+                                        onDelete={handleDeleteHybrid}
                                         onAddToShoppingList={handleLowStockToShoppingList}
                                         onUpdateCategory={handleUpdateCategory}
                                         onEdit={setEditingProduct}
@@ -1599,7 +1626,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                     viewMode={viewMode}
                                     onCardClick={handleCardClick}
                                     onToggleBuyLater={handleToggleBuyLater}
-                                    onDelete={() => setConfirmDeleteId(item.id)}
+                                    onDelete={handleDeleteHybrid}
                                     onReturnToPantry={handleReturnToPantry}
                                     onEdit={setEditingProduct}
                                     isChecking={item.id === checkingItemId}
@@ -1625,7 +1652,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                                     layoutId={`shopping-now-grouped-${item.id}`}
                                                     item={item} viewMode={viewMode}
                                                     onCardClick={handleCardClick}
-                                                    onToggleBuyLater={handleToggleBuyLater} onDelete={() => setConfirmDeleteId(item.id)}
+                                                    onToggleBuyLater={handleToggleBuyLater} onDelete={handleDeleteHybrid}
                                                     onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
                                                     isChecking={item.id === checkingItemId}
                                                     isSliding={item.id === slidingRightId}
@@ -1661,7 +1688,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                                         layoutId={`shopping-later-${item.id}`}
                                                         item={item} viewMode={viewMode}
                                                         onCardClick={handleCardClick}
-                                                        onToggleBuyLater={handleToggleBuyLater} onDelete={() => setConfirmDeleteId(item.id)}
+                                                        onToggleBuyLater={handleToggleBuyLater} onDelete={handleDeleteHybrid}
                                                         onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
                                                         isChecking={item.id === checkingItemId}
                                                         isSliding={item.id === slidingRightId}
@@ -1686,7 +1713,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                                                     layoutId={`shopping-later-grouped-${item.id}`}
                                                                     item={item} viewMode={viewMode}
                                                                     onCardClick={handleCardClick}
-                                                                    onToggleBuyLater={handleToggleBuyLater} onDelete={() => setConfirmDeleteId(item.id)}
+                                                                    onToggleBuyLater={handleToggleBuyLater} onDelete={handleDeleteHybrid}
                                                                     onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
                                                                     isChecking={item.id === checkingItemId}
                                                                     isSliding={item.id === slidingRightId}
