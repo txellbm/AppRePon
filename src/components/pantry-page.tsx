@@ -1143,7 +1143,7 @@ export default function PantryPage({ listId }: { listId: string }) {
   const currentFilterOptions = filterOptions[activeTab] || filterOptions.pantry;
 
   // 2. ADICIÓN DE PRODUCTO COMPLETAMENTE OPTIMISTA
-  const handleAddItemOptimistic = useCallback(async (name: string) => {
+  const handleAddItemOptimistic = useCallback((name: string) => {
     // Permitir varios productos separados por coma
     const productNames = name.split(',').map((n) => n.trim()).filter(Boolean);
     if (productNames.length === 0) return;
@@ -1162,36 +1162,41 @@ export default function PantryPage({ listId }: { listId: string }) {
     const uniqueNames = productNames.filter(n => !existingNames.has(normalizeName(n)));
     if (uniqueNames.length === 0) return;
 
-    // Añadir productos optimistas con categorización
+    // Añadir productos optimistas con categoría 'Otros' y lanzar categorización en segundo plano
     const now = Date.now();
-    const newProducts: Product[] = [];
-    for (let i = 0; i < uniqueNames.length; i++) {
-      const n = uniqueNames[i];
-      let category: Category = 'Otros';
-      try {
-        const result = await categorizeProduct({ productName: n });
-        if (result && result.category) category = result.category as Category;
-      } catch (e) {
-        category = 'Otros';
-      }
-      newProducts.push({
-        id: `temp-${now}-${i}`,
-        name: n.charAt(0).toUpperCase() + n.slice(1),
-        category,
-        status: 'available',
-        isPendingPurchase: false,
-        buyLater: false,
-      });
-    }
+    const newProducts: Product[] = uniqueNames.map((n, i) => ({
+      id: `temp-${now}-${i}`,
+      name: n.charAt(0).toUpperCase() + n.slice(1),
+      category: 'Otros',
+      status: 'available',
+      isPendingPurchase: false,
+      buyLater: false,
+    }));
     setOptimisticPantry(prev => {
       const base = prev ?? safeArray(pantry);
       return [...base, ...newProducts];
     });
-    // Scroll al último producto tras render
+    // Scroll inmediato al producto añadido
     setTimeout(() => {
       const el = document.getElementById(`product-temp-${now}-${newProducts.length - 1}`);
       el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 100);
+
+    // Lanzar categorización en segundo plano y actualizar la UI optimista cuando llegue la respuesta
+    newProducts.forEach((product, i) => {
+      categorizeProduct({ productName: product.name })
+        .then(result => {
+          if (result && result.category && result.category !== 'Otros') {
+            setOptimisticPantry(prev => {
+              if (!prev) return prev;
+              return prev.map(p =>
+                p.id === product.id ? { ...p, category: result.category as Category } : p
+              );
+            });
+          }
+        })
+        .catch(() => {/* mantener 'Otros' si falla */});
+    });
 
     // Lanza la operación real solo para los productos únicos
     if (uniqueNames.length > 0) {
