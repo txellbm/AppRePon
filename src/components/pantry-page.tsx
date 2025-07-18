@@ -769,66 +769,132 @@ export default function PantryPage({ listId }: { listId: string }) {
     }
   }, [pantry, shoppingList]);
 
-  const handleUpdateStatus = (id: string, status: ProductStatus) => {
-    // Usar los arrays optimistas si existen, si no los del hook
-    const pantryArr = optimisticPantry ?? safeArray(pantry);
-    const shoppingArr = optimisticShoppingList ?? safeArray(shoppingList);
-    const product = pantryArr.find(p => p.id === id);
-    if (!product) return;
-
-    setPulsingProductId(id);
-    setTimeout(() => setPulsingProductId(null), 500);
-
-    let newPantry = [...pantryArr];
-    let newShoppingList = [...shoppingArr];
-
-    if (status === 'out of stock') {
-      // Cambiar estado localmente
-      const interimPantry = pantryArr.map(p => p.id === id ? { ...p, status: 'out of stock' as ProductStatus } : p);
-      setOptimisticPantry(interimPantry);
-      updateRemoteList({ pantry: interimPantry });
-      setTimeout(() => {
-        setExitingProductId(id);
+  // Handler de actualizar estado híbrido
+  const handleUpdateStatusHybrid = useCallback((id: string, status: ProductStatus) => {
+    if (isOnline) {
+      // Flujo tradicional: solo updateRemoteList, sin optimismo
+      const product = pantry.find(p => p.id === id);
+      if (!product) return;
+      let newPantry = pantry.map(p => (p.id === id ? { ...p, status, isPendingPurchase: status === 'available' ? false : p.isPendingPurchase } : p));
+      let newShoppingList = [...shoppingList];
+      if (status === 'out of stock') {
+        const interimPantry = pantry.map(p => p.id === id ? { ...p, status: 'out of stock' as ProductStatus } : p);
+        updateRemoteList({ pantry: interimPantry });
         setTimeout(() => {
-          // Mover a la lista de la compra de forma optimista
-          const finalPantry = pantryArr.filter(p => p.id !== id);
-          let finalShoppingList = [...shoppingArr];
-          const existingShoppingItem = shoppingArr.find(item => item.id === product.id);
-          if (existingShoppingItem) {
-            finalShoppingList = shoppingArr.map(item => item.id === product.id ? { ...item, status: 'out of stock', reason: 'out of stock' } : item);
-          } else {
-            const { isPendingPurchase, ...restOfProduct } = product;
-            finalShoppingList.push({
-              ...restOfProduct,
-              status: 'out of stock',
-              reason: 'out of stock',
-              isPendingPurchase: false,
-              buyLater: false,
-            });
-          }
-          setOptimisticPantry(finalPantry);
-          setOptimisticShoppingList(finalShoppingList);
-          updateRemoteList({ pantry: finalPantry, shoppingList: finalShoppingList });
-          setExitingProductId(null);
-        }, 500);
-      }, 2000);
-      return;
-    }
-
-    // Cambiar estado localmente
-    newPantry = pantryArr.map(p => (p.id === id ? { ...p, status, isPendingPurchase: status === 'available' ? false : p.isPendingPurchase } : p));
-
-    if (status === 'available') {
-      const shoppingListItem = shoppingArr.find(item => item.id === product.id);
-      if (shoppingListItem && shoppingListItem.reason === 'low') {
-        newShoppingList = shoppingArr.filter(item => item.id !== product.id);
+          setExitingProductId(id);
+          setTimeout(() => {
+            const finalPantry = pantry.filter(p => p.id !== id);
+            let finalShoppingList = [...shoppingList];
+            const existingShoppingItem = shoppingList.find(item => item.id === product.id);
+            if (existingShoppingItem) {
+              finalShoppingList = shoppingList.map(item => item.id === product.id ? { ...item, status: 'out of stock', reason: 'out of stock' } : item);
+            } else {
+              const { isPendingPurchase, ...restOfProduct } = product;
+              finalShoppingList.push({
+                ...restOfProduct,
+                status: 'out of stock',
+                reason: 'out of stock',
+                isPendingPurchase: false,
+                buyLater: false,
+              });
+            }
+            updateRemoteList({ pantry: finalPantry, shoppingList: finalShoppingList });
+            setExitingProductId(null);
+          }, 500);
+        }, 2000);
+        return;
       }
+      if (status === 'available') {
+        const shoppingListItem = shoppingList.find(item => item.id === product.id);
+        if (shoppingListItem && shoppingListItem.reason === 'low') {
+          newShoppingList = shoppingList.filter(item => item.id !== product.id);
+        }
+      }
+      updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
+    } else {
+      // Flujo optimista offline
+      setPulsingProductId(id);
+      setTimeout(() => setPulsingProductId(null), 500);
+      setOptimisticPantry(prev => {
+        const arr = safeArray(prev);
+        let newPantry = arr.map(p => (p.id === id ? { ...p, status, isPendingPurchase: status === 'available' ? false : p.isPendingPurchase } : p));
+        if (status === 'out of stock') {
+          // Mover a la lista de la compra
+          setTimeout(() => {
+            setExitingProductId(id);
+            setTimeout(() => {
+              const finalPantry = newPantry.filter(p => p.id !== id);
+              setOptimisticPantry(finalPantry);
+              setOptimisticShoppingList(prevList => {
+                const arrList = safeArray(prevList);
+                const product = arr.find(p => p.id === id);
+                if (!product) return arrList;
+                let finalShoppingList = [...arrList];
+                const existingShoppingItem = arrList.find(item => item.id === product.id);
+                if (existingShoppingItem) {
+                  finalShoppingList = arrList.map(item => item.id === product.id ? { ...item, status: 'out of stock', reason: 'out of stock' } : item);
+                } else {
+                  const { isPendingPurchase, ...restOfProduct } = product;
+                  finalShoppingList.push({
+                    ...restOfProduct,
+                    status: 'out of stock',
+                    reason: 'out of stock',
+                    isPendingPurchase: false,
+                    buyLater: false,
+                  });
+                }
+                return finalShoppingList;
+              });
+              setExitingProductId(null);
+            }, 500);
+          }, 2000);
+          return newPantry.map(p => p.id === id ? { ...p, status: 'out of stock' as ProductStatus } : p);
+        }
+        return newPantry;
+      });
+      setOptimisticShoppingList(prev => {
+        const arr = safeArray(prev);
+        let newShoppingList = [...arr];
+        if (status === 'available') {
+          const product = safeArray(optimisticPantry).find(p => p.id === id);
+          const shoppingListItem = arr.find(item => item.id === id);
+          if (shoppingListItem && shoppingListItem.reason === 'low') {
+            newShoppingList = arr.filter(item => item.id !== id);
+          }
+        }
+        return newShoppingList;
+      });
     }
+  }, [isOnline, pantry, shoppingList, updateRemoteList, optimisticPantry]);
 
-    setOptimisticPantry(newPantry);
-    setOptimisticShoppingList(newShoppingList);
-    updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
-  };
+  // Handler de eliminar híbrido
+  const handleDeleteHybrid = useCallback((id: string) => {
+    if (isOnline) {
+      // Flujo tradicional
+      const itemInShoppingList = shoppingList.find((p) => p.id === id);
+      let newPantry = pantry.filter((p) => p.id !== id);
+      let newShoppingList = shoppingList.filter((p) => p.id !== id);
+      if (itemInShoppingList && itemInShoppingList.reason === "low") {
+        newPantry = newPantry.map((p) =>
+          p.name.toLowerCase() === itemInShoppingList.name.toLowerCase()
+            ? { ...p, isPendingPurchase: false }
+            : p,
+        );
+      }
+      updateRemoteList({
+        pantry: newPantry,
+        shoppingList: newShoppingList,
+      });
+      toast({ title: "¡Adiós, producto!" });
+      setConfirmDeleteId(null);
+    } else {
+      // Flujo optimista offline
+      setOptimisticPantry(prev => safeArray(prev).filter(p => p.id !== id));
+      setOptimisticShoppingList(prev => safeArray(prev).filter(p => p.id !== id));
+      toast({ title: "¡Adiós, producto! (offline)" });
+      setConfirmDeleteId(null);
+    }
+  }, [isOnline, pantry, shoppingList, updateRemoteList, toast]);
 
   const handleUpdateCategory = async (id: string, newCategory: Category) => {
     const productInPantry = pantry.find((p) => p.id === id);
