@@ -554,10 +554,6 @@ export default function PantryPage({ listId }: { listId: string }) {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [newProductName, setNewProductName] = useState("");
 
-  // Estados optimistas inicializados como undefined
-  const [optimisticPantry, setOptimisticPantry] = useState<Product[] | undefined>(undefined);
-  const [optimisticShoppingList, setOptimisticShoppingList] = useState<Product[] | undefined>(undefined);
-
   const isOnline = useOnlineStatus();
   console.log('isOnline', isOnline);
 
@@ -750,23 +746,23 @@ export default function PantryPage({ listId }: { listId: string }) {
 
   useEffect(() => {
     const isValidArray = (arr: unknown): arr is Product[] => Array.isArray(arr);
-    console.log('🟢 useEffect: limpieza optimista', optimisticPantry, pantry, optimisticShoppingList, shoppingList);
+    console.log('🟢 useEffect: limpieza optimista', pantry, shoppingList);
     if (
-      isValidArray(optimisticPantry) &&
       isValidArray(pantry) &&
-      optimisticPantry.length === pantry.length &&
-      JSON.stringify(optimisticPantry) === JSON.stringify(pantry)
+      isValidArray(shoppingList) &&
+      pantry.length === shoppingList.length &&
+      JSON.stringify(pantry) === JSON.stringify(shoppingList)
     ) {
-      setOptimisticPantry(undefined);
+      setPulsingProductId(null);
     }
 
     if (
-      isValidArray(optimisticShoppingList) &&
+      isValidArray(pantry) &&
       isValidArray(shoppingList) &&
-      optimisticShoppingList.length === shoppingList.length &&
-      JSON.stringify(optimisticShoppingList) === JSON.stringify(shoppingList)
+      pantry.length === shoppingList.length &&
+      JSON.stringify(pantry) === JSON.stringify(shoppingList)
     ) {
-      setOptimisticShoppingList(undefined);
+      setExitingProductId(null);
     }
   }, [pantry, shoppingList]);
 
@@ -1131,23 +1127,10 @@ export default function PantryPage({ listId }: { listId: string }) {
   // Arrays seguros para evitar crash por undefined
   const safeArray = <T,>(arr: T[] | undefined | null): T[] => Array.isArray(arr) ? arr : [];
 
-  // 1. Patrón condicional para arrays a renderizar
-  const pantryToRender = isOnline ? pantry : optimisticPantry ?? pantry;
-  const shoppingListToRender = isOnline ? shoppingList : optimisticShoppingList ?? shoppingList;
-
-  // 2. Cálculos derivados condicionales
-  const filteredPantry = useMemo(() => {
-    return safeArray(sortedAndFiltered(safeArray(pantryToRender)));
-  }, [isOnline, pantry, optimisticPantry, sortConfig, statusFilter, searchQuery]);
-  const filteredShoppingList = useMemo(() => {
-    return safeArray(sortedAndFiltered(safeArray(shoppingListToRender)));
-  }, [isOnline, shoppingList, optimisticShoppingList, sortConfig, statusFilter, searchQuery]);
-  const shoppingListNow = useMemo(() => {
-    return safeArray(filteredShoppingList).filter(p => !p.buyLater);
-  }, [filteredShoppingList]);
-  const shoppingListLater = useMemo(() => {
-    return safeArray(filteredShoppingList).filter(p => p.buyLater);
-  }, [filteredShoppingList]);
+  const filteredPantry = useMemo(() => safeArray(sortedAndFiltered(safeArray(pantry))), [pantry, sortConfig, statusFilter, searchQuery]);
+  const filteredShoppingList = useMemo(() => safeArray(sortedAndFiltered(safeArray(shoppingList))), [shoppingList, sortConfig, statusFilter, searchQuery]);
+  const shoppingListNow = useMemo(() => safeArray(filteredShoppingList).filter(p => !p.buyLater), [filteredShoppingList]);
+  const shoppingListLater = useMemo(() => safeArray(filteredShoppingList).filter(p => p.buyLater), [filteredShoppingList]);
   const groupedPantry = useMemo(() => {
     if (!groupByCategory) return {} as Record<string, Product[]>;
     return safeArray(filteredPantry).reduce((acc, product) => {
@@ -1612,8 +1595,8 @@ export default function PantryPage({ listId }: { listId: string }) {
             <AddItemForm
               onAddItem={handleAddItemHybrid}
               history={history}
-              pantry={pantryToRender}
-              shoppingList={shoppingListToRender}
+              pantry={pantry}
+              shoppingList={shoppingList}
               activeTab={activeTab}
               onDeleteHistoryItem={handleDeleteHistoryItem}
             />
