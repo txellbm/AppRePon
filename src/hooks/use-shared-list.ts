@@ -115,9 +115,19 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
       for (const correctedName of uniqueCorrectedNames) {
         const lower = correctedName.toLowerCase();
         if (currentPantryNames.has(lower)) {
-          if (typeof window !== 'undefined') alert(`"${correctedName}" ya está en tu despensa.`);
+          toast({
+            title: `Producto duplicado`,
+            description: `"${correctedName}" ya está en tu despensa.`,
+            variant: "destructive",
+            duration: 4000,
+          });
         } else if (shoppingListMap.has(lower)) {
-          if (typeof window !== 'undefined') alert(`"${correctedName}" ya está en la lista de la compra.`);
+          toast({
+            title: `Producto duplicado`,
+            description: `"${correctedName}" ya está en la lista de la compra.`,
+            variant: "destructive",
+            duration: 4000,
+          });
         } else {
           namesToCreate.push(correctedName);
         }
@@ -161,7 +171,12 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
       }
     } catch (error) {
       console.error("Failed to add item(s):", error);
-      if (typeof window !== 'undefined') alert('Error al guardar los productos');
+      toast({
+        title: "Error al guardar los productos",
+        description: "Ocurrió un error al guardar los productos. Intenta de nuevo.",
+        variant: "destructive",
+        duration: 4000,
+      });
     }
   }, [listData.pantry, listData.shoppingList, listData.history, toast, updateRemoteList, db]);
 
@@ -192,9 +207,19 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
       for (const correctedName of uniqueCorrectedNames) {
         const lower = correctedName.toLowerCase();
         if (pantryNames.has(lower)) {
-          if (typeof window !== 'undefined') alert(`"${correctedName}" ya está en tu despensa.`);
+          toast({
+            title: `Producto duplicado`,
+            description: `"${correctedName}" ya está en tu despensa.`,
+            variant: "destructive",
+            duration: 4000,
+          });
         } else if (shoppingListNames.has(lower)) {
-          if (typeof window !== 'undefined') alert(`"${correctedName}" ya está en la lista de la compra.`);
+          toast({
+            title: `Producto duplicado`,
+            description: `"${correctedName}" ya está en la lista de la compra.`,
+            variant: "destructive",
+            duration: 4000,
+          });
         } else {
           productsToCreate.push({ name: correctedName });
         }
@@ -231,7 +256,12 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
       // success
     } catch (error) {
       console.error("Failed to add item(s) to shopping list:", error);
-      if (typeof window !== 'undefined') alert('Error al guardar la lista de compra');
+      toast({
+        title: "Error al guardar la lista de compra",
+        description: "Ocurrió un error al guardar la lista de compra. Intenta de nuevo.",
+        variant: "destructive",
+        duration: 4000,
+      });
     }
   }, [listData.pantry, listData.shoppingList, listData.history, toast, updateRemoteList, db]);
 
