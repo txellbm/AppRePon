@@ -750,27 +750,32 @@ export default function PantryPage({ listId }: { listId: string }) {
   }, [pantry, shoppingList]);
 
   const handleUpdateStatus = (id: string, status: ProductStatus) => {
-    const product = pantryToRender.find(p => p.id === id);
+    // Usar los arrays optimistas si existen, si no los del hook
+    const pantryArr = optimisticPantry ?? safeArray(pantry);
+    const shoppingArr = optimisticShoppingList ?? safeArray(shoppingList);
+    const product = pantryArr.find(p => p.id === id);
     if (!product) return;
 
     setPulsingProductId(id);
     setTimeout(() => setPulsingProductId(null), 500);
 
-    let newPantry = [...pantryToRender];
-    let newShoppingList = [...shoppingListToRender];
+    let newPantry = [...pantryArr];
+    let newShoppingList = [...shoppingArr];
 
     if (status === 'out of stock') {
-      const interimPantry = pantryToRender.map(p => p.id === id ? { ...p, status: 'out of stock' as ProductStatus } : p);
+      // Cambiar estado localmente
+      const interimPantry = pantryArr.map(p => p.id === id ? { ...p, status: 'out of stock' as ProductStatus } : p);
       setOptimisticPantry(interimPantry);
       updateRemoteList({ pantry: interimPantry });
       setTimeout(() => {
         setExitingProductId(id);
         setTimeout(() => {
-          const finalPantry = pantryToRender.filter(p => p.id !== id);
-          let finalShoppingList = [...shoppingListToRender];
-          const existingShoppingItem = shoppingListToRender.find(item => item.id === product.id);
+          // Mover a la lista de la compra de forma optimista
+          const finalPantry = pantryArr.filter(p => p.id !== id);
+          let finalShoppingList = [...shoppingArr];
+          const existingShoppingItem = shoppingArr.find(item => item.id === product.id);
           if (existingShoppingItem) {
-            finalShoppingList = shoppingListToRender.map(item => item.id === product.id ? { ...item, status: 'out of stock', reason: 'out of stock' } : item);
+            finalShoppingList = shoppingArr.map(item => item.id === product.id ? { ...item, status: 'out of stock', reason: 'out of stock' } : item);
           } else {
             const { isPendingPurchase, ...restOfProduct } = product;
             finalShoppingList.push({
@@ -790,12 +795,13 @@ export default function PantryPage({ listId }: { listId: string }) {
       return;
     }
 
-    newPantry = pantryToRender.map(p => (p.id === id ? { ...p, status, isPendingPurchase: status === 'available' ? false : p.isPendingPurchase } : p));
+    // Cambiar estado localmente
+    newPantry = pantryArr.map(p => (p.id === id ? { ...p, status, isPendingPurchase: status === 'available' ? false : p.isPendingPurchase } : p));
 
     if (status === 'available') {
-      const shoppingListItem = shoppingListToRender.find(item => item.id === product.id);
+      const shoppingListItem = shoppingArr.find(item => item.id === product.id);
       if (shoppingListItem && shoppingListItem.reason === 'low') {
-        newShoppingList = shoppingListToRender.filter(item => item.id !== product.id);
+        newShoppingList = shoppingArr.filter(item => item.id !== product.id);
       }
     }
 
@@ -1134,6 +1140,36 @@ export default function PantryPage({ listId }: { listId: string }) {
   const currentAddItemHandler = activeTab === 'pantry' ? handleAddItem : handleShoppingListAddItem;
   const currentFilterOptions = filterOptions[activeTab] || filterOptions.pantry;
 
+  // 2. ADICIÓN DE PRODUCTO COMPLETAMENTE OPTIMISTA
+  const handleAddItemOptimistic = useCallback((name: string) => {
+    // Permitir varios productos separados por coma
+    const productNames = name.split(',').map((n) => n.trim()).filter(Boolean);
+    if (productNames.length === 0) return;
+
+    // Añadir productos optimistas
+    setOptimisticPantry(prev => {
+      const base = prev ?? safeArray(pantry);
+      const now = Date.now();
+      const newProducts = productNames.map((n, i) => ({
+        id: `temp-${now}-${i}`,
+        name: n.charAt(0).toUpperCase() + n.slice(1),
+        category: 'Otros',
+        status: 'available',
+        isPendingPurchase: false,
+        buyLater: false,
+      }));
+      // Scroll al último producto tras render
+      setTimeout(() => {
+        const el = document.getElementById(`product-temp-${now}-${newProducts.length - 1}`);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+      return [...base, ...newProducts];
+    });
+
+    // Lanza la operación real (esto actualizará Firestore y el hook lo sincronizará)
+    handleAddItem(name);
+  }, [pantry, handleAddItem]);
+
   if (!isLoaded) {
     return (
         <div className="flex min-h-screen w-full items-center justify-center bg-background">
@@ -1421,10 +1457,10 @@ export default function PantryPage({ listId }: { listId: string }) {
                 )}
               </AnimatePresence>
             <AddItemForm
-              onAddItem={currentAddItemHandler}
+              onAddItem={handleAddItemOptimistic}
               history={history}
-              pantry={pantry}
-              shoppingList={shoppingList}
+              pantry={safeArray(pantry)}
+              shoppingList={safeArray(shoppingList)}
               activeTab={activeTab}
               onDeleteHistoryItem={handleDeleteHistoryItem}
             />
