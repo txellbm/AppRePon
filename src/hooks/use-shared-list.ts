@@ -95,13 +95,11 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
   const handleBulkAdd = useCallback(async (names: string[]) => {
     if (!db || names.length === 0) return;
 
-
-
     try {
       const currentPantryNames = new Set(listData.pantry.map((p) => p.name.toLowerCase()));
       const shoppingListMap = new Map(listData.shoppingList.map((p) => [p.name.toLowerCase(), p]));
 
-      const itemsToMoveFromShoppingList: Product[] = [];
+      // const itemsToMoveFromShoppingList: Product[] = []; // Eliminado porque no se usa
       const namesToCreate: string[] = [];
 
       const correctedNamesMap = new Map<string, string>();
@@ -152,17 +150,11 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
       );
 
       const finalProductsToAdd = [
-        ...newProductsFromScratch,
-        ...itemsToMoveFromShoppingList.map((p) => {
-          const { reason, ...rest } = p;
-          return { ...rest, status: "available" as const, isPendingPurchase: false, buyLater: false };
-        }),
+        ...newProductsFromScratch
       ];
 
       if (finalProductsToAdd.length > 0) {
-        const newShoppingList = listData.shoppingList.filter(
-          (item) => !itemsToMoveFromShoppingList.some((moved) => moved.name.toLowerCase() === item.name.toLowerCase())
-        );
+        const newShoppingList = listData.shoppingList;
         const newPantry = [...listData.pantry, ...finalProductsToAdd];
         const newHistory = [...new Set([...listData.history, ...finalProductsToAdd.map((p) => p.name)])];
 
