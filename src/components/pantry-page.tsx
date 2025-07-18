@@ -546,6 +546,19 @@ function BadgeFirestoreStatus({ isOnline, hasPendingWrites }: { isOnline: boolea
   );
 }
 
+function FirestoreDebugInfo({ isOnline, hasPendingWrites, pantry, shoppingList }: { isOnline: boolean, hasPendingWrites: boolean, pantry: Product[], shoppingList: Product[] }) {
+  return (
+    <div style={{ position: 'fixed', bottom: 60, right: 16, zIndex: 9999, background: 'rgba(30,30,30,0.95)', color: 'white', borderRadius: 8, padding: 10, fontSize: 12, minWidth: 220 }}>
+      <div><b>isOnline:</b> {String(isOnline)}</div>
+      <div><b>hasPendingWrites:</b> {String(hasPendingWrites)}</div>
+      <div><b>pantry.length:</b> {pantry.length}</div>
+      <div><b>shoppingList.length:</b> {shoppingList.length}</div>
+      <div><b>pantry[0-1]:</b> {pantry.slice(0,2).map(p => p.name).join(", ") || '-'}</div>
+      <div><b>shoppingList[0-1]:</b> {shoppingList.slice(0,2).map(p => p.name).join(", ") || '-'}</div>
+    </div>
+  );
+}
+
 export default function PantryPage({ listId }: { listId: string }) {
   console.log('💡 Render iniciado');
   var a,s;
@@ -1216,113 +1229,6 @@ export default function PantryPage({ listId }: { listId: string }) {
   const currentAddItemHandler = activeTab === 'pantry' ? handleAddItem : handleShoppingListAddItem;
   const currentFilterOptions = filterOptions[activeTab] || filterOptions.pantry;
 
-  // 2. ADICIÓN DE PRODUCTO COMPLETAMENTE OPTIMISTA
-  const handleAddItemOptimistic = useCallback((name: string) => {
-    // Permitir varios productos separados por coma
-    const productNames = name.split(',').map((n) => n.trim()).filter(Boolean);
-    if (productNames.length === 0) return;
-
-    // Arrays actuales para evitar duplicados
-    const allPantry = safeArray(optimisticPantry ?? pantry);
-    const allShopping = safeArray(optimisticShoppingList ?? shoppingList);
-
-    // Normalizar nombres existentes
-    const existingNames = new Set([
-      ...allPantry.map(p => normalizeName(p.name)),
-      ...allShopping.map(p => normalizeName(p.name)),
-    ]);
-
-    // Filtrar productos que ya existen
-    const uniqueNames = productNames.filter(n => !existingNames.has(normalizeName(n)));
-    if (uniqueNames.length === 0) return;
-
-    // Añadir productos optimistas con categoría 'Otros' y lanzar categorización en segundo plano
-    const now = Date.now();
-    const newProducts: Product[] = uniqueNames.map((n, i) => ({
-      id: `temp-${now}-${i}`,
-      name: n.charAt(0).toUpperCase() + n.slice(1),
-      category: 'Otros',
-      status: 'available',
-      isPendingPurchase: false,
-      buyLater: false,
-    }));
-    setOptimisticPantry(prev => {
-      const base = prev ?? safeArray(pantry);
-      return [...base, ...newProducts];
-    });
-    // Scroll inmediato al producto añadido
-    setTimeout(() => {
-      const el = document.getElementById(`product-temp-${now}-${newProducts.length - 1}`);
-      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
-
-    // Lanzar categorización en segundo plano y actualizar la UI optimista cuando llegue la respuesta
-    newProducts.forEach((product, i) => {
-      categorizeProduct({ productName: product.name })
-        .then(result => {
-          if (result && result.category && result.category !== 'Otros') {
-            setOptimisticPantry(prev => {
-              if (!prev) return prev;
-              return prev.map(p =>
-                p.id === product.id ? { ...p, category: result.category as Category } : p
-              );
-            });
-          }
-        })
-        .catch(() => {/* mantener 'Otros' si falla */});
-    });
-
-    // Lanza la operación real solo para los productos únicos
-    if (uniqueNames.length > 0) {
-      handleAddItem(uniqueNames.join(', '));
-    }
-  }, [pantry, shoppingList, optimisticPantry, optimisticShoppingList, handleAddItem]);
-
-  // Handler de añadir híbrido
-  const handleAddItemHybrid = useCallback((name: string) => {
-    if (isOnline) {
-      handleAddItem(name);
-    } else {
-      handleAddItemOptimistic(name);
-    }
-  }, [isOnline, handleAddItem, handleAddItemOptimistic]);
-
-  // useEffect para relanzar categorización IA al volver online
-  const prevOnline = useRef(isOnline);
-  useEffect(() => {
-    if (prevOnline.current === false && isOnline === true) {
-      // Volvemos online: relanzar categorización IA para productos con 'Otros'
-      const relanzarCategorizacion = async () => {
-        const productosOtros = [
-          ...safeArray(pantry),
-          ...safeArray(shoppingList)
-        ].filter(p => p.category === 'Otros');
-        for (const producto of productosOtros) {
-          try {
-            const result = await categorizeProduct({ productName: producto.name });
-            if (result && result.category && result.category !== 'Otros') {
-              // Actualizar en Firestore
-              const isPantry = safeArray(pantry).some(p => p.id === producto.id);
-              const isShopping = safeArray(shoppingList).some(p => p.id === producto.id);
-              if (isPantry) {
-                const newPantry = safeArray(pantry).map(p => p.id === producto.id ? { ...p, category: result.category as Category } : p);
-                updateRemoteList({ pantry: newPantry });
-              }
-              if (isShopping) {
-                const newShoppingList = safeArray(shoppingList).map(p => p.id === producto.id ? { ...p, category: result.category as Category } : p);
-                updateRemoteList({ shoppingList: newShoppingList });
-              }
-            }
-          } catch (e) {
-            // Si falla, mantener 'Otros'
-          }
-        }
-      };
-      relanzarCategorizacion();
-    }
-    prevOnline.current = isOnline;
-  }, [isOnline, pantry, shoppingList, updateRemoteList]);
-
   useEffect(() => {
     if (!isOnline) {
       toast({
@@ -1383,6 +1289,7 @@ export default function PantryPage({ listId }: { listId: string }) {
   return (
     <>
       <BadgeFirestoreStatus isOnline={isOnline} hasPendingWrites={hasPendingWrites} />
+      <FirestoreDebugInfo isOnline={isOnline} hasPendingWrites={hasPendingWrites} pantry={pantry} shoppingList={shoppingList} />
       <div className="min-h-screen bg-background text-foreground">
         <header className="sticky top-0 z-20 w-full border-b bg-background/80 backdrop-blur-sm">
             <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -1623,7 +1530,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                   )}
                 </AnimatePresence>
               <AddItemForm
-                onAddItem={handleAddItemHybrid}
+                onAddItem={currentAddItemHandler}
                 history={history}
                 pantry={pantry}
                 shoppingList={shoppingList}

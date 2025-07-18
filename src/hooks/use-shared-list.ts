@@ -43,18 +43,27 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
       docRef,
       { includeMetadataChanges: true },
       (snap) => {
-        // 1. Log de metadata para depuración
-        console.log('Firestore snapshot metadata:', snap.metadata);
+        // Log de metadata y muestra de productos para depuración visual
+        const data = snap.exists() ? snap.data() : {};
+        const pantrySample = Array.isArray(data.pantry) ? data.pantry.slice(0, 2).map((p: any) => p?.name).join(", ") : "";
+        const shoppingSample = Array.isArray(data.shoppingList) ? data.shoppingList.slice(0, 2).map((p: any) => p?.name).join(", ") : "";
+        console.log('SNAPSHOT', snap.metadata, {
+          pantryCount: Array.isArray(data.pantry) ? data.pantry.length : 0,
+          shoppingCount: Array.isArray(data.shoppingList) ? data.shoppingList.length : 0,
+          pantrySample,
+          shoppingSample
+        });
         setHasPendingWrites(snap.metadata.hasPendingWrites);
-        // 2. Procesar SIEMPRE todos los snapshots, sin filtrar por hasPendingWrites ni fromCache
+        // Procesar SIEMPRE todos los snapshots, sin filtrar
         if (snap.exists()) {
-          const data = snap.data();
           setListData({
             pantry: sanitizeProductArray(data.pantry),
             shoppingList: sanitizeProductArray(data.shoppingList),
             history: Array.isArray(data.history) ? data.history : [],
             categoryOverrides: typeof data.categoryOverrides === 'object' ? data.categoryOverrides : {},
           });
+        } else {
+          setListData({ pantry: [], shoppingList: [], history: [], categoryOverrides: {} });
         }
         if (first) {
           setIsLoaded(true);
