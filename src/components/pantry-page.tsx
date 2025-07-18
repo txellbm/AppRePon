@@ -109,11 +109,12 @@ history: string[],
 pantry: Product[],
 shoppingList: Product[],
 activeTab: string,
-onDeleteHistoryItem: (name: string) => void
+onDeleteHistoryItem: (name: string) => Promise<void> | void
 }) {
   const [itemName, setItemName] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useReponToast();
 
   useEffect(() => {
     setItemName("");
@@ -141,6 +142,20 @@ onDeleteHistoryItem: (name: string) => void
     setItemName("");
     setSuggestions([]);
   }
+
+  const handleDeleteSuggestion = async (name: string) => {
+    // Eliminar de la lista visual inmediatamente
+    setSuggestions(prev => prev.filter(s => s !== name));
+    try {
+      await onDeleteHistoryItem(name);
+    } catch (error) {
+      toast({
+        title: "Error al eliminar sugerencia",
+        description: `No se pudo eliminar "${name}" del historial. Intenta de nuevo.`,
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,7 +192,7 @@ onDeleteHistoryItem: (name: string) => void
                   </button>
                   <button
                     type="button"
-                    onClick={() => onDeleteHistoryItem(suggestion)}
+                    onClick={() => handleDeleteSuggestion(suggestion)}
                     className="p-2 text-destructive hover:bg-destructive/20 rounded"
                   >
                     <X className="h-3 w-3" />
@@ -1325,7 +1340,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
-                    <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8" onClick={() => setShowSearch(false)}>
+                    <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8" onClick={() => { setShowSearch(false); setSearchQuery(""); }}>
                       <X className="h-4 w-4" />
                     </Button>
                   </motion.div>
