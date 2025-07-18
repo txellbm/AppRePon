@@ -232,8 +232,6 @@ onDeleteHistoryItem: (name: string) => Promise<void> | void
 function ProductCard({
   product,
   viewMode,
-  isPulsing,
-  isExiting,
   onUpdateStatus,
   onDelete,
   onAddToShoppingList,
@@ -242,8 +240,6 @@ function ProductCard({
 }: {
   product: Product;
   viewMode: ViewMode;
-  isPulsing: boolean;
-  isExiting: boolean;
   onUpdateStatus: (id: string, status: ProductStatus) => void;
   onDelete: (id: string) => void;
   onAddToShoppingList: (id: string) => void;
@@ -272,7 +268,7 @@ function ProductCard({
       layoutId={'pantry-' + product.id}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, x: isExiting ? 100 : 50, transition: { duration: 0.3 } }}
+      exit={{ opacity: 0, x: 50, transition: { duration: 0.3 } }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
         "rounded-md transition-all duration-300 hover:brightness-110 shadow-md mb-2",
@@ -281,7 +277,6 @@ function ProductCard({
           : "relative p-2 flex flex-col items-center justify-center text-center min-h-[6rem]",
         statusStyles,
         "cursor-pointer transition-colors transition-color",
-        isPulsing && "pulse bg-amarillo-mostaza"
       )}
       onClick={handleCycleStatus}
     >
@@ -576,8 +571,6 @@ export default function PantryPage({ listId }: { listId: string }) {
   const [showIdentifyDialog, setShowIdentifyDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showLegendDialog, setShowLegendDialog] = useState(false);
-  const [pulsingProductId, setPulsingProductId] = useState<string | null>(null);
-  const [exitingProductId, setExitingProductId] = useState<string | null>(null);
   const [checkingItemId, setCheckingItemId] = useState<string | null>(null);
   const [slidingRightId, setSlidingRightId] = useState<string | null>(null);
   
@@ -807,133 +800,6 @@ export default function PantryPage({ listId }: { listId: string }) {
     }
   }, [pantry, shoppingList]);
 
-  // Handler de actualizar estado híbrido
-  const handleUpdateStatusHybrid = useCallback((id: string, status: ProductStatus) => {
-    if (isOnline) {
-      // Flujo tradicional: solo updateRemoteList, sin optimismo
-      const product = pantry.find(p => p.id === id);
-      if (!product) return;
-      let newPantry = pantry.map(p => (p.id === id ? { ...p, status, isPendingPurchase: status === 'available' ? false : p.isPendingPurchase } : p));
-      let newShoppingList = [...shoppingList];
-      if (status === 'out of stock') {
-        const interimPantry = pantry.map(p => p.id === id ? { ...p, status: 'out of stock' as ProductStatus } : p);
-        updateRemoteList({ pantry: interimPantry });
-        setTimeout(() => {
-          setExitingProductId(id);
-          setTimeout(() => {
-            const finalPantry = pantry.filter(p => p.id !== id);
-            let finalShoppingList = [...shoppingList];
-            const existingShoppingItem = shoppingList.find(item => item.id === product.id);
-            if (existingShoppingItem) {
-              finalShoppingList = shoppingList.map(item => item.id === product.id ? { ...item, status: 'out of stock', reason: 'out of stock' } : item);
-            } else {
-              const { isPendingPurchase, ...restOfProduct } = product;
-              finalShoppingList.push({
-                ...restOfProduct,
-                status: 'out of stock',
-                reason: 'out of stock',
-                isPendingPurchase: false,
-                buyLater: false,
-              });
-            }
-            updateRemoteList({ pantry: finalPantry, shoppingList: finalShoppingList });
-            setExitingProductId(null);
-          }, 500);
-        }, 2000);
-        return;
-      }
-      if (status === 'available') {
-        const shoppingListItem = shoppingList.find(item => item.id === product.id);
-        if (shoppingListItem && shoppingListItem.reason === 'low') {
-          newShoppingList = shoppingList.filter(item => item.id !== product.id);
-        }
-      }
-      updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
-    } else {
-      // Flujo optimista offline
-      setPulsingProductId(id);
-      setTimeout(() => setPulsingProductId(null), 500);
-      setOptimisticPantry(prev => {
-        const arr = safeArray(prev);
-        let newPantry = arr.map(p => (p.id === id ? { ...p, status, isPendingPurchase: status === 'available' ? false : p.isPendingPurchase } : p));
-        if (status === 'out of stock') {
-          // Mover a la lista de la compra
-          setTimeout(() => {
-            setExitingProductId(id);
-            setTimeout(() => {
-              const finalPantry = newPantry.filter(p => p.id !== id);
-              setOptimisticPantry(finalPantry);
-              setOptimisticShoppingList(prevList => {
-                const arrList = safeArray(prevList);
-                const product = arr.find(p => p.id === id);
-                if (!product) return arrList;
-                let finalShoppingList = [...arrList];
-                const existingShoppingItem = arrList.find(item => item.id === product.id);
-                if (existingShoppingItem) {
-                  finalShoppingList = arrList.map(item => item.id === product.id ? { ...item, status: 'out of stock', reason: 'out of stock' } : item);
-                } else {
-                  const { isPendingPurchase, ...restOfProduct } = product;
-                  finalShoppingList.push({
-                    ...restOfProduct,
-                    status: 'out of stock',
-                    reason: 'out of stock',
-                    isPendingPurchase: false,
-                    buyLater: false,
-                  });
-                }
-                return finalShoppingList;
-              });
-              setExitingProductId(null);
-            }, 500);
-          }, 2000);
-          return newPantry.map(p => p.id === id ? { ...p, status: 'out of stock' as ProductStatus } : p);
-        }
-        return newPantry;
-      });
-      setOptimisticShoppingList(prev => {
-        const arr = safeArray(prev);
-        let newShoppingList = [...arr];
-        if (status === 'available') {
-          const product = safeArray(optimisticPantry).find(p => p.id === id);
-          const shoppingListItem = arr.find(item => item.id === id);
-          if (shoppingListItem && shoppingListItem.reason === 'low') {
-            newShoppingList = arr.filter(item => item.id !== id);
-          }
-        }
-        return newShoppingList;
-      });
-    }
-  }, [isOnline, pantry, shoppingList, updateRemoteList, optimisticPantry]);
-
-  // Handler de eliminar híbrido
-  const handleDeleteHybrid = useCallback((id: string) => {
-    if (isOnline) {
-      // Flujo tradicional
-      const itemInShoppingList = shoppingList.find((p) => p.id === id);
-      let newPantry = pantry.filter((p) => p.id !== id);
-      let newShoppingList = shoppingList.filter((p) => p.id !== id);
-      if (itemInShoppingList && itemInShoppingList.reason === "low") {
-        newPantry = newPantry.map((p) =>
-          p.name.toLowerCase() === itemInShoppingList.name.toLowerCase()
-            ? { ...p, isPendingPurchase: false }
-            : p,
-        );
-      }
-      updateRemoteList({
-        pantry: newPantry,
-        shoppingList: newShoppingList,
-      });
-      toast({ title: "¡Adiós, producto!" });
-      setConfirmDeleteId(null);
-    } else {
-      // Flujo optimista offline
-      setOptimisticPantry(prev => safeArray(prev).filter(p => p.id !== id));
-      setOptimisticShoppingList(prev => safeArray(prev).filter(p => p.id !== id));
-      toast({ title: "¡Adiós, producto! (offline)" });
-      setConfirmDeleteId(null);
-    }
-  }, [isOnline, pantry, shoppingList, updateRemoteList, toast]);
-
   const handleUpdateCategory = async (id: string, newCategory: Category) => {
     const productInPantry = pantry.find((p) => p.id === id);
     const productInShopping = shoppingList.find((p) => p.id === id);
@@ -1041,9 +907,6 @@ export default function PantryPage({ listId }: { listId: string }) {
   const handleLowStockToShoppingList = async (id: string) => {
     const product = pantry.find(p => p.id === id);
     if (!product || product.status !== 'low') return;
-
-    setPulsingProductId(id);
-    setTimeout(() => setPulsingProductId(null), 500);
 
     const itemInShoppingList = shoppingList.find(item => item.id === product.id);
 
@@ -1285,6 +1148,38 @@ export default function PantryPage({ listId }: { listId: string }) {
   console.log("shoppingListNow", shoppingListNow);
   console.log("shoppingListLater", shoppingListLater);
   console.log("groupedPantry", groupedPantry);
+
+  // Handler limpio para actualizar el estado de un producto
+  const handleUpdateStatus = (id: string, status: ProductStatus) => {
+    const product = pantry.find(p => p.id === id);
+    if (!product) return;
+    let newPantry = pantry.map(p => (p.id === id ? { ...p, status, isPendingPurchase: status === 'available' ? false : p.isPendingPurchase } : p));
+    let newShoppingList = [...shoppingList];
+    if (status === 'out of stock') {
+      // Mover a la lista de la compra
+      newPantry = pantry.filter(p => p.id !== id);
+      const existingShoppingItem = shoppingList.find(item => item.id === product.id);
+      if (existingShoppingItem) {
+        newShoppingList = shoppingList.map(item => item.id === product.id ? { ...item, status: 'out of stock', reason: 'out of stock' } : item);
+      } else {
+        const { isPendingPurchase, ...restOfProduct } = product;
+        newShoppingList.push({
+          ...restOfProduct,
+          status: 'out of stock',
+          reason: 'out of stock',
+          isPendingPurchase: false,
+          buyLater: false,
+        });
+      }
+    }
+    if (status === 'available') {
+      const shoppingListItem = shoppingList.find(item => item.id === product.id);
+      if (shoppingListItem && shoppingListItem.reason === 'low') {
+        newShoppingList = shoppingList.filter(item => item.id !== product.id);
+      }
+    }
+    updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
+  };
 
   return (
     <>
@@ -1551,10 +1446,8 @@ export default function PantryPage({ listId }: { listId: string }) {
                               key={`pantry-${product.id}`}
                               product={product}
                               viewMode={viewMode}
-                              isPulsing={product.id === pulsingProductId}
-                              isExiting={product.id === exitingProductId}
-                              onUpdateStatus={handleUpdateStatusHybrid}
-                              onDelete={handleDeleteHybrid}
+                              onUpdateStatus={handleUpdateStatus}
+                              onDelete={handleDelete}
                               onAddToShoppingList={handleLowStockToShoppingList}
                               onUpdateCategory={handleUpdateCategory}
                               onEdit={setEditingProduct}
@@ -1579,10 +1472,8 @@ export default function PantryPage({ listId }: { listId: string }) {
                                           key={`pantry-grouped-${product.id}`}
                                           product={product}
                                           viewMode={viewMode}
-                                          isPulsing={product.id === pulsingProductId}
-                                          isExiting={product.id === exitingProductId}
-                                          onUpdateStatus={handleUpdateStatusHybrid}
-                                          onDelete={handleDeleteHybrid}
+                                          onUpdateStatus={handleUpdateStatus}
+                                          onDelete={handleDelete}
                                           onAddToShoppingList={handleLowStockToShoppingList}
                                           onUpdateCategory={handleUpdateCategory}
                                           onEdit={setEditingProduct}
@@ -1638,7 +1529,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                       viewMode={viewMode}
                                       onCardClick={handleCardClick}
                                       onToggleBuyLater={handleToggleBuyLater}
-                                      onDelete={handleDeleteHybrid}
+                                      onDelete={handleDelete}
                                       onReturnToPantry={handleReturnToPantry}
                                       onEdit={setEditingProduct}
                                       isChecking={item.id === checkingItemId}
@@ -1664,8 +1555,10 @@ export default function PantryPage({ listId }: { listId: string }) {
                                                       layoutId={`shopping-now-grouped-${item.id}`}
                                                       item={item} viewMode={viewMode}
                                                       onCardClick={handleCardClick}
-                                                      onToggleBuyLater={handleToggleBuyLater} onDelete={handleDeleteHybrid}
-                                                      onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
+                                                      onToggleBuyLater={handleToggleBuyLater}
+                                                      onDelete={handleDelete}
+                                                      onReturnToPantry={handleReturnToPantry}
+                                                      onEdit={setEditingProduct}
                                                       isChecking={item.id === checkingItemId}
                                                       isSliding={item.id === slidingRightId}
                                                   />
@@ -1700,7 +1593,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                                           layoutId={`shopping-later-${item.id}`}
                                                           item={item} viewMode={viewMode}
                                                           onCardClick={handleCardClick}
-                                                          onToggleBuyLater={handleToggleBuyLater} onDelete={handleDeleteHybrid}
+                                                          onToggleBuyLater={handleToggleBuyLater} onDelete={handleDelete}
                                                           onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
                                                           isChecking={item.id === checkingItemId}
                                                           isSliding={item.id === slidingRightId}
@@ -1725,7 +1618,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                                                       layoutId={`shopping-later-grouped-${item.id}`}
                                                                       item={item} viewMode={viewMode}
                                                                       onCardClick={handleCardClick}
-                                                                      onToggleBuyLater={handleToggleBuyLater} onDelete={handleDeleteHybrid}
+                                                                      onToggleBuyLater={handleToggleBuyLater} onDelete={handleDelete}
                                                                       onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
                                                                       isChecking={item.id === checkingItemId}
                                                                       isSliding={item.id === slidingRightId}
