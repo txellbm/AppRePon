@@ -34,7 +34,7 @@ const prompt = ai.definePrompt({
 4.  **Cantidades Precisas:** En la lista de 'ingredients', especifica las cantidades tanto en unidades métricas (gramos, ml) como en medidas caseras (cucharadas, tazas, etc.). Las cantidades deben estar calculadas con precisión para una ración.
 5.  **Fácil y Rápida:** La preparación debe ser sencilla, ideal para alguien que cuida su alimentación.
 6.  **Especias y Grasas Saludables:** Utiliza, si es posible, especias o aceites saludables presentes en la despensa (como cúrcuma, jengibre, canela, romero, aceite de oliva).
-7.  **Formato de Salida:** Presenta el plato con un `title` (nombre), `ingredients` (lista de ingredientes) y `instructions`
+7.  **Formato de Salida:** Presenta el plato con los campos 'title' (nombre), 'ingredients' (lista de ingredientes) y 'instructions' (pasos de la receta).
 
 {{#if previousRecipeTitles}}
 **Recetas a Evitar:** No sugieras recetas con los siguientes títulos: {{#each previousRecipeTitles}}"{{{this}}}"{{#unless @last}}, {{/unless}}{{/each}}. Sé creativo y ofrece una alternativa completamente diferente.
