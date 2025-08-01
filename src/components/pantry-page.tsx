@@ -366,10 +366,10 @@ function ProductCard({
                           <span>Cambiar Categoría</span>
                       </DropdownMenuSubTrigger>
                       <DropdownMenuPortal>
-                          <DropdownMenuSubContent>
+                          <DropdownMenuSubContent className="max-w-[calc(100vw-2rem)] sm:max-w-none overflow-hidden">
                               <DropdownMenuRadioGroup value={product.category} onValueChange={(newCategory) => onUpdateCategory(product.id, newCategory as Category)}>
                                   {categories.map((cat) => (
-                                      <DropdownMenuRadioItem key={cat} value={cat}>{cat}</DropdownMenuRadioItem>
+                                      <DropdownMenuRadioItem key={cat} value={cat} className="whitespace-nowrap">{cat}</DropdownMenuRadioItem>
                                   ))}
                               </DropdownMenuRadioGroup>
                           </DropdownMenuSubContent>
@@ -382,14 +382,14 @@ function ProductCard({
                           <span>Cambiar Estado</span>
                       </DropdownMenuSubTrigger>
                       <DropdownMenuPortal>
-                          <DropdownMenuSubContent>
+                          <DropdownMenuSubContent className="max-w-[calc(100vw-2rem)] sm:max-w-none overflow-hidden">
                               {product.status === 'available' && (
                                   <>
-                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'low'); }}>
+                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'low'); }} className="whitespace-nowrap">
                                           <div className="w-3 h-3 rounded-full bg-amarillo-mostaza mr-2" />
                                           <span>Cambiar a "Queda poco"</span>
                                       </DropdownMenuItem>
-                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpdateStatus(product.id, 'out of stock'); }}>
+                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpdateStatus(product.id, 'out of stock'); }} className="whitespace-nowrap">
                                           <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
                                           <span>Cambiar a "Agotado (mover a compra)"</span>
                                       </DropdownMenuItem>
@@ -397,11 +397,11 @@ function ProductCard({
                               )}
                               {product.status === 'low' && (
                                   <>
-                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'available'); }}>
+                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'available'); }} className="whitespace-nowrap">
                                           <div className="w-3 h-3 rounded-full bg-verde-eucalipto mr-2" />
                                           <span>Cambiar a "Disponible"</span>
                                       </DropdownMenuItem>
-                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpdateStatus(product.id, 'out of stock'); }}>
+                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpdateStatus(product.id, 'out of stock'); }} className="whitespace-nowrap">
                                           <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
                                           <span>Cambiar a "Agotado (mover a compra)"</span>
                                       </DropdownMenuItem>
@@ -409,11 +409,11 @@ function ProductCard({
                               )}
                               {product.status === 'out of stock' && (
                                   <>
-                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'available'); }}>
+                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'available'); }} className="whitespace-nowrap">
                                           <div className="w-3 h-3 rounded-full bg-verde-eucalipto mr-2" />
                                           <span>Cambiar a "Disponible"</span>
                                       </DropdownMenuItem>
-                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'low'); }}>
+                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'low'); }} className="whitespace-nowrap">
                                           <div className="w-3 h-3 rounded-full bg-amarillo-mostaza mr-2" />
                                           <span>Cambiar a "Queda poco"</span>
                                       </DropdownMenuItem>
