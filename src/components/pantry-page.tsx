@@ -301,10 +301,13 @@ function ProductCard({
           const hasMultipleTags = hasPendingPurchase && hasFrozen;
           
           return (
-            <div className="flex justify-between items-start">
+            <div className={cn(
+              "flex justify-between",
+              hasMultipleTags ? "items-start" : "items-center"
+            )}>
               <div className={cn(
                 "flex gap-1",
-                hasMultipleTags ? "flex-col" : "items-center"
+                hasMultipleTags ? "flex-col items-start" : "items-center"
               )}>
                 {product.status === 'low' && (
                   product.isPendingPurchase ? (
