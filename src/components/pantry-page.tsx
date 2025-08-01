@@ -241,7 +241,8 @@ function ProductCard({
   onDirectStatusChange,
   onToggleFreeze,
   onLongPress,
-  onCancelLongPress
+  onCancelLongPress,
+  onSetEditingFrozenDate
 }: {
   product: Product;
   viewMode: ViewMode;
@@ -254,6 +255,7 @@ function ProductCard({
   onToggleFreeze: (id: string) => void;
   onLongPress: (id: string, event: React.MouseEvent | React.TouchEvent) => void;
   onCancelLongPress: () => void;
+  onSetEditingFrozenDate: (data: {product: Product, date: string}) => void;
 }) {
   const handleCycleStatus = () => {
     const statuses: ProductStatus[] = ["available", "low", "out of stock"];
@@ -438,10 +440,10 @@ function ProductCard({
                         </DropdownMenuSubContent>
                     </DropdownMenuPortal>
                 </DropdownMenuSub>
-                {isFrozen && (
+                {isFrozen && product.frozenAt && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingFrozenDate({ product, date: new Date(product.frozenAt!).toISOString().split('T')[0] }); }}>
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSetEditingFrozenDate({ product, date: new Date(product.frozenAt).toISOString().split('T')[0] }); }}>
                       <Calendar className="mr-2 h-4 w-4" />
                       <span>Editar fecha de congelación</span>
                     </DropdownMenuItem>
@@ -530,10 +532,10 @@ function ProductCard({
                   </DropdownMenuSubContent>
                 </DropdownMenuPortal>
               </DropdownMenuSub>
-              {isFrozen && (
+              {isFrozen && product.frozenAt && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingFrozenDate({ product, date: new Date(product.frozenAt!).toISOString().split('T')[0] }); }}>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSetEditingFrozenDate({ product, date: new Date(product.frozenAt).toISOString().split('T')[0] }); }}>
                     <Calendar className="mr-2 h-4 w-4" />
                     <span>Editar fecha de congelación</span>
                   </DropdownMenuItem>
@@ -718,7 +720,7 @@ export default function PantryPage({ listId }: { listId: string }) {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [groupByCategory, setGroupByCategory] = useState(true);
   const [sortConfig, setSortConfig] = useState<SortConfig>({ by: 'name', order: 'asc' });
-  const [statusFilter, setStatusFilter] = useState<'all' | ProductStatus>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | ProductStatus | 'frozen'>('all');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
@@ -1703,6 +1705,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                               onToggleFreeze={handleToggleFreeze}
                               onLongPress={handleLongPress}
                               onCancelLongPress={handleCancelLongPress}
+                              onSetEditingFrozenDate={setEditingFrozenDate}
                             />
                           ))}
                         </AnimatePresence>
@@ -1733,6 +1736,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                           onToggleFreeze={handleToggleFreeze}
                                           onLongPress={handleLongPress}
                                           onCancelLongPress={handleCancelLongPress}
+                                          onSetEditingFrozenDate={setEditingFrozenDate}
                                         />
                                         ))}
                                     </AnimatePresence>
