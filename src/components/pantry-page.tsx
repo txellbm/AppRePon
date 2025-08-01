@@ -240,8 +240,6 @@ function ProductCard({
   onEdit,
   onDirectStatusChange,
   onToggleFreeze,
-  onLongPress,
-  onCancelLongPress,
   onSetEditingFrozenDate
 }: {
   product: Product;
@@ -253,8 +251,6 @@ function ProductCard({
   onEdit: (product: Product) => void;
   onDirectStatusChange: (id: string, status: ProductStatus) => void;
   onToggleFreeze: (id: string) => void;
-  onLongPress: (id: string, event: React.MouseEvent | React.TouchEvent) => void;
-  onCancelLongPress: () => void;
   onSetEditingFrozenDate: (data: {product: Product, date: string}) => void;
 }) {
   const handleCycleStatus = () => {
@@ -262,37 +258,6 @@ function ProductCard({
     const currentIndex = statuses.indexOf(product.status);
     const nextStatus = statuses[(currentIndex + 1) % statuses.length];
     onUpdateStatus(product.id, nextStatus);
-  };
-
-  const handleMouseDown = (event: React.MouseEvent) => {
-    const timer = setTimeout(() => {
-      onLongPress(product.id, event);
-    }, 1500);
-    // Guardar el timer para poder cancelarlo
-    (event.target as HTMLElement).setAttribute('data-timer', timer.toString());
-  };
-
-  const handleMouseUp = (event: React.MouseEvent) => {
-    const timerId = (event.target as HTMLElement).getAttribute('data-timer');
-    if (timerId) {
-      clearTimeout(parseInt(timerId));
-      (event.target as HTMLElement).removeAttribute('data-timer');
-    }
-  };
-
-  const handleTouchStart = (event: React.TouchEvent) => {
-    const timer = setTimeout(() => {
-      onLongPress(product.id, event);
-    }, 1500);
-    (event.target as HTMLElement).setAttribute('data-timer', timer.toString());
-  };
-
-  const handleTouchEnd = (event: React.TouchEvent) => {
-    const timerId = (event.target as HTMLElement).getAttribute('data-timer');
-    if (timerId) {
-      clearTimeout(parseInt(timerId));
-      (event.target as HTMLElement).removeAttribute('data-timer');
-    }
   };
 
   const statusStyles = {
@@ -323,10 +288,6 @@ function ProductCard({
         "cursor-pointer transition-colors transition-color"
       )}
       onClick={handleCycleStatus}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
     >
       <div className="flex items-center gap-2">
         <h3 className={cn("font-semibold", isListView ? '' : 'line-clamp-2')}>{product.name}</h3>
@@ -338,6 +299,22 @@ function ProductCard({
           Congelado: {frozenDate}
         </div>
       )}
+
+      {/* Botón de congelar/descongelar */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className={cn(
+          "absolute top-1 right-1 h-6 w-6",
+          isFrozen ? "text-blue-300 opacity-100" : "text-gray-400 opacity-50 hover:opacity-75"
+        )}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleFreeze(product.id);
+        }}
+      >
+        <span className="text-sm">❄️</span>
+      </Button>
 
       {isListView ? (
         <div className="shrink-0 flex items-center gap-1">
@@ -745,8 +722,6 @@ export default function PantryPage({ listId }: { listId: string }) {
   const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
   
   // Estados para funcionalidad de congelar/descongelar
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
-  const [showFreezeMenu, setShowFreezeMenu] = useState<{id: string, x: number, y: number} | null>(null);
   const [editingFrozenDate, setEditingFrozenDate] = useState<{product: Product, date: string} | null>(null);
 
   const [openCategories, setOpenCategories] = useState<string[]>([]);
@@ -1392,7 +1367,6 @@ export default function PantryPage({ listId }: { listId: string }) {
     );
 
     updateRemoteList({ pantry: newPantry });
-    setShowFreezeMenu(null);
   };
 
   // Handler para editar fecha de congelación
@@ -1412,36 +1386,7 @@ export default function PantryPage({ listId }: { listId: string }) {
     setEditingFrozenDate(null);
   };
 
-  // Handler para long press en ProductCard
-  const handleLongPress = (id: string, event: React.MouseEvent | React.TouchEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    const rect = (event.target as HTMLElement).getBoundingClientRect();
-    setShowFreezeMenu({ id, x: rect.left + rect.width / 2, y: rect.top });
-  };
 
-  // Handler para cancelar long press
-  const handleCancelLongPress = () => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-  };
-
-  // Cerrar menú flotante al hacer clic fuera
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showFreezeMenu) {
-        setShowFreezeMenu(null);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [showFreezeMenu]);
 
   return (
     <>
@@ -1713,8 +1658,6 @@ export default function PantryPage({ listId }: { listId: string }) {
                               onEdit={setEditingProduct}
                               onDirectStatusChange={handleDirectStatusChange}
                               onToggleFreeze={handleToggleFreeze}
-                              onLongPress={handleLongPress}
-                              onCancelLongPress={handleCancelLongPress}
                               onSetEditingFrozenDate={setEditingFrozenDate}
                             />
                           ))}
@@ -1744,8 +1687,6 @@ export default function PantryPage({ listId }: { listId: string }) {
                                           onEdit={setEditingProduct}
                                           onDirectStatusChange={handleDirectStatusChange}
                                           onToggleFreeze={handleToggleFreeze}
-                                          onLongPress={handleLongPress}
-                                          onCancelLongPress={handleCancelLongPress}
                                           onSetEditingFrozenDate={setEditingFrozenDate}
                                         />
                                         ))}
@@ -2093,36 +2034,7 @@ export default function PantryPage({ listId }: { listId: string }) {
           </DialogContent>
         </Dialog>
 
-        {/* Menú flotante de congelar/descongelar */}
-        {showFreezeMenu && (
-          <div 
-            className="fixed z-50 bg-background border rounded-lg shadow-lg p-2"
-            style={{ 
-              left: showFreezeMenu.x - 50, 
-              top: showFreezeMenu.y - 40,
-              transform: 'translateX(-50%)'
-            }}
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleToggleFreeze(showFreezeMenu.id)}
-              className="flex items-center gap-2"
-            >
-              {pantry.find(p => p.id === showFreezeMenu.id)?.frozenAt ? (
-                <>
-                  <span>🔥</span>
-                  <span>Descongelar</span>
-                </>
-              ) : (
-                <>
-                  <span>❄️</span>
-                  <span>Congelar</span>
-                </>
-              )}
-            </Button>
-          </div>
-        )}
+
       </div>
     </>
   );
