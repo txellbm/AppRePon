@@ -20,6 +20,7 @@ export interface Product {
   reason?: 'low' | 'out of stock';
   isPendingPurchase: boolean;
   buyLater: boolean;
+  frozenAt?: number; // Timestamp de cuando se congeló el producto
 }
 
 export type MessageType = 'low_stock' | 'out_of_stock' | 'moved_to_shopping_list' | 'added_to_pantry' | 'available' | 'out_of_stock_and_moved' | 'added_to_shopping_list';
