@@ -355,7 +355,7 @@ function ProductCard({
                       <MoreVertical className="h-4 w-4" />
                   </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="end">
+              <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="end" side="bottom" sideOffset={4} avoidCollisions={true}>
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(product); }}>
                       <Pencil className="mr-2 h-4 w-4" />
                       <span>Editar Nombre</span>
@@ -382,7 +382,7 @@ function ProductCard({
                           <span>Cambiar Estado</span>
                       </DropdownMenuSubTrigger>
                       <DropdownMenuPortal>
-                          <DropdownMenuSubContent side="bottom" sideOffset={4} avoidCollisions={true}>
+                          <DropdownMenuSubContent>
                               {product.status === 'available' && (
                                   <>
                                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'low'); }}>
@@ -474,7 +474,7 @@ function ProductCard({
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="end">
+            <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="end" side="bottom" sideOffset={4} avoidCollisions={true}>
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(product); }}>
                 <Pencil className="mr-2 h-4 w-4" />
                 <span>Editar Nombre</span>
@@ -591,7 +591,7 @@ function ShoppingItemCard({
                     <MoreVertical className="h-4 w-4" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="end">
+            <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="end" side="bottom" sideOffset={4} avoidCollisions={true}>
                 <DropdownMenuItem onClick={() => onEdit(item)}>
                     <Pencil className="mr-2 h-4 w-4" />
                     <span>Editar Nombre</span>
@@ -630,7 +630,7 @@ function ShoppingItemCard({
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="end">
+            <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="end" side="bottom" sideOffset={4} avoidCollisions={true}>
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(item); }}>
                 <Pencil className="mr-2 h-4 w-4" />
                 <span>Editar Nombre</span>
