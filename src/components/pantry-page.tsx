@@ -573,47 +573,6 @@ function ShoppingItemCard({
   );
 }
 
-// Badge visual para depuración de Firestore offline/online
-function BadgeFirestoreStatus({ isOnline, hasPendingWrites }: { isOnline: boolean, hasPendingWrites: boolean }) {
-  let color = 'bg-blue-600';
-  let text = 'Online';
-  if (!isOnline && !hasPendingWrites) {
-    color = 'bg-orange-500';
-    text = 'Offline';
-  } else if (!isOnline && hasPendingWrites) {
-    color = 'bg-red-600';
-    text = 'Offline (pendiente)';
-  } else if (isOnline && hasPendingWrites) {
-    color = 'bg-yellow-500';
-    text = 'Online (pendiente)';
-  }
-  return (
-    <div style={{ position: 'fixed', bottom: 16, right: 16, zIndex: 9999 }}>
-      <div className={`flex items-center gap-2 px-3 py-1 rounded-full shadow-lg text-white text-xs font-semibold ${color}`}
-        style={{ minWidth: 120, justifyContent: 'center' }}>
-        {color === 'bg-blue-600' && '🔵'}
-        {color === 'bg-orange-500' && '🟠'}
-        {color === 'bg-red-600' && '🔴'}
-        {color === 'bg-yellow-500' && '🟡'}
-        <span>{text}</span>
-      </div>
-    </div>
-  );
-}
-
-function FirestoreDebugInfo({ isOnline, hasPendingWrites, pantry, shoppingList }: { isOnline: boolean, hasPendingWrites: boolean, pantry: Product[], shoppingList: Product[] }) {
-  return (
-    <div style={{ position: 'fixed', bottom: 60, right: 16, zIndex: 9999, background: 'rgba(30,30,30,0.95)', color: 'white', borderRadius: 8, padding: 10, fontSize: 12, minWidth: 220 }}>
-      <div><b>isOnline:</b> {String(isOnline)}</div>
-      <div><b>hasPendingWrites:</b> {String(hasPendingWrites)}</div>
-      <div><b>pantry.length:</b> {pantry.length}</div>
-      <div><b>shoppingList.length:</b> {shoppingList.length}</div>
-      <div><b>pantry[0-1]:</b> {pantry.slice(0,2).map(p => p.name).join(", ") || '-'}</div>
-      <div><b>shoppingList[0-1]:</b> {shoppingList.slice(0,2).map(p => p.name).join(", ") || '-'}</div>
-    </div>
-  );
-}
-
 export default function PantryPage({ listId }: { listId: string }) {
   console.log('💡 Render iniciado');
   var a,s;
@@ -1264,8 +1223,6 @@ export default function PantryPage({ listId }: { listId: string }) {
 
   return (
     <>
-      <BadgeFirestoreStatus isOnline={isOnline} hasPendingWrites={hasPendingWrites} />
-      <FirestoreDebugInfo isOnline={isOnline} hasPendingWrites={hasPendingWrites} pantry={pantry} shoppingList={shoppingList} />
       <div className="min-h-screen bg-background text-foreground">
         <header className="sticky top-0 z-20 w-full border-b bg-background/80 backdrop-blur-sm">
             <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
