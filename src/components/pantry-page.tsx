@@ -302,8 +302,8 @@ function ProductCard({
   }[product.status];
 
   const isListView = viewMode === 'list';
-  const isFrozen = !!product.frozenAt;
-  const frozenDate = product.frozenAt ? new Date(product.frozenAt).toLocaleDateString('es-ES') : null;
+  const isFrozen = !!product?.frozenAt;
+  const frozenDate = product?.frozenAt ? new Date(product.frozenAt).toLocaleDateString('es-ES') : null;
 
   return (
     <motion.div
@@ -440,10 +440,15 @@ function ProductCard({
                         </DropdownMenuSubContent>
                     </DropdownMenuPortal>
                 </DropdownMenuSub>
-                {isFrozen && product.frozenAt && (
+                {isFrozen && product?.frozenAt && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSetEditingFrozenDate({ product, date: new Date(product.frozenAt).toISOString().split('T')[0] }); }}>
+                    <DropdownMenuItem onClick={(e) => { 
+                      e.stopPropagation(); 
+                      if (product.frozenAt) {
+                        onSetEditingFrozenDate({ product, date: new Date(product.frozenAt).toISOString().split('T')[0] }); 
+                      }
+                    }}>
                       <Calendar className="mr-2 h-4 w-4" />
                       <span>Editar fecha de congelación</span>
                     </DropdownMenuItem>
@@ -532,10 +537,15 @@ function ProductCard({
                   </DropdownMenuSubContent>
                 </DropdownMenuPortal>
               </DropdownMenuSub>
-              {isFrozen && product.frozenAt && (
+              {isFrozen && product?.frozenAt && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSetEditingFrozenDate({ product, date: new Date(product.frozenAt).toISOString().split('T')[0] }); }}>
+                  <DropdownMenuItem onClick={(e) => { 
+                    e.stopPropagation(); 
+                    if (product.frozenAt) {
+                      onSetEditingFrozenDate({ product, date: new Date(product.frozenAt).toISOString().split('T')[0] }); 
+                    }
+                  }}>
                     <Calendar className="mr-2 h-4 w-4" />
                     <span>Editar fecha de congelación</span>
                   </DropdownMenuItem>
@@ -1186,7 +1196,7 @@ export default function PantryPage({ listId }: { listId: string }) {
      return sorted
         .filter(p => {
           if (statusFilter === 'frozen') {
-            return !!p.frozenAt;
+            return !!p?.frozenAt;
           }
           return statusFilter === 'all' || p.status === statusFilter;
         })
@@ -1376,7 +1386,7 @@ export default function PantryPage({ listId }: { listId: string }) {
       p.id === id 
         ? { 
             ...p, 
-            frozenAt: p.frozenAt ? undefined : Date.now() 
+            frozenAt: p?.frozenAt ? undefined : Date.now() 
           } 
         : p
     );
