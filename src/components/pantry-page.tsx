@@ -236,7 +236,8 @@ function ProductCard({
   onDelete,
   onAddToShoppingList,
   onUpdateCategory,
-  onEdit
+  onEdit,
+  onDirectStatusChange
 }: {
   product: Product;
   viewMode: ViewMode;
@@ -245,6 +246,7 @@ function ProductCard({
   onAddToShoppingList: (id: string) => void;
   onUpdateCategory: (id: string, category: Category) => void;
   onEdit: (product: Product) => void;
+  onDirectStatusChange: (id: string, status: ProductStatus) => void;
 }) {
   const handleCycleStatus = () => {
     const statuses: ProductStatus[] = ["available", "low", "out of stock"];
@@ -276,7 +278,7 @@ function ProductCard({
           ? "p-3 flex items-center justify-between"
           : "relative p-2 flex flex-col items-center justify-center text-center min-h-[6rem]",
         statusStyles,
-        "cursor-pointer transition-colors transition-color",
+        "cursor-pointer transition-colors transition-color"
       )}
       onClick={handleCycleStatus}
     >
@@ -337,6 +339,29 @@ function ProductCard({
                     </DropdownMenuPortal>
                 </DropdownMenuSub>
                 <DropdownMenuSeparator />
+                <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                        <Package className="mr-2 h-4 w-4" />
+                        <span>Cambiar Estado</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                        <DropdownMenuSubContent>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'available'); }}>
+                                <div className="w-3 h-3 rounded-full bg-verde-eucalipto mr-2" />
+                                <span>Disponible</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'low'); }}>
+                                <div className="w-3 h-3 rounded-full bg-amarillo-mostaza mr-2" />
+                                <span>Queda poco</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpdateStatus(product.id, 'out of stock'); }}>
+                                <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
+                                <span>Agotado (mover a compra)</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                </DropdownMenuSub>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem className="text-[#FF4C4C] hover:bg-[#2C0000] hover:text-white focus:bg-[#2C0000] focus:text-white" onClick={(e) => { e.stopPropagation(); onDelete(product.id); }}>
                     <Trash2 className="mr-2 h-4 w-4" />
                     <span>Eliminar</span>
@@ -373,6 +398,29 @@ function ProductCard({
                 </DropdownMenuPortal>
               </DropdownMenuSub>
               <DropdownMenuSeparator />
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Package className="mr-2 h-4 w-4" />
+                  <span>Cambiar Estado</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'available'); }}>
+                      <div className="w-3 h-3 rounded-full bg-verde-eucalipto mr-2" />
+                      <span>Disponible</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'low'); }}>
+                      <div className="w-3 h-3 rounded-full bg-amarillo-mostaza mr-2" />
+                      <span>Queda poco</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpdateStatus(product.id, 'out of stock'); }}>
+                      <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
+                      <span>Agotado (mover a compra)</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
               <DropdownMenuItem className="text-[#FF4C4C] hover:bg-[#2C0000] hover:text-white focus:bg-[#2C0000] focus:text-white" onClick={(e) => { e.stopPropagation(); onDelete(product.id); }}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 <span>Eliminar</span>
@@ -393,6 +441,7 @@ function ShoppingItemCard({
   onDelete,
   onReturnToPantry,
   onEdit,
+  onMarkAsOutOfStock,
   layoutId,
   isChecking = false,
   isSliding = false
@@ -404,6 +453,7 @@ function ShoppingItemCard({
   onDelete: (id: string) => void;
   onReturnToPantry: (id: string) => void;
   onEdit: (product: Product) => void;
+  onMarkAsOutOfStock: (id: string) => void;
   layoutId: string;
   isChecking?: boolean;
   isSliding?: boolean;
@@ -474,6 +524,11 @@ function ShoppingItemCard({
                     </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onMarkAsOutOfStock(item.id)}>
+                    <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
+                    <span>Marcar como agotado</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem className="text-[#FF4C4C] hover:bg-[#2C0000] hover:text-white focus:bg-[#2C0000] focus:text-white" onClick={() => onDelete(item.id)}>
                     <Trash2 className="mr-2 h-4 w-4" />
                     <span>Eliminar</span>
@@ -500,6 +555,11 @@ function ShoppingItemCard({
                   <span>Devolver a despensa</span>
                 </DropdownMenuItem>
               )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onMarkAsOutOfStock(item.id)}>
+                <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
+                <span>Marcar como agotado</span>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-[#FF4C4C] hover:bg-[#2C0000] hover:text-white focus:bg-[#2C0000] focus:text-white" onClick={() => onDelete(item.id)}>
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -787,7 +847,7 @@ export default function PantryPage({ listId }: { listId: string }) {
       pantry.length === shoppingList.length &&
       JSON.stringify(pantry) === JSON.stringify(shoppingList)
     ) {
-      setPulsingProductId(null);
+    
     }
 
     if (
@@ -796,7 +856,7 @@ export default function PantryPage({ listId }: { listId: string }) {
       pantry.length === shoppingList.length &&
       JSON.stringify(pantry) === JSON.stringify(shoppingList)
     ) {
-      setExitingProductId(null);
+      
     }
   }, [pantry, shoppingList]);
 
@@ -1153,8 +1213,10 @@ export default function PantryPage({ listId }: { listId: string }) {
   const handleUpdateStatus = (id: string, status: ProductStatus) => {
     const product = pantry.find(p => p.id === id);
     if (!product) return;
+    
     let newPantry = pantry.map(p => (p.id === id ? { ...p, status, isPendingPurchase: status === 'available' ? false : p.isPendingPurchase } : p));
     let newShoppingList = [...shoppingList];
+    
     if (status === 'out of stock') {
       // Mover a la lista de la compra
       newPantry = pantry.filter(p => p.id !== id);
@@ -1172,13 +1234,32 @@ export default function PantryPage({ listId }: { listId: string }) {
         });
       }
     }
+    
     if (status === 'available') {
       const shoppingListItem = shoppingList.find(item => item.id === product.id);
       if (shoppingListItem && shoppingListItem.reason === 'low') {
         newShoppingList = shoppingList.filter(item => item.id !== product.id);
       }
     }
+    
     updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
+  };
+
+  // Handler para cambiar estado directamente sin ciclo
+  const handleDirectStatusChange = (id: string, newStatus: ProductStatus) => {
+    handleUpdateStatus(id, newStatus);
+  };
+
+  // Handler para marcar como agotado en la lista de compra sin pasar a despensa
+  const handleMarkAsOutOfStock = (id: string) => {
+    const item = shoppingList.find(p => p.id === id);
+    if (!item) return;
+    
+    const newShoppingList = shoppingList.map(p => 
+      p.id === id ? { ...p, status: 'out of stock' as ProductStatus } : p
+    );
+    
+    updateRemoteList({ shoppingList: newShoppingList });
   };
 
   return (
@@ -1446,11 +1527,12 @@ export default function PantryPage({ listId }: { listId: string }) {
                               key={`pantry-${product.id}`}
                               product={product}
                               viewMode={viewMode}
-                              onUpdateStatus={handleUpdateStatus}
+                              onUpdateStatus={handleDirectStatusChange}
                               onDelete={handleDelete}
                               onAddToShoppingList={handleLowStockToShoppingList}
                               onUpdateCategory={handleUpdateCategory}
                               onEdit={setEditingProduct}
+                              onDirectStatusChange={handleDirectStatusChange}
                             />
                           ))}
                         </AnimatePresence>
@@ -1472,11 +1554,12 @@ export default function PantryPage({ listId }: { listId: string }) {
                                           key={`pantry-grouped-${product.id}`}
                                           product={product}
                                           viewMode={viewMode}
-                                          onUpdateStatus={handleUpdateStatus}
+                                          onUpdateStatus={handleDirectStatusChange}
                                           onDelete={handleDelete}
                                           onAddToShoppingList={handleLowStockToShoppingList}
                                           onUpdateCategory={handleUpdateCategory}
                                           onEdit={setEditingProduct}
+                                          onDirectStatusChange={handleDirectStatusChange}
                                         />
                                         ))}
                                     </AnimatePresence>
@@ -1532,6 +1615,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                       onDelete={handleDelete}
                                       onReturnToPantry={handleReturnToPantry}
                                       onEdit={setEditingProduct}
+                                      onMarkAsOutOfStock={handleMarkAsOutOfStock}
                                       isChecking={item.id === checkingItemId}
                                       isSliding={item.id === slidingRightId}
                                   />
@@ -1559,6 +1643,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                                       onDelete={handleDelete}
                                                       onReturnToPantry={handleReturnToPantry}
                                                       onEdit={setEditingProduct}
+                                                      onMarkAsOutOfStock={handleMarkAsOutOfStock}
                                                       isChecking={item.id === checkingItemId}
                                                       isSliding={item.id === slidingRightId}
                                                   />
@@ -1595,6 +1680,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                                           onCardClick={handleCardClick}
                                                           onToggleBuyLater={handleToggleBuyLater} onDelete={handleDelete}
                                                           onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
+                                                          onMarkAsOutOfStock={handleMarkAsOutOfStock}
                                                           isChecking={item.id === checkingItemId}
                                                           isSliding={item.id === slidingRightId}
                                                       />
@@ -1620,6 +1706,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                                                       onCardClick={handleCardClick}
                                                                       onToggleBuyLater={handleToggleBuyLater} onDelete={handleDelete}
                                                                       onReturnToPantry={handleReturnToPantry} onEdit={setEditingProduct}
+                                                                      onMarkAsOutOfStock={handleMarkAsOutOfStock}
                                                                       isChecking={item.id === checkingItemId}
                                                                       isSliding={item.id === slidingRightId}
                                                                   />
