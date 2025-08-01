@@ -301,165 +301,165 @@ function ProductCard({
           const hasMultipleTags = hasPendingPurchase && hasFrozen;
           
           return (
-            <div className={cn(
-              "shrink-0 flex gap-1",
-              hasMultipleTags 
-                ? "flex-col sm:flex-row items-end sm:items-center" 
-                : "items-center"
-            )}>
-            {product.status === 'low' && (
-              product.isPendingPurchase ? (
-                <div className={cn(
-                  "flex items-center justify-center text-[10px] sm:text-xs h-6 sm:h-8 px-1 sm:px-2 rounded-md bg-[#5D6D7E] text-white border border-[#5D6D7E] font-medium",
-                  hasMultipleTags ? "w-full sm:w-auto" : ""
-                )}>
-                    Pendiente de compra
-                </div>
-              ) : (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        className="h-8 w-8 bg-gray-800 text-white hover:bg-gray-700"
-                        aria-label="Añadir a la lista de compra"
-                        onClick={(e) => { e.stopPropagation(); onAddToShoppingList(product.id); }}
-                      >
-                        <ShoppingCart className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Añadir a la compra</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )
-            )}
-            
-            {isFrozen && frozenDate && (
+            <div className="flex justify-between items-start">
               <div className={cn(
-                "flex items-center justify-center text-[10px] sm:text-xs h-6 sm:h-8 px-1 sm:px-2 rounded-md bg-blue-600 text-white border border-blue-600 font-medium",
-                hasMultipleTags ? "w-full sm:w-auto" : ""
+                "flex gap-1",
+                hasMultipleTags ? "flex-col" : "items-center"
               )}>
-                Congelado: {frozenDate}
-              </div>
-            )}
-            
-            <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
-                    <MoreVertical className="h-4 w-4" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="end">
-                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(product); }}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    <span>Editar Nombre</span>
-                </DropdownMenuItem>
-                <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                        <Tags className="mr-2 h-4 w-4" />
-                        <span>Cambiar Categoría</span>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                        <DropdownMenuSubContent>
-                            <DropdownMenuRadioGroup value={product.category} onValueChange={(newCategory) => onUpdateCategory(product.id, newCategory as Category)}>
-                                {categories.map((cat) => (
-                                    <DropdownMenuRadioItem key={cat} value={cat}>{cat}</DropdownMenuRadioItem>
-                                ))}
-                            </DropdownMenuRadioGroup>
-                        </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                </DropdownMenuSub>
-                <DropdownMenuSeparator />
-                <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                        <Package className="mr-2 h-4 w-4" />
-                        <span>Cambiar Estado</span>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                        <DropdownMenuSubContent>
-                            {product.status === 'available' && (
-                                <>
-                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'low'); }}>
-                                        <div className="w-3 h-3 rounded-full bg-amarillo-mostaza mr-2" />
-                                        <span>Cambiar a "Queda poco"</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpdateStatus(product.id, 'out of stock'); }}>
-                                        <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
-                                        <span>Cambiar a "Agotado (mover a compra)"</span>
-                                    </DropdownMenuItem>
-                                </>
-                            )}
-                            {product.status === 'low' && (
-                                <>
-                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'available'); }}>
-                                        <div className="w-3 h-3 rounded-full bg-verde-eucalipto mr-2" />
-                                        <span>Cambiar a "Disponible"</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpdateStatus(product.id, 'out of stock'); }}>
-                                        <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
-                                        <span>Cambiar a "Agotado (mover a compra)"</span>
-                                    </DropdownMenuItem>
-                                </>
-                            )}
-                            {product.status === 'out of stock' && (
-                                <>
-                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'available'); }}>
-                                        <div className="w-3 h-3 rounded-full bg-verde-eucalipto mr-2" />
-                                        <span>Cambiar a "Disponible"</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'low'); }}>
-                                        <div className="w-3 h-3 rounded-full bg-amarillo-mostaza mr-2" />
-                                        <span>Cambiar a "Queda poco"</span>
-                                    </DropdownMenuItem>
-                                </>
-                            )}
-                        </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                </DropdownMenuSub>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={(e) => { 
-                    e.stopPropagation(); 
-                    onToggleFreeze(product.id);
-                  }}
-                  className={isFrozen ? "text-red-500 hover:bg-red-50 hover:text-red-600" : "text-blue-500 hover:bg-blue-50 hover:text-blue-600"}
-                >
-                  {isFrozen ? (
-                    <>
-                      <span className="mr-2">🔥</span>
-                      <span>Descongelar</span>
-                    </>
+                {product.status === 'low' && (
+                  product.isPendingPurchase ? (
+                    <div className={cn(
+                      "flex items-center justify-center text-[10px] sm:text-xs h-6 sm:h-8 px-1 sm:px-2 rounded-md bg-[#5D6D7E] text-white border border-[#5D6D7E] font-medium",
+                      hasMultipleTags ? "w-full sm:w-auto" : ""
+                    )}>
+                        Pendiente de compra
+                    </div>
                   ) : (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="h-8 w-8 bg-gray-800 text-white hover:bg-gray-700"
+                            aria-label="Añadir a la lista de compra"
+                            onClick={(e) => { e.stopPropagation(); onAddToShoppingList(product.id); }}
+                          >
+                            <ShoppingCart className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Añadir a la compra</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )
+                )}
+                
+                {isFrozen && frozenDate && (
+                  <div className={cn(
+                    "flex items-center justify-center text-[10px] sm:text-xs h-6 sm:h-8 px-1 sm:px-2 rounded-md bg-blue-600 text-white border border-blue-600 font-medium",
+                    hasMultipleTags ? "w-full sm:w-auto" : ""
+                  )}>
+                    Congelado: {frozenDate}
+                  </div>
+                )}
+              </div>
+              
+              <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+                      <MoreVertical className="h-4 w-4" />
+                  </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="end">
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(product); }}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      <span>Editar Nombre</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                          <Tags className="mr-2 h-4 w-4" />
+                          <span>Cambiar Categoría</span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                          <DropdownMenuSubContent>
+                              <DropdownMenuRadioGroup value={product.category} onValueChange={(newCategory) => onUpdateCategory(product.id, newCategory as Category)}>
+                                  {categories.map((cat) => (
+                                      <DropdownMenuRadioItem key={cat} value={cat}>{cat}</DropdownMenuRadioItem>
+                                  ))}
+                              </DropdownMenuRadioGroup>
+                          </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                  </DropdownMenuSub>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                          <Package className="mr-2 h-4 w-4" />
+                          <span>Cambiar Estado</span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                          <DropdownMenuSubContent>
+                              {product.status === 'available' && (
+                                  <>
+                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'low'); }}>
+                                          <div className="w-3 h-3 rounded-full bg-amarillo-mostaza mr-2" />
+                                          <span>Cambiar a "Queda poco"</span>
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpdateStatus(product.id, 'out of stock'); }}>
+                                          <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
+                                          <span>Cambiar a "Agotado (mover a compra)"</span>
+                                      </DropdownMenuItem>
+                                  </>
+                              )}
+                              {product.status === 'low' && (
+                                  <>
+                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'available'); }}>
+                                          <div className="w-3 h-3 rounded-full bg-verde-eucalipto mr-2" />
+                                          <span>Cambiar a "Disponible"</span>
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpdateStatus(product.id, 'out of stock'); }}>
+                                          <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
+                                          <span>Cambiar a "Agotado (mover a compra)"</span>
+                                      </DropdownMenuItem>
+                                  </>
+                              )}
+                              {product.status === 'out of stock' && (
+                                  <>
+                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'available'); }}>
+                                          <div className="w-3 h-3 rounded-full bg-verde-eucalipto mr-2" />
+                                          <span>Cambiar a "Disponible"</span>
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'low'); }}>
+                                          <div className="w-3 h-3 rounded-full bg-amarillo-mostaza mr-2" />
+                                          <span>Cambiar a "Queda poco"</span>
+                                      </DropdownMenuItem>
+                                  </>
+                              )}
+                          </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                  </DropdownMenuSub>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      onToggleFreeze(product.id);
+                    }}
+                    className={isFrozen ? "text-red-500 hover:bg-red-50 hover:text-red-600" : "text-blue-500 hover:bg-blue-50 hover:text-blue-600"}
+                  >
+                    {isFrozen ? (
+                      <>
+                        <span className="mr-2">🔥</span>
+                        <span>Descongelar</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="mr-2">❄️</span>
+                        <span>Congelar</span>
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                  {isFrozen && product?.frozenAt && (
                     <>
-                      <span className="mr-2">❄️</span>
-                      <span>Congelar</span>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={(e) => { 
+                        e.stopPropagation(); 
+                        if (product.frozenAt) {
+                          onSetEditingFrozenDate({ product, date: new Date(product.frozenAt).toISOString().split('T')[0] }); 
+                        }
+                      }}>
+                        <Calendar className="mr-2 h-4 w-4" />
+                        <span>Editar fecha de congelación</span>
+                      </DropdownMenuItem>
                     </>
                   )}
-                </DropdownMenuItem>
-                {isFrozen && product?.frozenAt && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={(e) => { 
-                      e.stopPropagation(); 
-                      if (product.frozenAt) {
-                        onSetEditingFrozenDate({ product, date: new Date(product.frozenAt).toISOString().split('T')[0] }); 
-                      }
-                    }}>
-                      <Calendar className="mr-2 h-4 w-4" />
-                      <span>Editar fecha de congelación</span>
-                    </DropdownMenuItem>
-                  </>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-[#FF4C4C] hover:bg-[#2C0000] hover:text-white focus:bg-[#2C0000] focus:text-white" onClick={(e) => { e.stopPropagation(); onDelete(product.id); }}>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    <span>Eliminar</span>
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-[#FF4C4C] hover:bg-[#2C0000] hover:text-white focus:bg-[#2C0000] focus:text-white" onClick={(e) => { e.stopPropagation(); onDelete(product.id); }}>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      <span>Eliminar</span>
+                  </DropdownMenuItem>
+              </DropdownMenuContent>
+          </DropdownMenu>
             </div>
           );
         })()
