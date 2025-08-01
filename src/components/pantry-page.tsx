@@ -295,10 +295,10 @@ function ProductCard({
       </div>
       
       {isListView ? (
-        <div className="shrink-0 flex items-center gap-1">
+        <div className="shrink-0 flex flex-col sm:flex-row items-end sm:items-center gap-1">
         {product.status === 'low' && (
           product.isPendingPurchase ? (
-            <div className="flex items-center justify-center text-xs h-8 px-2 rounded-md bg-[#5D6D7E] text-white border border-[#5D6D7E] font-medium">
+            <div className="flex items-center justify-center text-[10px] sm:text-xs h-6 sm:h-8 px-1 sm:px-2 rounded-md bg-[#5D6D7E] text-white border border-[#5D6D7E] font-medium w-full sm:w-auto">
                 Pendiente de compra
             </div>
           ) : (
@@ -324,7 +324,7 @@ function ProductCard({
         )}
         
         {isFrozen && frozenDate && (
-          <div className="flex items-center justify-center text-xs h-8 px-2 rounded-md bg-blue-600 text-white border border-blue-600 font-medium">
+          <div className="flex items-center justify-center text-[10px] sm:text-xs h-6 sm:h-8 px-1 sm:px-2 rounded-md bg-blue-600 text-white border border-blue-600 font-medium w-full sm:w-auto">
             Congelado: {frozenDate}
           </div>
         )}
