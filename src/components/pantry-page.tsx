@@ -295,41 +295,58 @@ function ProductCard({
       </div>
       
       {isListView ? (
-        <div className="shrink-0 flex flex-col sm:flex-row items-end sm:items-center gap-1">
-        {product.status === 'low' && (
-          product.isPendingPurchase ? (
-            <div className="flex items-center justify-center text-[10px] sm:text-xs h-6 sm:h-8 px-1 sm:px-2 rounded-md bg-[#5D6D7E] text-white border border-[#5D6D7E] font-medium w-full sm:w-auto">
-                Pendiente de compra
-            </div>
-          ) : (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="h-8 w-8 bg-gray-800 text-white hover:bg-gray-700"
-                    aria-label="Añadir a la lista de compra"
-                    onClick={(e) => { e.stopPropagation(); onAddToShoppingList(product.id); }}
-                  >
-                    <ShoppingCart className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>Añadir a la compra</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )
-        )}
-        
-        {isFrozen && frozenDate && (
-          <div className="flex items-center justify-center text-[10px] sm:text-xs h-6 sm:h-8 px-1 sm:px-2 rounded-md bg-blue-600 text-white border border-blue-600 font-medium w-full sm:w-auto">
-            Congelado: {frozenDate}
-          </div>
-        )}
-        
-        <DropdownMenu>
+        (() => {
+          const hasPendingPurchase = product.status === 'low' && product.isPendingPurchase;
+          const hasFrozen = isFrozen && frozenDate;
+          const hasMultipleTags = hasPendingPurchase && hasFrozen;
+          
+          return (
+            <div className={cn(
+              "shrink-0 flex gap-1",
+              hasMultipleTags 
+                ? "flex-col sm:flex-row items-end sm:items-center" 
+                : "items-center"
+            )}>
+            {product.status === 'low' && (
+              product.isPendingPurchase ? (
+                <div className={cn(
+                  "flex items-center justify-center text-[10px] sm:text-xs h-6 sm:h-8 px-1 sm:px-2 rounded-md bg-[#5D6D7E] text-white border border-[#5D6D7E] font-medium",
+                  hasMultipleTags ? "w-full sm:w-auto" : ""
+                )}>
+                    Pendiente de compra
+                </div>
+              ) : (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="h-8 w-8 bg-gray-800 text-white hover:bg-gray-700"
+                        aria-label="Añadir a la lista de compra"
+                        onClick={(e) => { e.stopPropagation(); onAddToShoppingList(product.id); }}
+                      >
+                        <ShoppingCart className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Añadir a la compra</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )
+            )}
+            
+            {isFrozen && frozenDate && (
+              <div className={cn(
+                "flex items-center justify-center text-[10px] sm:text-xs h-6 sm:h-8 px-1 sm:px-2 rounded-md bg-blue-600 text-white border border-blue-600 font-medium",
+                hasMultipleTags ? "w-full sm:w-auto" : ""
+              )}>
+                Congelado: {frozenDate}
+              </div>
+            )}
+            
+            <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
                     <MoreVertical className="h-4 w-4" />
@@ -443,7 +460,9 @@ function ProductCard({
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
-      </div>
+            </div>
+          );
+        })()
       ) : (
         <div className="absolute top-1 right-1">
           <DropdownMenu>
