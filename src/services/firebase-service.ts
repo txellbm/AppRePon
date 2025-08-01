@@ -38,6 +38,7 @@ export const sanitizeProductArray = (products: any): Product[] => {
                         isPendingPurchase: p.isPendingPurchase ?? false,
                         buyLater: p.buyLater ?? false,
                         ...(p.reason ? { reason: p.reason } : {}),
+                        ...(p.frozenAt ? { frozenAt: p.frozenAt } : {}),
                     });
                 }
             }
@@ -53,6 +54,7 @@ export const sanitizeProductArray = (products: any): Product[] => {
                     isPendingPurchase: p.isPendingPurchase ?? false,
                     buyLater: p.buyLater ?? false,
                     ...(p.reason ? { reason: p.reason } : {}),
+                    ...(p.frozenAt ? { frozenAt: p.frozenAt } : {}),
                 });
             }
         }
