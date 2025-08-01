@@ -285,7 +285,8 @@ function ProductCard({
           ? "p-3 flex items-center justify-between"
           : "relative p-2 flex flex-col items-center justify-center text-center min-h-[6rem]",
         statusStyles,
-        "cursor-pointer transition-colors transition-color"
+        "cursor-pointer transition-colors transition-color",
+        isFrozen && "ring-2 ring-blue-400 ring-opacity-75"
       )}
       onClick={handleCycleStatus}
     >
@@ -299,22 +300,6 @@ function ProductCard({
           Congelado: {frozenDate}
         </div>
       )}
-
-      {/* Botón de congelar/descongelar */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className={cn(
-          "absolute top-1 right-1 h-6 w-6",
-          isFrozen ? "text-blue-300 opacity-100" : "text-gray-400 opacity-50 hover:opacity-75"
-        )}
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggleFreeze(product.id);
-        }}
-      >
-        <span className="text-sm">❄️</span>
-      </Button>
 
       {isListView ? (
         <div className="shrink-0 flex items-center gap-1">
@@ -344,6 +329,23 @@ function ProductCard({
             </TooltipProvider>
           )
         )}
+        
+        {/* Botón de congelar/descongelar */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn(
+            "h-8 w-8",
+            isFrozen ? "text-blue-300 opacity-100" : "text-gray-400 opacity-50 hover:opacity-75"
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFreeze(product.id);
+          }}
+        >
+          <span className="text-sm">❄️</span>
+        </Button>
+        
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
@@ -440,10 +442,26 @@ function ProductCard({
         </DropdownMenu>
       </div>
       ) : (
-        <div className="absolute top-1 right-1">
+        <div className="absolute top-1 right-1 flex items-center gap-1">
+          {/* Botón de congelar/descongelar */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "h-6 w-6",
+              isFrozen ? "text-blue-300 opacity-100" : "text-gray-400 opacity-50 hover:opacity-75"
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFreeze(product.id);
+            }}
+          >
+            <span className="text-sm">❄️</span>
+          </Button>
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()}>
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -662,7 +680,7 @@ function ShoppingItemCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="end">
-              <DropdownMenuItem onClick={() => onEdit(item)}>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(item); }}>
                 <Pencil className="mr-2 h-4 w-4" />
                 <span>Editar Nombre</span>
               </DropdownMenuItem>
