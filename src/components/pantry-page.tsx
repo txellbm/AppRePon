@@ -285,8 +285,7 @@ function ProductCard({
           ? "p-3 flex items-center justify-between"
           : "relative p-2 flex flex-col items-center justify-center text-center min-h-[6rem]",
         statusStyles,
-        "cursor-pointer transition-colors transition-color",
-        isFrozen && "ring-2 ring-blue-400 ring-opacity-75"
+        "cursor-pointer transition-colors transition-color"
       )}
       onClick={handleCycleStatus}
     >
@@ -295,12 +294,6 @@ function ProductCard({
         {isFrozen && <span className="text-blue-300">❄️</span>}
       </div>
       
-      {isFrozen && frozenDate && (
-        <div className="flex items-center justify-center text-xs h-8 px-2 rounded-md bg-blue-600 text-white border border-blue-600 font-medium mt-1">
-          Congelado: {frozenDate}
-        </div>
-      )}
-
       {isListView ? (
         <div className="shrink-0 flex items-center gap-1">
         {product.status === 'low' && (
@@ -328,6 +321,12 @@ function ProductCard({
               </Tooltip>
             </TooltipProvider>
           )
+        )}
+        
+        {isFrozen && frozenDate && (
+          <div className="flex items-center justify-center text-xs h-8 px-2 rounded-md bg-blue-600 text-white border border-blue-600 font-medium">
+            Congelado: {frozenDate}
+          </div>
         )}
         
         <DropdownMenu>
