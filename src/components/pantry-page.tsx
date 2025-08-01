@@ -296,7 +296,7 @@ function ProductCard({
       </div>
       
       {isFrozen && frozenDate && (
-        <div className="text-xs opacity-80 mt-1">
+        <div className="flex items-center justify-center text-xs h-8 px-2 rounded-md bg-blue-600 text-white border border-blue-600 font-medium mt-1">
           Congelado: {frozenDate}
         </div>
       )}
@@ -329,22 +329,6 @@ function ProductCard({
             </TooltipProvider>
           )
         )}
-        
-        {/* Botón de congelar/descongelar */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "h-8 w-8",
-            isFrozen ? "text-blue-300 opacity-100" : "text-gray-400 opacity-50 hover:opacity-75"
-          )}
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleFreeze(product.id);
-          }}
-        >
-          <span className="text-sm">❄️</span>
-        </Button>
         
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -419,6 +403,26 @@ function ProductCard({
                         </DropdownMenuSubContent>
                     </DropdownMenuPortal>
                 </DropdownMenuSub>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    onToggleFreeze(product.id);
+                  }}
+                  className={isFrozen ? "text-red-500 hover:bg-red-50 hover:text-red-600" : "text-blue-500 hover:bg-blue-50 hover:text-blue-600"}
+                >
+                  {isFrozen ? (
+                    <>
+                      <span className="mr-2">🔥</span>
+                      <span>Descongelar</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="mr-2">❄️</span>
+                      <span>Congelar</span>
+                    </>
+                  )}
+                </DropdownMenuItem>
                 {isFrozen && product?.frozenAt && (
                   <>
                     <DropdownMenuSeparator />
@@ -442,23 +446,7 @@ function ProductCard({
         </DropdownMenu>
       </div>
       ) : (
-        <div className="absolute top-1 right-1 flex items-center gap-1">
-          {/* Botón de congelar/descongelar */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "h-6 w-6",
-              isFrozen ? "text-blue-300 opacity-100" : "text-gray-400 opacity-50 hover:opacity-75"
-            )}
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleFreeze(product.id);
-            }}
-          >
-            <span className="text-sm">❄️</span>
-          </Button>
-          
+        <div className="absolute top-1 right-1">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()}>
@@ -532,6 +520,26 @@ function ProductCard({
                   </DropdownMenuSubContent>
                 </DropdownMenuPortal>
               </DropdownMenuSub>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  onToggleFreeze(product.id);
+                }}
+                className={isFrozen ? "text-red-500 hover:bg-red-50 hover:text-red-600" : "text-blue-500 hover:bg-blue-50 hover:text-blue-600"}
+              >
+                {isFrozen ? (
+                  <>
+                    <span className="mr-2">🔥</span>
+                    <span>Descongelar</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="mr-2">❄️</span>
+                    <span>Congelar</span>
+                  </>
+                )}
+              </DropdownMenuItem>
               {isFrozen && product?.frozenAt && (
                 <>
                   <DropdownMenuSeparator />
@@ -553,6 +561,30 @@ function ProductCard({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        </div>
+      )}
+
+      {/* Botón redondo con borde azul en la esquina inferior (solo en vista grid y si está congelado) */}
+      {!isListView && isFrozen && (
+        <div className="absolute bottom-1 right-1">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 border-blue-400 text-blue-400 hover:bg-blue-50 hover:border-blue-500 hover:text-blue-500"
+                  aria-label="Producto congelado"
+                  onClick={(e) => { e.stopPropagation(); }}
+                >
+                  <span className="text-sm">❄️</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Producto congelado</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       )}
     </motion.div>
