@@ -259,7 +259,7 @@ function ProductCard({
     const statuses: ProductStatus[] = ["available", "low", "out of stock"];
     const currentIndex = statuses.indexOf(product.status);
     const nextStatus = statuses[(currentIndex + 1) % statuses.length];
-    onUpdateStatus(product.id, nextStatus);
+    onDirectStatusChange(product.id, nextStatus);
   };
 
   const statusStyles = {
@@ -272,11 +272,11 @@ function ProductCard({
   const isFrozen = !!product?.frozenAt;
   const frozenDate = product?.frozenAt ? new Date(product.frozenAt).toLocaleDateString('es-ES') : null;
 
-  // Función helper para renderizar iconos de estado
+  // Función helper para renderizar iconos de estado (solo indicativos, no clickables)
   const renderStatusIcons = () => {
     const icons = [];
     
-    // Icono de carrito para productos pendientes de compra
+    // Icono de carrito para productos pendientes de compra (solo indicativo)
     if (product.status === 'low' && product.isPendingPurchase) {
       icons.push(
         <span key="cart" className="text-gray-600" title="Pendiente de compra">
@@ -285,7 +285,7 @@ function ProductCard({
       );
     }
     
-    // Icono de congelado con fecha
+    // Icono de congelado con fecha (solo indicativo)
     if (isFrozen && frozenDate) {
       icons.push(
         <span key="frozen" className="text-blue-300" title={`Congelado: ${frozenDate}`}>
@@ -331,17 +331,13 @@ function ProductCard({
       
       {isListView ? (
         (() => {
-          const hasPendingPurchase = product.status === 'low' && product.isPendingPurchase;
-          const hasFrozen = isFrozen && frozenDate;
-          const hasMultipleTags = hasPendingPurchase && hasFrozen;
-          
           return (
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
-                {/* Iconos de estado */}
+                {/* Iconos de estado (solo indicativos) */}
                 {renderStatusIcons()}
                 
-                {/* Botón de añadir a compra (solo si no está pendiente) */}
+                {/* Botón clickable original para añadir a compra (solo si no está pendiente) */}
                 {product.status === 'low' && !product.isPendingPurchase && (
                   <TooltipProvider>
                     <Tooltip>
