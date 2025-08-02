@@ -1372,26 +1372,31 @@ export default function PantryPage({ listId }: { listId: string }) {
       handleUpdateStatus(id, newStatus);
     } else if (shoppingProduct) {
       // Si está en shoppingList, manejar la sincronización con pantry
-      let newPantry = [...pantry];
-      let newShoppingList = shoppingList.map(p => 
-        p.id === id ? { ...p, status: newStatus } : p
-      );
-      
-      if (newStatus === 'low') {
-        // Si cambia a "queda poco", añadir a la despensa
-        const { isPendingPurchase, buyLater, ...restOfProduct } = shoppingProduct;
-        newPantry.push({
-          ...restOfProduct,
-          status: 'low',
-          isPendingPurchase: true, // Marcar como pendiente de compra
-          buyLater: false,
-        });
-      } else if (newStatus === 'out of stock') {
-        // Si cambia a "agotado", eliminar de la despensa si existe
-        newPantry = pantry.filter(p => p.id !== id);
+      if (newStatus === 'out of stock') {
+        // Si cambia a "out of stock", eliminar de la despensa
+        const updatedShoppingList = shoppingList.map((p) =>
+          p.id === id ? { ...p, status: "out of stock" } : p
+        );
+        
+        const updatedPantry = pantry.filter((p) => p.id !== id);
+        
+        updateRemoteList({ pantry: updatedPantry, shoppingList: updatedShoppingList });
+      } else if (newStatus === 'low') {
+        // Si cambia a "low", añadir a la despensa
+        const updatedShoppingList = shoppingList.map((p) =>
+          p.id === id ? { ...p, status: "low" } : p
+        );
+        
+        const productInPantry = pantry.find((p) => p.id === id);
+        
+        const updatedPantry = productInPantry
+          ? pantry.map((p) =>
+              p.id === id ? { ...p, status: "low", isPendingPurchase: true } : p
+            )
+          : [...pantry, { ...shoppingProduct, status: "low", isPendingPurchase: true }];
+        
+        updateRemoteList({ pantry: updatedPantry, shoppingList: updatedShoppingList });
       }
-      
-      updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
     }
   };
 
