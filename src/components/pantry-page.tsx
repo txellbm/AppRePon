@@ -358,68 +358,47 @@ function ProductCard({
                           <Pencil className="mr-2 h-4 w-4" />
                           <span>Editar Nombre</span>
                       </DropdownMenuItem>
-                      <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>
-                              <Tags className="mr-2 h-4 w-4" />
-                              <span>Cambiar Categoría</span>
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuPortal>
-                              <DropdownMenuSubContent className="max-w-[calc(100vw-2rem)] sm:max-w-none overflow-hidden">
-                                  <DropdownMenuRadioGroup value={product.category} onValueChange={(newCategory) => onUpdateCategory(product.id, newCategory as Category)}>
-                                      {categories.map((cat) => (
-                                          <DropdownMenuRadioItem key={cat} value={cat} className="whitespace-nowrap">{cat}</DropdownMenuRadioItem>
-                                      ))}
-                                  </DropdownMenuRadioGroup>
-                              </DropdownMenuSubContent>
-                          </DropdownMenuPortal>
-                      </DropdownMenuSub>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingCategory(product); }}>
+                          <Tags className="mr-2 h-4 w-4" />
+                          <span>Cambiar Categoría</span>
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>
-                              <Package className="mr-2 h-4 w-4" />
-                              <span>Cambiar Estado</span>
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuPortal>
-                              <DropdownMenuSubContent className="max-w-[calc(100vw-2rem)] sm:max-w-none overflow-hidden">
-                                  {product.status === 'available' && (
-                                      <>
-                                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'low'); }} className="whitespace-nowrap">
-                                              <div className="w-3 h-3 rounded-full bg-amarillo-mostaza mr-2" />
-                                              <span>Cambiar a "Queda poco"</span>
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpdateStatus(product.id, 'out of stock'); }} className="whitespace-nowrap">
-                                              <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
-                                              <span>Cambiar a "Agotado (mover a compra)"</span>
-                                          </DropdownMenuItem>
-                                      </>
-                                  )}
-                                  {product.status === 'low' && (
-                                      <>
-                                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'available'); }} className="whitespace-nowrap">
-                                              <div className="w-3 h-3 rounded-full bg-verde-eucalipto mr-2" />
-                                              <span>Cambiar a "Disponible"</span>
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpdateStatus(product.id, 'out of stock'); }} className="whitespace-nowrap">
-                                              <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
-                                              <span>Cambiar a "Agotado (mover a compra)"</span>
-                                          </DropdownMenuItem>
-                                      </>
-                                  )}
-                                  {product.status === 'out of stock' && (
-                                      <>
-                                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'available'); }} className="whitespace-nowrap">
-                                              <div className="w-3 h-3 rounded-full bg-verde-eucalipto mr-2" />
-                                              <span>Cambiar a "Disponible"</span>
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'low'); }} className="whitespace-nowrap">
-                                              <div className="w-3 h-3 rounded-full bg-amarillo-mostaza mr-2" />
-                                              <span>Cambiar a "Queda poco"</span>
-                                          </DropdownMenuItem>
-                                      </>
-                                  )}
-                              </DropdownMenuSubContent>
-                          </DropdownMenuPortal>
-                      </DropdownMenuSub>
+                      {product.status === 'available' && (
+                          <>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'low'); }}>
+                                  <div className="w-3 h-3 rounded-full bg-amarillo-mostaza mr-2" />
+                                  <span>Cambiar a "Queda poco"</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpdateStatus(product.id, 'out of stock'); }}>
+                                  <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
+                                  <span>Cambiar a "Agotado (mover a compra)"</span>
+                              </DropdownMenuItem>
+                          </>
+                      )}
+                      {product.status === 'low' && (
+                          <>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'available'); }}>
+                                  <div className="w-3 h-3 rounded-full bg-verde-eucalipto mr-2" />
+                                  <span>Cambiar a "Disponible"</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpdateStatus(product.id, 'out of stock'); }}>
+                                  <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
+                                  <span>Cambiar a "Agotado (mover a compra)"</span>
+                              </DropdownMenuItem>
+                          </>
+                      )}
+                      {product.status === 'out of stock' && (
+                          <>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'available'); }}>
+                                  <div className="w-3 h-3 rounded-full bg-verde-eucalipto mr-2" />
+                                  <span>Cambiar a "Disponible"</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'low'); }}>
+                                  <div className="w-3 h-3 rounded-full bg-amarillo-mostaza mr-2" />
+                                  <span>Cambiar a "Queda poco"</span>
+                              </DropdownMenuItem>
+                          </>
+                      )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
                         onClick={(e) => { 
@@ -691,6 +670,7 @@ export default function PantryPage({ listId }: { listId: string }) {
   
   // Estados para funcionalidad de congelar/descongelar
   const [editingFrozenDate, setEditingFrozenDate] = useState<{product: Product, date: string} | null>(null);
+  const [editingCategory, setEditingCategory] = useState<Product | null>(null);
 
   const [openCategories, setOpenCategories] = useState<string[]>([]);
   const [openShoppingSections, setOpenShoppingSections] = useState<string[]>(['buy-later-section']);
@@ -1339,22 +1319,29 @@ export default function PantryPage({ listId }: { listId: string }) {
 
   // Handler para editar fecha de congelación
   const handleUpdateFrozenDate = () => {
-    if (!editingFrozenDate) return;
-
-    const { product, date } = editingFrozenDate;
-    const newDate = new Date(date).getTime();
-
-    const newPantry = pantry.map(p => 
-      p.id === product.id 
-        ? { ...p, frozenAt: newDate } 
-        : p
-    );
-
-    updateRemoteList({ pantry: newPantry });
-    setEditingFrozenDate(null);
+    if (editingFrozenDate) {
+      const newTimestamp = new Date(editingFrozenDate.date).getTime();
+      handleToggleFreeze(editingFrozenDate.product.id);
+      // Actualizar la fecha específica
+      updateRemoteList(prev => {
+        const updatedProducts = prev.products.map(p => 
+          p.id === editingFrozenDate.product.id 
+            ? { ...p, frozenAt: newTimestamp }
+            : p
+        );
+        return { ...prev, products: updatedProducts };
+      });
+      setEditingFrozenDate(null);
+    }
   };
 
-
+  const handleUpdateCategoryModal = () => {
+    if (editingCategory) {
+      // La función onUpdateCategory ya existe y maneja la actualización
+      // Solo necesitamos cerrar el modal
+      setEditingCategory(null);
+    }
+  };
 
   return (
     <>
@@ -2002,6 +1989,36 @@ export default function PantryPage({ listId }: { listId: string }) {
           </DialogContent>
         </Dialog>
 
+        <Dialog open={!!editingCategory} onOpenChange={() => setEditingCategory(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Cambiar categoría</DialogTitle>
+              <DialogDescription>
+                Selecciona la nueva categoría para "{editingCategory?.name}".
+              </DialogDescription>
+            </DialogHeader>
+            <div className="pt-4 space-y-2">
+              {categories.map((category) => (
+                <Button
+                  key={category}
+                  variant={editingCategory?.category === category ? "default" : "outline"}
+                  className="w-full justify-start"
+                  onClick={() => {
+                    if (editingCategory) {
+                      onUpdateCategory(editingCategory.id, category);
+                      setEditingCategory(null);
+                    }
+                  }}
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingCategory(null)}>Cancelar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
       </div>
     </>
