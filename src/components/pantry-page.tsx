@@ -199,6 +199,10 @@ onDeleteHistoryItem: (name: string) => Promise<void> | void
             onChange={handleInputChange}
             placeholder="Puedes añadir varios productos separados por comas"
             className="flex-grow bg-gray-800 text-white placeholder-gray-400"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck="false"
+            autoCapitalize="none"
           />
           {suggestions.length > 0 && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="absolute z-10 w-full bg-background border rounded-md shadow-lg mt-1 p-2 flex flex-col gap-1">
@@ -1651,6 +1655,10 @@ export default function PantryPage({ listId }: { listId: string }) {
                         className="pl-10 w-full bg-gray-800 text-white placeholder-gray-400"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        autoComplete="off"
+                        autoCorrect="off"
+                        spellCheck="false"
+                        autoCapitalize="none"
                       />
                       <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8" onClick={() => { setShowSearch(false); setSearchQuery(""); }}>
                         <X className="h-4 w-4" />
