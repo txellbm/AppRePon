@@ -457,26 +457,26 @@ function ProductCard({
                 <Pencil className="mr-2 h-4 w-4" />
                 <span>Editar Nombre</span>
               </DropdownMenuItem>
-              {item.status === 'low' && (
-                <DropdownMenuItem onClick={() => onReturnToPantry(item.id)}>
+              {product.status === 'low' && (
+                <DropdownMenuItem onClick={() => onReturnToPantry(product.id)}>
                   <Undo2 className="mr-2 h-4 w-4" />
                   <span>Devolver a despensa</span>
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              {item.status === 'out of stock' ? (
-                  <DropdownMenuItem onClick={() => onDirectStatusChange(item.id, 'low')}>
+              {product.status === 'out of stock' ? (
+                  <DropdownMenuItem onClick={() => onDirectStatusChange(product.id, 'low')}>
                       <div className="w-3 h-3 rounded-full bg-amarillo-mostaza mr-2" />
                       <span>Marcar como "Queda poco"</span>
                   </DropdownMenuItem>
               ) : (
-                  <DropdownMenuItem onClick={() => onMarkAsOutOfStock(item.id)}>
+                  <DropdownMenuItem onClick={() => onMarkAsOutOfStock(product.id)}>
                       <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
                       <span>Marcar como "Agotado"</span>
                   </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-[#FF4C4C] hover:bg-[#2C0000] hover:text-white focus:bg-[#2C0000] focus:text-white" onClick={() => onDelete(item.id)}>
+              <DropdownMenuItem className="text-[#FF4C4C] hover:bg-[#2C0000] hover:text-white focus:bg-[#2C0000] focus:text-white" onClick={() => onDelete(product.id)}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 <span>Eliminar</span>
               </DropdownMenuItem>
