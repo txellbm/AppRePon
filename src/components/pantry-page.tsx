@@ -48,6 +48,8 @@ import {
   Cloudy,
   Copy,
   Calendar,
+  Snowflake,
+  ShoppingBag
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -279,8 +281,8 @@ function ProductCard({
     // Icono de carrito para productos pendientes de compra (solo indicativo)
     if (product.status === 'low' && product.isPendingPurchase) {
       icons.push(
-        <span key="cart" className="text-gray-600" title="Pendiente de compra">
-          🛒
+        <span key="cart" title="Pendiente de compra">
+          <ShoppingBag className="h-4 w-4 text-gray-600" />
         </span>
       );
     }
@@ -288,15 +290,18 @@ function ProductCard({
     // Icono de congelado con fecha (solo indicativo)
     if (isFrozen && frozenDate) {
       icons.push(
-        <span key="frozen" className="text-blue-300" title={`Congelado: ${frozenDate}`}>
-          ❄️ {frozenDate}
+        <span key="frozen" title={`Congelado: ${frozenDate}`}>
+          <div className="flex items-center gap-1 text-blue-300">
+            <Snowflake className="h-4 w-4" />
+            <span className="text-xs">{frozenDate}</span>
+          </div>
         </span>
       );
     }
     
     return icons.length > 0 ? (
       <div className={cn(
-        "flex items-center gap-1 text-xs",
+        "flex items-center gap-2 text-xs",
         isListView ? "flex-row" : "flex-col"
       )}>
         {icons}
@@ -325,8 +330,8 @@ function ProductCard({
     >
       <div className="flex items-center gap-2">
         <h3 className={cn("font-semibold", isListView ? '' : 'line-clamp-2')}>{product.name}</h3>
-        {/* Iconos de estado en vista cuadrícula */}
-        {renderStatusIcons()}
+        {/* Iconos de estado (solo en vista cuadrícula) */}
+        {!isListView && renderStatusIcons()}
       </div>
       
       {isListView ? (
@@ -334,7 +339,7 @@ function ProductCard({
           return (
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
-                {/* Iconos de estado (solo indicativos) */}
+                {/* Iconos de estado (solo en vista lista) */}
                 {renderStatusIcons()}
                 
                 {/* Botón clickable original para añadir a compra (solo si no está pendiente) */}
