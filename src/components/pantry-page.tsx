@@ -1397,14 +1397,13 @@ export default function PantryPage({ listId }: { listId: string }) {
       const newTimestamp = new Date(editingFrozenDate.date).getTime();
       
       // Actualizar directamente la fecha sin llamar a handleToggleFreeze
-      updateRemoteList(prev => {
-        const updatedProducts = prev.products.map(p => 
-          p.id === editingFrozenDate.product.id 
-            ? { ...p, frozenAt: newTimestamp }
-            : p
-        );
-        return { ...prev, products: updatedProducts };
-      });
+      const updatedPantry = pantry.map(p => 
+        p.id === editingFrozenDate.product.id 
+          ? { ...p, frozenAt: newTimestamp }
+          : p
+      );
+      
+      updateRemoteList({ pantry: updatedPantry });
       
       setEditingFrozenDate(null);
     }
