@@ -1371,11 +1371,27 @@ export default function PantryPage({ listId }: { listId: string }) {
       // Si está en pantry, usar handleUpdateStatus
       handleUpdateStatus(id, newStatus);
     } else if (shoppingProduct) {
-      // Si está en shoppingList, actualizar directamente
-      const newShoppingList = shoppingList.map(p => 
+      // Si está en shoppingList, manejar la sincronización con pantry
+      let newPantry = [...pantry];
+      let newShoppingList = shoppingList.map(p => 
         p.id === id ? { ...p, status: newStatus } : p
       );
-      updateRemoteList({ shoppingList: newShoppingList });
+      
+      if (newStatus === 'low') {
+        // Si cambia a "queda poco", añadir a la despensa
+        const { isPendingPurchase, buyLater, ...restOfProduct } = shoppingProduct;
+        newPantry.push({
+          ...restOfProduct,
+          status: 'low',
+          isPendingPurchase: true, // Marcar como pendiente de compra
+          buyLater: false,
+        });
+      } else if (newStatus === 'out of stock') {
+        // Si cambia a "agotado", eliminar de la despensa si existe
+        newPantry = pantry.filter(p => p.id !== id);
+      }
+      
+      updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList });
     }
   };
 
