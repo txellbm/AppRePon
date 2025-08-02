@@ -1382,15 +1382,17 @@ export default function PantryPage({ listId }: { listId: string }) {
       // Si está en shoppingList, manejar la sincronización con pantry
       console.log('🔍 Producto encontrado en shoppingList, manejando sincronización');
       
+      // Siempre actualizar shoppingList primero
+      const updatedShoppingList = shoppingList.map((p) =>
+        p.id === id ? { ...p, status: newStatus } : p
+      );
+      
+      let updatedPantry = [...pantry];
+      
       if (newStatus === 'out of stock') {
         // Si cambia a "out of stock", eliminar de la despensa
         console.log('🔍 Cambiando a "out of stock", eliminando de despensa');
-        
-        const updatedShoppingList = shoppingList.map((p) =>
-          p.id === id ? { ...p, status: "out of stock" as ProductStatus } : p
-        );
-        
-        const updatedPantry = pantry.filter((p) => p.id !== id);
+        updatedPantry = pantry.filter((p) => p.id !== id);
         
         console.log('🔍 Antes de updateRemoteList:', {
           pantryLength: pantry.length,
@@ -1399,23 +1401,21 @@ export default function PantryPage({ listId }: { listId: string }) {
           updatedShoppingListLength: updatedShoppingList.length,
           productToRemove: pantry.find(p => p.id === id)?.name
         });
-        
-        updateRemoteList({ pantry: updatedPantry, shoppingList: updatedShoppingList });
       } else if (newStatus === 'low') {
         // Si cambia a "low", añadir a la despensa
         console.log('🔍 Cambiando a "low", añadiendo a despensa');
         
-        const updatedShoppingList = shoppingList.map((p) =>
-          p.id === id ? { ...p, status: "low" as ProductStatus } : p
-        );
-        
         const productInPantry = pantry.find((p) => p.id === id);
         
-        const updatedPantry = productInPantry
-          ? pantry.map((p) =>
-              p.id === id ? { ...p, status: "low" as ProductStatus, isPendingPurchase: true } : p
-            )
-          : [...pantry, { ...shoppingProduct, status: "low" as ProductStatus, isPendingPurchase: true }];
+        if (productInPantry) {
+          // Si ya existe en pantry, actualizar
+          updatedPantry = pantry.map((p) =>
+            p.id === id ? { ...p, status: newStatus, isPendingPurchase: true } : p
+          );
+        } else {
+          // Si no existe en pantry, añadir
+          updatedPantry = [...pantry, { ...shoppingProduct, status: newStatus, isPendingPurchase: true }];
+        }
         
         console.log('🔍 Antes de updateRemoteList:', {
           pantryLength: pantry.length,
@@ -1423,9 +1423,11 @@ export default function PantryPage({ listId }: { listId: string }) {
           productInPantry: productInPantry?.name,
           willAdd: !productInPantry
         });
-        
-        updateRemoteList({ pantry: updatedPantry, shoppingList: updatedShoppingList });
       }
+      
+      // SIEMPRE llamar a updateRemoteList con ambos arrays
+      console.log('🔍 Llamando a updateRemoteList con ambos arrays');
+      updateRemoteList({ pantry: updatedPantry, shoppingList: updatedShoppingList });
     } else {
       console.log('🔍 Producto no encontrado en pantry ni shoppingList');
     }
