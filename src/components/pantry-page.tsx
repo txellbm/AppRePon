@@ -240,7 +240,8 @@ function ProductCard({
   onEdit,
   onDirectStatusChange,
   onToggleFreeze,
-  onSetEditingFrozenDate
+  onSetEditingFrozenDate,
+  setEditingCategory
 }: {
   product: Product;
   viewMode: ViewMode;
@@ -252,6 +253,7 @@ function ProductCard({
   onDirectStatusChange: (id: string, status: ProductStatus) => void;
   onToggleFreeze: (id: string) => void;
   onSetEditingFrozenDate: (data: {product: Product, date: string}) => void;
+  setEditingCategory: (product: Product | null) => void;
 }) {
   const handleCycleStatus = () => {
     const statuses: ProductStatus[] = ["available", "low", "out of stock"];
@@ -457,26 +459,83 @@ function ProductCard({
                 <Pencil className="mr-2 h-4 w-4" />
                 <span>Editar Nombre</span>
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingCategory(product); }}>
+                <Tags className="mr-2 h-4 w-4" />
+                <span>Cambiar Categoría</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {product.status === 'available' && (
+                <>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'low'); }}>
+                    <div className="w-3 h-3 rounded-full bg-amarillo-mostaza mr-2" />
+                    <span>Cambiar a "Queda poco"</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpdateStatus(product.id, 'out of stock'); }}>
+                    <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
+                    <span>Cambiar a "Agotado (mover a compra)"</span>
+                  </DropdownMenuItem>
+                </>
+              )}
               {product.status === 'low' && (
-                <DropdownMenuItem onClick={() => onReturnToPantry(product.id)}>
-                  <Undo2 className="mr-2 h-4 w-4" />
-                  <span>Devolver a despensa</span>
-                </DropdownMenuItem>
+                <>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'available'); }}>
+                    <div className="w-3 h-3 rounded-full bg-verde-eucalipto mr-2" />
+                    <span>Cambiar a "Disponible"</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpdateStatus(product.id, 'out of stock'); }}>
+                    <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
+                    <span>Cambiar a "Agotado (mover a compra)"</span>
+                  </DropdownMenuItem>
+                </>
+              )}
+              {product.status === 'out of stock' && (
+                <>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'available'); }}>
+                    <div className="w-3 h-3 rounded-full bg-verde-eucalipto mr-2" />
+                    <span>Cambiar a "Disponible"</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDirectStatusChange(product.id, 'low'); }}>
+                    <div className="w-3 h-3 rounded-full bg-amarillo-mostaza mr-2" />
+                    <span>Cambiar a "Queda poco"</span>
+                  </DropdownMenuItem>
+                </>
               )}
               <DropdownMenuSeparator />
-              {product.status === 'out of stock' ? (
-                  <DropdownMenuItem onClick={() => onDirectStatusChange(product.id, 'low')}>
-                      <div className="w-3 h-3 rounded-full bg-amarillo-mostaza mr-2" />
-                      <span>Marcar como "Queda poco"</span>
+              <DropdownMenuItem 
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  onToggleFreeze(product.id);
+                }}
+                className={isFrozen ? "text-red-500 hover:bg-red-50 hover:text-red-600" : "text-blue-500 hover:bg-blue-50 hover:text-blue-600"}
+              >
+                {isFrozen ? (
+                  <>
+                    <span className="mr-2">🔥</span>
+                    <span>Descongelar</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="mr-2">❄️</span>
+                    <span>Congelar</span>
+                  </>
+                )}
+              </DropdownMenuItem>
+              {isFrozen && product?.frozenAt && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={(e) => { 
+                    e.stopPropagation(); 
+                    if (product.frozenAt) {
+                      onSetEditingFrozenDate({ product, date: new Date(product.frozenAt).toISOString().split('T')[0] }); 
+                    }
+                  }}>
+                    <Calendar className="mr-2 h-4 w-4" />
+                    <span>Editar fecha de congelación</span>
                   </DropdownMenuItem>
-              ) : (
-                  <DropdownMenuItem onClick={() => onMarkAsOutOfStock(product.id)}>
-                      <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
-                      <span>Marcar como "Agotado"</span>
-                  </DropdownMenuItem>
+                </>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-[#FF4C4C] hover:bg-[#2C0000] hover:text-white focus:bg-[#2C0000] focus:text-white" onClick={() => onDelete(product.id)}>
+              <DropdownMenuItem className="text-[#FF4C4C] hover:bg-[#2C0000] hover:text-white focus:bg-[#2C0000] focus:text-white" onClick={(e) => { e.stopPropagation(); onDelete(product.id); }}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 <span>Eliminar</span>
               </DropdownMenuItem>
@@ -1614,6 +1673,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                               onDirectStatusChange={handleDirectStatusChange}
                               onToggleFreeze={handleToggleFreeze}
                               onSetEditingFrozenDate={setEditingFrozenDate}
+                              setEditingCategory={setEditingCategory}
                             />
                           ))}
                         </AnimatePresence>
@@ -1643,6 +1703,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                                           onDirectStatusChange={handleDirectStatusChange}
                                           onToggleFreeze={handleToggleFreeze}
                                           onSetEditingFrozenDate={setEditingFrozenDate}
+                                          setEditingCategory={setEditingCategory}
                                         />
                                         ))}
                                     </AnimatePresence>
@@ -2005,7 +2066,7 @@ export default function PantryPage({ listId }: { listId: string }) {
                   className="w-full justify-start"
                   onClick={() => {
                     if (editingCategory) {
-                      onUpdateCategory(editingCategory.id, category);
+                      handleUpdateCategory(editingCategory.id, category);
                       setEditingCategory(null);
                     }
                   }}
