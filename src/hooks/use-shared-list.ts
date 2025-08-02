@@ -85,6 +85,8 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
   }, [finalListId, toast]);
 
   const updateRemoteList = useCallback((updatedData: Partial<ListData> & { forceClear?: boolean }) => {
+    console.log('🔍 updateRemoteList llamado con:', updatedData);
+    
     if (!db) {
       toast({
         title: "Error de Conexión",

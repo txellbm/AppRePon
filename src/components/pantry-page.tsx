@@ -1363,40 +1363,71 @@ export default function PantryPage({ listId }: { listId: string }) {
 
   // Handler para cambiar estado directamente sin ciclo
   const handleDirectStatusChange = (id: string, newStatus: ProductStatus) => {
+    console.log('🔍 handleDirectStatusChange llamado:', { id, newStatus });
+    
     // Buscar el producto tanto en pantry como en shoppingList
     const pantryProduct = pantry.find(p => p.id === id);
     const shoppingProduct = shoppingList.find(p => p.id === id);
     
+    console.log('🔍 Productos encontrados:', { 
+      pantryProduct: pantryProduct?.name, 
+      shoppingProduct: shoppingProduct?.name 
+    });
+    
     if (pantryProduct) {
       // Si está en pantry, usar handleUpdateStatus
+      console.log('🔍 Producto encontrado en pantry, usando handleUpdateStatus');
       handleUpdateStatus(id, newStatus);
     } else if (shoppingProduct) {
       // Si está en shoppingList, manejar la sincronización con pantry
+      console.log('🔍 Producto encontrado en shoppingList, manejando sincronización');
+      
       if (newStatus === 'out of stock') {
         // Si cambia a "out of stock", eliminar de la despensa
+        console.log('🔍 Cambiando a "out of stock", eliminando de despensa');
+        
         const updatedShoppingList = shoppingList.map((p) =>
-          p.id === id ? { ...p, status: "out of stock" } : p
+          p.id === id ? { ...p, status: "out of stock" as ProductStatus } : p
         );
         
         const updatedPantry = pantry.filter((p) => p.id !== id);
         
+        console.log('🔍 Antes de updateRemoteList:', {
+          pantryLength: pantry.length,
+          updatedPantryLength: updatedPantry.length,
+          shoppingListLength: shoppingList.length,
+          updatedShoppingListLength: updatedShoppingList.length,
+          productToRemove: pantry.find(p => p.id === id)?.name
+        });
+        
         updateRemoteList({ pantry: updatedPantry, shoppingList: updatedShoppingList });
       } else if (newStatus === 'low') {
         // Si cambia a "low", añadir a la despensa
+        console.log('🔍 Cambiando a "low", añadiendo a despensa');
+        
         const updatedShoppingList = shoppingList.map((p) =>
-          p.id === id ? { ...p, status: "low" } : p
+          p.id === id ? { ...p, status: "low" as ProductStatus } : p
         );
         
         const productInPantry = pantry.find((p) => p.id === id);
         
         const updatedPantry = productInPantry
           ? pantry.map((p) =>
-              p.id === id ? { ...p, status: "low", isPendingPurchase: true } : p
+              p.id === id ? { ...p, status: "low" as ProductStatus, isPendingPurchase: true } : p
             )
-          : [...pantry, { ...shoppingProduct, status: "low", isPendingPurchase: true }];
+          : [...pantry, { ...shoppingProduct, status: "low" as ProductStatus, isPendingPurchase: true }];
+        
+        console.log('🔍 Antes de updateRemoteList:', {
+          pantryLength: pantry.length,
+          updatedPantryLength: updatedPantry.length,
+          productInPantry: productInPantry?.name,
+          willAdd: !productInPantry
+        });
         
         updateRemoteList({ pantry: updatedPantry, shoppingList: updatedShoppingList });
       }
+    } else {
+      console.log('🔍 Producto no encontrado en pantry ni shoppingList');
     }
   };
 
