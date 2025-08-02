@@ -1395,8 +1395,8 @@ export default function PantryPage({ listId }: { listId: string }) {
   const handleUpdateFrozenDate = () => {
     if (editingFrozenDate) {
       const newTimestamp = new Date(editingFrozenDate.date).getTime();
-      handleToggleFreeze(editingFrozenDate.product.id);
-      // Actualizar la fecha específica
+      
+      // Actualizar directamente la fecha sin llamar a handleToggleFreeze
       updateRemoteList(prev => {
         const updatedProducts = prev.products.map(p => 
           p.id === editingFrozenDate.product.id 
@@ -1405,6 +1405,7 @@ export default function PantryPage({ listId }: { listId: string }) {
         );
         return { ...prev, products: updatedProducts };
       });
+      
       setEditingFrozenDate(null);
     }
   };
