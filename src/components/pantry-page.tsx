@@ -281,8 +281,8 @@ function ProductCard({
     // Icono de carrito para productos pendientes de compra (solo indicativo)
     if (product.status === 'low' && product.isPendingPurchase) {
       icons.push(
-        <span key="cart" title="Pendiente de compra">
-          <ShoppingBag className="h-4 w-4 text-gray-600" />
+        <span key="cart" title="Pendiente de compra" className="flex items-center justify-center h-8 w-8 bg-gray-200/50 rounded-md">
+          <ShoppingCart className="h-4 w-4 text-gray-600" />
         </span>
       );
     }
@@ -290,11 +290,9 @@ function ProductCard({
     // Icono de congelado con fecha (solo indicativo)
     if (isFrozen && frozenDate) {
       icons.push(
-        <span key="frozen" title={`Congelado: ${frozenDate}`}>
-          <div className="flex items-center gap-1 text-blue-300">
-            <Snowflake className="h-4 w-4" />
-            <span className="text-xs">{frozenDate}</span>
-          </div>
+        <span key="frozen" title={`Congelado: ${frozenDate}`} className="flex items-center gap-1 h-8 px-2 bg-gray-200/50 rounded-md">
+          <Snowflake className="h-4 w-4 text-blue-600" />
+          <span className="text-xs text-gray-700">{frozenDate}</span>
         </span>
       );
     }
