@@ -1363,7 +1363,20 @@ export default function PantryPage({ listId }: { listId: string }) {
 
   // Handler para cambiar estado directamente sin ciclo
   const handleDirectStatusChange = (id: string, newStatus: ProductStatus) => {
-    handleUpdateStatus(id, newStatus);
+    // Buscar el producto tanto en pantry como en shoppingList
+    const pantryProduct = pantry.find(p => p.id === id);
+    const shoppingProduct = shoppingList.find(p => p.id === id);
+    
+    if (pantryProduct) {
+      // Si está en pantry, usar handleUpdateStatus
+      handleUpdateStatus(id, newStatus);
+    } else if (shoppingProduct) {
+      // Si está en shoppingList, actualizar directamente
+      const newShoppingList = shoppingList.map(p => 
+        p.id === id ? { ...p, status: newStatus } : p
+      );
+      updateRemoteList({ shoppingList: newShoppingList });
+    }
   };
 
   // Handler para marcar como agotado en la lista de compra sin pasar a despensa
