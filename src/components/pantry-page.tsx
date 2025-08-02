@@ -272,6 +272,38 @@ function ProductCard({
   const isFrozen = !!product?.frozenAt;
   const frozenDate = product?.frozenAt ? new Date(product.frozenAt).toLocaleDateString('es-ES') : null;
 
+  // Función helper para renderizar iconos de estado
+  const renderStatusIcons = () => {
+    const icons = [];
+    
+    // Icono de carrito para productos pendientes de compra
+    if (product.status === 'low' && product.isPendingPurchase) {
+      icons.push(
+        <span key="cart" className="text-gray-600" title="Pendiente de compra">
+          🛒
+        </span>
+      );
+    }
+    
+    // Icono de congelado con fecha
+    if (isFrozen && frozenDate) {
+      icons.push(
+        <span key="frozen" className="text-blue-300" title={`Congelado: ${frozenDate}`}>
+          ❄️ {frozenDate}
+        </span>
+      );
+    }
+    
+    return icons.length > 0 ? (
+      <div className={cn(
+        "flex items-center gap-1 text-xs",
+        isListView ? "flex-row" : "flex-col"
+      )}>
+        {icons}
+      </div>
+    ) : null;
+  };
+
   return (
     <motion.div
       id={`product-${product.id}`}
@@ -293,7 +325,8 @@ function ProductCard({
     >
       <div className="flex items-center gap-2">
         <h3 className={cn("font-semibold", isListView ? '' : 'line-clamp-2')}>{product.name}</h3>
-        {isFrozen && <span className="text-blue-300">❄️</span>}
+        {/* Iconos de estado en vista cuadrícula */}
+        {renderStatusIcons()}
       </div>
       
       {isListView ? (
@@ -304,47 +337,30 @@ function ProductCard({
           
           return (
             <div className="flex justify-between items-center">
-              <div className={cn(
-                "flex gap-1",
-                hasMultipleTags ? "flex-col items-start" : "items-center"
-              )}>
-                {product.status === 'low' && (
-                  product.isPendingPurchase ? (
-                    <div className={cn(
-                      "flex items-center justify-center text-[10px] sm:text-xs h-6 sm:h-8 px-1 sm:px-2 rounded-md bg-[#5D6D7E] text-white border border-[#5D6D7E] font-medium",
-                      hasMultipleTags ? "w-full sm:w-auto" : ""
-                    )}>
-                        Pendiente de compra
-                    </div>
-                  ) : (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="secondary"
-                            size="icon"
-                            className="h-8 w-8 bg-gray-800 text-white hover:bg-gray-700"
-                            aria-label="Añadir a la lista de compra"
-                            onClick={(e) => { e.stopPropagation(); onAddToShoppingList(product.id); }}
-                          >
-                            <ShoppingCart className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Añadir a la compra</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )
-                )}
+              <div className="flex items-center gap-2">
+                {/* Iconos de estado */}
+                {renderStatusIcons()}
                 
-                {isFrozen && frozenDate && (
-                  <div className={cn(
-                    "flex items-center justify-center text-[10px] sm:text-xs h-6 sm:h-8 px-1 sm:px-2 rounded-md bg-blue-600 text-white border border-blue-600 font-medium",
-                    hasMultipleTags ? "w-full sm:w-auto" : ""
-                  )}>
-                    Congelado: {frozenDate}
-                  </div>
+                {/* Botón de añadir a compra (solo si no está pendiente) */}
+                {product.status === 'low' && !product.isPendingPurchase && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="h-8 w-8 bg-gray-800 text-white hover:bg-gray-700"
+                          aria-label="Añadir a la lista de compra"
+                          onClick={(e) => { e.stopPropagation(); onAddToShoppingList(product.id); }}
+                        >
+                          <ShoppingCart className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                          <p>Añadir a la compra</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
               
