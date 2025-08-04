@@ -110,16 +110,14 @@ export async function updateList(
 
     if (rest.pantry !== undefined) {
       const arr = sanitizeProductArray(rest.pantry);
-      if (arr.length > 0 || forceClear) {
-        sanitizedData.pantry = arr;
-      }
+      // Siempre incluir pantry, incluso si está vacío
+      sanitizedData.pantry = arr;
     }
 
     if (rest.shoppingList !== undefined) {
       const arr = sanitizeProductArray(rest.shoppingList);
-      if (arr.length > 0 || forceClear) {
-        sanitizedData.shoppingList = arr;
-      }
+      // Siempre incluir shoppingList, incluso si está vacío
+      sanitizedData.shoppingList = arr;
     }
 
     if (rest.history !== undefined) {
