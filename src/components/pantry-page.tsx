@@ -469,7 +469,7 @@ function ProductCard({
         <div className="absolute top-1 right-1">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()}>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -670,11 +670,6 @@ function ShoppingItemCard({
                         <span>Marcar como "Agotado"</span>
                     </DropdownMenuItem>
                 )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-[#FF4C4C] hover:bg-[#2C0000] hover:text-white focus:bg-[#2C0000] focus:text-white" onClick={() => onDelete(item.id)}>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    <span>Eliminar</span>
-                </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -709,11 +704,6 @@ function ShoppingItemCard({
                       <span>Marcar como "Agotado"</span>
                   </DropdownMenuItem>
               )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-[#FF4C4C] hover:bg-[#2C0000] hover:text-white focus:bg-[#2C0000] focus:text-white" onClick={() => onDelete(item.id)}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                <span>Eliminar</span>
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
