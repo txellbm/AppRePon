@@ -665,7 +665,7 @@ function ShoppingItemCard({
                         <span>Marcar como "Queda poco"</span>
                     </DropdownMenuItem>
                 ) : (
-                    <DropdownMenuItem onClick={() => onMarkAsOutOfStock(item.id)}>
+                    <DropdownMenuItem onClick={() => onDirectStatusChange(item.id, 'out of stock')}>
                         <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
                         <span>Marcar como "Agotado"</span>
                     </DropdownMenuItem>
@@ -704,7 +704,7 @@ function ShoppingItemCard({
                       <span>Marcar como "Queda poco"</span>
                   </DropdownMenuItem>
               ) : (
-                  <DropdownMenuItem onClick={() => onMarkAsOutOfStock(item.id)}>
+                  <DropdownMenuItem onClick={() => onDirectStatusChange(item.id, 'out of stock')}>
                       <div className="w-3 h-3 rounded-full bg-rojo-coral mr-2" />
                       <span>Marcar como "Agotado"</span>
                   </DropdownMenuItem>
