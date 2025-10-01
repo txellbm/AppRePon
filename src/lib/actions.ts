@@ -1,6 +1,3 @@
-
-
-
 import {
   categorizeProduct as categorizeProductFlow,
   type CategorizeProductInput,
@@ -17,11 +14,6 @@ import {
   type ImproveCategorizationOutput,
 } from "@/ai/flows/improve-categorization";
 import {
-  handleVoiceCommand as handleVoiceCommandFlow,
-  type VoiceCommandInput,
-  type VoiceCommandOutput,
-} from "@/ai/flows/voice-command-handler";
-import {
   correctProductName as correctProductNameFlow,
   type CorrectProductNameInput,
   type CorrectProductNameOutput,
@@ -33,24 +25,9 @@ import {
   type IdentifyProductsFromPhotoInput,
   type IdentifyProductsFromPhotoOutput,
 } from '@/ai/flows/identify-products-from-photo';
-import {
-  textToSpeech as textToSpeechFlow,
-  type TextToSpeechInput,
-  type TextToSpeechOutput,
-} from "@/ai/flows/text-to-speech";
 
 import { generateGrammaticalMessage as generateGrammaticalMessageFlow } from '@/ai/flows/generate-grammatical-message';
 import type { GenerateGrammaticalMessageInput, GenerateGrammaticalMessageOutput } from '@/lib/types';
-import {
-  generateRecipe as generateRecipeFlow,
-  type GenerateRecipeInput,
-  type GenerateRecipeOutput,
-} from '@/ai/flows/generate-recipe';
-import {
-  conversationalAssistant as conversationalAssistantFlow,
-  type AssistantInput,
-  type AssistantOutput,
-} from '@/ai/flows/conversational-assistant';
 
 // Helper function to run AI flows with a fallback mechanism
 async function runWithAIFallback<T, U>(
@@ -123,16 +100,6 @@ export async function improveCategorization(
   return runWithAIFallback(improveCategorizationFlow, input, fallback, 'improveCategorization');
 }
 
-export async function handleVoiceCommand(
-  input: VoiceCommandInput
-): Promise<VoiceCommandOutput> {
-  const fallback = {
-    operations: [],
-    response: 'No he podido procesar el comando de voz en este momento.',
-  };
-  return runWithAIFallback(handleVoiceCommandFlow, input, fallback, 'handleVoiceCommand');
-}
-
 export async function correctProductName(
   input: CorrectProductNameInput
 ): Promise<CorrectProductNameOutput> {
@@ -175,10 +142,6 @@ export async function identifyProductsFromPhoto(
   return runWithAIFallback(identifyProductsFromPhotoFlow, input, { products: [] }, 'identifyProductsFromPhoto');
 }
 
-export async function textToSpeech(input: TextToSpeechInput): Promise<TextToSpeechOutput> {
-    return runWithAIFallback(textToSpeechFlow, input, { audioDataUri: undefined }, 'textToSpeech');
-}
-
 
 export async function generateGrammaticalMessage(
   input: GenerateGrammaticalMessageInput
@@ -194,45 +157,5 @@ export async function generateGrammaticalMessage(
         case 'available': fallbackMessage = `"${input.productName}" ahora está disponible.`; break;
     }
     return runWithAIFallback(generateGrammaticalMessageFlow, input, { message: fallbackMessage }, 'generateGrammaticalMessage');
-}
-
-export async function generateRecipe(
-  input: GenerateRecipeInput
-): Promise<GenerateRecipeOutput> {
-  const fallback = {
-    title: 'Error al generar receta',
-    ingredients: [],
-    instructions: [
-      'No se pudo conectar con el servicio de IA para generar la receta.',
-    ],
-    note: 'El servicio de IA no está disponible en este momento. Por favor, inténtelo de nuevo más tarde.',
-  };
-  try {
-    const result = await generateRecipeFlow(input);
-    if (!result || !result.title || !result.ingredients || !result.instructions) {
-      console.error('[RECETA] La IA no devolvió una receta válida para', input.products, '->', result);
-      console.warn('[RECETA] Usando fallback de error');
-      return fallback;
-    }
-    // Log de éxito
-    console.log('[RECETA] Receta generada por IA:', result.title);
-    return result;
-  } catch (error) {
-    console.error('[RECETA] Error al llamar a la IA para generar receta:', error);
-    console.warn('[RECETA] Usando fallback de error');
-    return fallback;
-  }
-}
-
-export async function conversationalAssistant(
-  input: AssistantInput
-): Promise<AssistantOutput> {
-  const fallback = {
-    response:
-      'Lo siento, no he podido procesar tu petición en este momento. Inténtalo de nuevo.',
-    operations: [],
-    uiActions: [],
-  };
-  return runWithAIFallback(conversationalAssistantFlow, input, fallback, 'conversationalAssistant');
 }
 
