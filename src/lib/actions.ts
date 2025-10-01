@@ -1,7 +1,6 @@
 import {
   categorizeProduct as categorizeProductFlow,
-  type CategorizeProductInput,
-  type CategorizeProductOutput,
+  type CategorizeProductInput as AICategorizeProductInput,
 } from "@/ai/flows/categorize-product";
 import {
   refineCategory as refineCategoryFlow,
@@ -20,6 +19,8 @@ import {
 } from "@/ai/flows/correct-product-name";
 import { COMMON_PRODUCTS } from "@/data/common-products";
 import { levenshtein } from "@/lib/levenshtein";
+import type { Category } from "@/lib/types";
+import { categorizeWithLocalRules, isValidCategory } from "@/lib/categorization/localRules";
 import {
   identifyProductsFromPhoto as identifyProductsFromPhotoFlow,
   type IdentifyProductsFromPhotoInput,
@@ -49,41 +50,75 @@ async function runWithAIFallback<T, U>(
   }
 }
 
+const TRUE_FLAG_VALUES = new Set(["1", "true", "yes", "on"]);
+
+export type CategorizeProductSource = "override" | "local" | "ai" | "fallback";
+
+export type CategorizeProductInput = AICategorizeProductInput & {
+  overrideCategory?: string | null;
+};
+
+export interface CategorizeProductOutput {
+  category: Category;
+  source: CategorizeProductSource;
+}
+
+function isAICategorizationEnabled(): boolean {
+  const flag = process.env.AI_CATEG_ENABLED;
+  if (!flag || !TRUE_FLAG_VALUES.has(flag.toLowerCase())) {
+    return false;
+  }
+  return Boolean(process.env.GOOGLE_API_KEY);
+}
+
 export async function categorizeProduct(
   input: CategorizeProductInput
 ): Promise<CategorizeProductOutput> {
-  try {
-    const result = await categorizeProductFlow(input);
-    const validCategories = [
-      "Frutas y Verduras",
-      "Lácteos y Huevos",
-      "Proteínas",
-      "Panadería y Cereales",
-      "Aperitivos",
-      "Bebidas",
-      "Hogar y Limpieza",
-      "Condimentos y Especias",
-      "Conservas y Despensa",
-      "Otros"
-    ];
-    if (!result || !result.category) {
-      console.error('[CATEGORIZACIÓN] La IA no devolvió ninguna categoría para', input.productName, '->', result);
-      console.warn('[CATEGORIZACIÓN] Usando fallback: "Otros"');
-      return { category: 'Otros' };
-    }
-    if (!validCategories.includes(result.category)) {
-      console.error('[CATEGORIZACIÓN] La IA devolvió una categoría no válida para', input.productName, ':', result.category);
-      console.warn('[CATEGORIZACIÓN] Usando fallback: "Otros"');
-      return { category: 'Otros' };
-    }
-    // Log de éxito
-    console.log('[CATEGORIZACIÓN] Categoría IA para', input.productName, ':', result.category);
-    return result;
-  } catch (error) {
-    console.error('[CATEGORIZACIÓN] Error al llamar a la IA para', input.productName, ':', error);
-    console.warn('[CATEGORIZACIÓN] Usando fallback: "Otros"');
-    return { category: 'Otros' };
+  const { productName } = input;
+
+  if (!productName) {
+    return { category: "Otros", source: "fallback" };
   }
+
+  const override = typeof input.overrideCategory === "string" ? input.overrideCategory : undefined;
+  if (override) {
+    if (isValidCategory(override)) {
+      return { category: override, source: "override" };
+    }
+    console.warn(
+      `[CATEGORIZACIÓN] Override inválido "${override}" para "${productName}". Ignorando y continuando con reglas locales.`
+    );
+  }
+
+  const localMatch = categorizeWithLocalRules(productName);
+  if (localMatch.category) {
+    return { category: localMatch.category, source: "local" };
+  }
+
+  if (isAICategorizationEnabled()) {
+    try {
+      const result = await categorizeProductFlow({ productName });
+      if (result && isValidCategory(result.category)) {
+        console.log(
+          "[CATEGORIZACIÓN] Categoría IA para",
+          productName,
+          ":",
+          result.category
+        );
+        return { category: result.category, source: "ai" };
+      }
+      console.warn(
+        "[CATEGORIZACIÓN] La IA devolvió una categoría no válida para",
+        productName,
+        "->",
+        result?.category
+      );
+    } catch (error) {
+      console.error("[CATEGORIZACIÓN] Error al llamar a la IA para", productName, ":", error);
+    }
+  }
+
+  return { category: "Otros", source: "fallback" };
 }
 
 export async function refineCategory(

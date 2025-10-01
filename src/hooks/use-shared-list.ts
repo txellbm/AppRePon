@@ -5,6 +5,7 @@ import { doc, onSnapshot, type Unsubscribe } from "firebase/firestore";
 import { db } from "@/lib/firebase-config";
 import { updateList, type ListData, sanitizeProductArray } from "@/services/firebase-service";
 import { type Product, type Category } from "@/lib/types";
+import { normalizeForCategorization } from "@/lib/categorization/localRules";
 import { v4 as uuidv4 } from 'uuid';
 import {
   categorizeProduct,
@@ -145,13 +146,18 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
         }
       }
 
+      const currentOverrides = listData.categoryOverrides;
+      const resolveOverride = (value: string) => {
+        const normalizedKey = normalizeForCategorization(value);
+        return currentOverrides[normalizedKey] ?? currentOverrides[value.toLowerCase()];
+      };
+
       const newProductsFromScratch = await Promise.all(
         namesToCreate.map(async (name) => {
-          const lower = name.toLowerCase();
-          const overrideCat = listData.categoryOverrides[lower];
-          const { category } = overrideCat
-            ? { category: overrideCat }
-            : await categorizeProduct({ productName: name });
+          const { category } = await categorizeProduct({
+            productName: name,
+            overrideCategory: resolveOverride(name),
+          });
           return {
             id: uuidv4(),
             name,
@@ -235,13 +241,18 @@ export function useSharedList(listId: string | null, toast: ToastFn) {
         return;
       }
 
+      const currentOverrides = listData.categoryOverrides;
+      const resolveOverride = (value: string) => {
+        const normalizedKey = normalizeForCategorization(value);
+        return currentOverrides[normalizedKey] ?? currentOverrides[value.toLowerCase()];
+      };
+
       const newProducts = await Promise.all(
         productsToCreate.map(async (product) => {
-          const lower = product.name.toLowerCase();
-          const overrideCat = listData.categoryOverrides[lower];
-          const { category } = overrideCat
-            ? { category: overrideCat }
-            : await categorizeProduct({ productName: product.name });
+          const { category } = await categorizeProduct({
+            productName: product.name,
+            overrideCategory: resolveOverride(product.name),
+          });
           return {
             id: uuidv4(),
             name: product.name,
