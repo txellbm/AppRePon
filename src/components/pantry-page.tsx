@@ -47,7 +47,8 @@ import {
   Copy,
   Calendar,
   Snowflake,
-  ShoppingBag
+  ShoppingBag,
+  RefreshCcw
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -77,6 +78,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { normalizeForCategorization } from "@/lib/categorization/localRules";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
@@ -741,6 +743,7 @@ export default function PantryPage({ listId }: { listId: string }) {
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [newProductName, setNewProductName] = useState("");
+  const [isReclassifying, setIsReclassifying] = useState(false);
 
   const isOnline = useOnlineStatus();
   console.log('isOnline', isOnline);
@@ -798,10 +801,21 @@ export default function PantryPage({ listId }: { listId: string }) {
         const newHistory = [...new Set([...history.filter(h => h.toLowerCase() !== oldName.toLowerCase()), correctedName])];
         
         let newOverrides = { ...categoryOverrides };
-        const oldKey = oldName.toLowerCase();
-        if (newOverrides[oldKey]) {
-            newOverrides[correctedName.toLowerCase()] = newOverrides[oldKey];
-            delete newOverrides[oldKey];
+        const oldNormalizedKey = normalizeForCategorization(oldName);
+        const newNormalizedKey = normalizeForCategorization(correctedName);
+        const oldLegacyKey = oldName.toLowerCase();
+        const newLegacyKey = correctedName.toLowerCase();
+        const existingOverride =
+            newOverrides[oldNormalizedKey] ?? newOverrides[oldLegacyKey];
+        if (existingOverride) {
+            newOverrides[newNormalizedKey] = existingOverride;
+        }
+        delete newOverrides[oldNormalizedKey];
+        if (oldLegacyKey !== oldNormalizedKey) {
+            delete newOverrides[oldLegacyKey];
+        }
+        if (newLegacyKey !== newNormalizedKey) {
+            delete newOverrides[newLegacyKey];
         }
         updateRemoteList({
             pantry: newPantry,
@@ -973,8 +987,12 @@ export default function PantryPage({ listId }: { listId: string }) {
     }
 
     if (productName) {
-        const key = productName.toLowerCase();
-        const newOverrides = { ...categoryOverrides, [key]: newCategory };
+        const normalizedKey = normalizeForCategorization(productName);
+        const legacyKey = productName.toLowerCase();
+        const newOverrides = { ...categoryOverrides, [normalizedKey]: newCategory };
+        if (legacyKey !== normalizedKey && newOverrides[legacyKey]) {
+            delete newOverrides[legacyKey];
+        }
         updateRemoteList({ pantry: newPantry, shoppingList: newShoppingList, categoryOverrides: newOverrides });
         try {
             await improveCategorization({ productName, userSelectedCategory: newCategory });
@@ -1093,12 +1111,66 @@ export default function PantryPage({ listId }: { listId: string }) {
     const item = shoppingList.find(p => p.id === id);
     if (!item) return;
 
-    const newShoppingList = shoppingList.map(p => 
+    const newShoppingList = shoppingList.map(p =>
       p.id === id ? { ...p, buyLater: !p.buyLater } : p
     );
     updateRemoteList({ shoppingList: newShoppingList });
-    
+
     // transition without notifications
+  };
+
+  const handleReclassifyOthers = async () => {
+    if (isReclassifying) {
+      return;
+    }
+
+    const toastController = toast({
+      title: "Reclasificando productos...",
+      description: "Revisando artículos en \"Otros\".",
+      duration: 5000,
+    });
+
+    setIsReclassifying(true);
+    try {
+      const response = await fetch("/api/reclassify-others", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listId }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.error || response.statusText);
+      }
+
+      const summary = payload?.summary ?? {};
+      const updated = typeof summary.updated === "number" ? summary.updated : 0;
+      const overridesAdded = typeof summary.overridesAdded === "number" ? summary.overridesAdded : 0;
+      const bySource = typeof summary.bySource === "object" && summary.bySource !== null ? summary.bySource : {};
+      const localCount = typeof bySource.local === "number" ? bySource.local : 0;
+      const aiCount = typeof bySource.ai === "number" ? bySource.ai : 0;
+      const fallbackCount = typeof bySource.fallback === "number" ? bySource.fallback : 0;
+
+      const description =
+        updated > 0
+          ? `Se actualizaron ${updated} productos (local: ${localCount}, IA: ${aiCount}, fallback: ${fallbackCount}). Overrides guardados: ${overridesAdded}.`
+          : payload?.message ?? 'No había productos en "Otros" para reclasificar.';
+
+      toastController.update({
+        title: updated > 0 ? "Reclasificación completada" : "Sin cambios",
+        description,
+        duration: 6000,
+      });
+    } catch (error) {
+      console.error("Error reclasificando productos:", error);
+      toastController.update({
+        title: "Error al reclasificar",
+        description: "No se pudieron reclasificar los productos. Intenta de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsReclassifying(false);
+    }
   };
 
   const handleReturnToPantry = (id: string) => {
@@ -1518,6 +1590,29 @@ export default function PantryPage({ listId }: { listId: string }) {
                             <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowSearch(!showSearch)} aria-label="Buscar productos">
                                 <Search className="h-5 w-5" />
                             </Button>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-9 w-9"
+                                          onClick={handleReclassifyOthers}
+                                          aria-label="Reclasificar productos en Otros"
+                                          disabled={isReclassifying}
+                                        >
+                                          {isReclassifying ? (
+                                            <Loader2 className="h-5 w-5 animate-spin" />
+                                          ) : (
+                                            <RefreshCcw className="h-5 w-5" />
+                                          )}
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Reclasificar "Otros"</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="icon" className="h-9 w-9">
@@ -1625,7 +1720,21 @@ export default function PantryPage({ listId }: { listId: string }) {
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
-                      
+
+                      <Button
+                        variant="outline"
+                        className="h-9 gap-2"
+                        onClick={handleReclassifyOthers}
+                        disabled={isReclassifying}
+                      >
+                        {isReclassifying ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCcw className="h-4 w-4" />
+                        )}
+                        <span>Reclasificar "Otros"</span>
+                      </Button>
+
                       <Separator orientation="vertical" className="h-6 mx-1" />
 
                       <TooltipProvider>
