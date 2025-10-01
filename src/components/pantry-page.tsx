@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { generateRecipe, generateGrammaticalMessage, correctProductName, improveCategorization, categorizeProduct } from "@/lib/actions";
-import { type Product, type Category, type ProductStatus, type ViewMode, type GenerateRecipeOutput } from "@/lib/types";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { generateGrammaticalMessage, correctProductName, improveCategorization, categorizeProduct } from "@/lib/actions";
+import { type Product, type Category, type ProductStatus, type ViewMode } from "@/lib/types";
 import { useReponToast } from "@/hooks/use-repon-toast";
 import { useSharedList } from "@/hooks/use-shared-list";
 import { IdentifyProductsDialog } from "@/components/identify-products-dialog";
@@ -35,8 +35,6 @@ import {
   ArrowUpAZ,
   Camera,
   Loader2,
-  RefreshCw,
-  ChefHat,
   HelpCircle,
   Filter,
   History,
@@ -732,10 +730,6 @@ export default function PantryPage({ listId }: { listId: string }) {
   const [checkingItemId, setCheckingItemId] = useState<string | null>(null);
   const [slidingRightId, setSlidingRightId] = useState<string | null>(null);
   
-  const [isRecipeDialogOpen, setIsRecipeDialogOpen] = useState(false);
-  const [recipe, setRecipe] = useState<GenerateRecipeOutput | null>(null);
-  const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
-  
   // Estados para funcionalidad de congelar/descongelar
   const [editingFrozenDate, setEditingFrozenDate] = useState<{product: Product, date: string} | null>(null);
   const [editingCategory, setEditingCategory] = useState<Product | null>(null);
@@ -1128,44 +1122,6 @@ export default function PantryPage({ listId }: { listId: string }) {
     }, 500);
   };
 
-
-  const handleGenerateRecipe = async () => {
-    const availableProducts = pantry
-      .filter(p => p.status === 'available' || p.status === 'low')
-      .map(p => p.name);
-
-    if (availableProducts.length === 0) {
-      toast({
-        title: "No hay ingredientes",
-        description: "Añade productos a tu despensa para poder generar una receta.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsGeneratingRecipe(true);
-    setRecipe(null);
-    setIsRecipeDialogOpen(true);
-
-    try {
-      const result = await generateRecipe({
-        products: availableProducts
-      });
-      setRecipe(result);
-    } catch (error) {
-      console.error("Error generating recipe", error);
-      toast({
-        title: "Error al crear la receta",
-        description: "No se pudo generar una receta en este momento. Inténtalo de nuevo.",
-        variant: "destructive"
-      });
-      setIsRecipeDialogOpen(false);
-    } finally {
-      setIsGeneratingRecipe(false);
-    }
-  };
-  
-
   const handleNameSortToggle = () => {
     setSortConfig(current => {
       if (current.by === 'name') {
@@ -1500,16 +1456,6 @@ export default function PantryPage({ listId }: { listId: string }) {
                       </TooltipProvider>
                     )}
                     <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" disabled={pantry.filter(p => p.status === 'available' || p.status === 'low').length === 0} onClick={handleGenerateRecipe}>
-                            <ChefHat className="h-5 w-5" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Generar Receta</p>
-                        </TooltipContent>
-                      </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button variant="ghost" size="icon" onClick={() => setShowLegendDialog(true)}>
@@ -2025,56 +1971,6 @@ export default function PantryPage({ listId }: { listId: string }) {
           </DialogContent>
         </Dialog>
         
-        <Dialog open={isRecipeDialogOpen} onOpenChange={setIsRecipeDialogOpen}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Receta Sugerida</DialogTitle>
-              <DialogDescription>
-                {isGeneratingRecipe && !recipe ? "Buscando una receta deliciosa con tus ingredientes..." : (recipe ? recipe.title : "")}
-              </DialogDescription>
-            </DialogHeader>
-            {isGeneratingRecipe ? (
-              <div className="flex justify-center items-center py-10">
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
-              </div>
-            ) : recipe ? (
-              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                <div>
-                  <h3 className="font-semibold mb-2 text-primary">Ingredientes</h3>
-                  <ul className="list-disc list-inside space-y-1 text-sm">
-                    {recipe.ingredients.map((ing, i) => <li key={`recipe-ing-${i}-${ing}`}>{ing}</li>)}
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2 text-primary">Instrucciones</h3>
-                  <ol className="list-decimal list-inside space-y-2 text-sm">
-                    {recipe.instructions.map((step, i) => <li key={`recipe-step-${i}`}>{step}</li>)}
-                  </ol>
-                </div>
-                 <div>
-                  <h3 className="font-semibold mb-2 text-primary">Nota del Chef</h3>
-                  <p className="text-sm text-muted-foreground italic">{recipe.note}</p>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-10">
-                <p className="text-muted-foreground">No se pudo generar la receta. Inténtalo de nuevo.</p>
-              </div>
-            )}
-            <DialogFooter className="flex-row justify-between sm:justify-between w-full">
-               <Button variant="outline" onClick={() => setIsRecipeDialogOpen(false)}>Cerrar</Button>
-               <Button
-                variant="secondary"
-                onClick={handleGenerateRecipe}
-                disabled={isGeneratingRecipe}
-              >
-                {isGeneratingRecipe ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4"/>}
-                Probar otra
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
         <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
           <DialogContent>
               <DialogHeader>
