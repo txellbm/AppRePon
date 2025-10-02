@@ -8,6 +8,7 @@ import { useSharedList } from "@/hooks/use-shared-list";
 import { IdentifyProductsDialog } from "@/components/identify-products-dialog";
 import { ShareDialog } from "@/components/share-dialog";
 import Image from "next/image";
+import { reclassifyOthersClient } from "@/lib/categorization/reclassifyClient";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -1132,32 +1133,42 @@ export default function PantryPage({ listId }: { listId: string }) {
 
     setIsReclassifying(true);
     try {
-      const response = await fetch("/api/reclassify-others", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ listId }),
-      });
-
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload?.error || response.statusText);
-      }
-
-      const summary = payload?.summary ?? {};
-      const updated = typeof summary.updated === "number" ? summary.updated : 0;
+      const { summary, message } = await reclassifyOthersClient(listId);
+      const totalProcessed = typeof summary.totalProcessed === "number" ? summary.totalProcessed : 0;
+      const changed = typeof summary.changed === "number" ? summary.changed : 0;
+      const unchanged = typeof summary.unchanged === "number" ? summary.unchanged : Math.max(totalProcessed - changed, 0);
       const overridesAdded = typeof summary.overridesAdded === "number" ? summary.overridesAdded : 0;
-      const bySource = typeof summary.bySource === "object" && summary.bySource !== null ? summary.bySource : {};
+      const bySource = summary.bySource ?? {};
       const localCount = typeof bySource.local === "number" ? bySource.local : 0;
       const aiCount = typeof bySource.ai === "number" ? bySource.ai : 0;
       const fallbackCount = typeof bySource.fallback === "number" ? bySource.fallback : 0;
+      const overrideCount = typeof bySource.override === "number" ? bySource.override : 0;
 
-      const description =
-        updated > 0
-          ? `Se actualizaron ${updated} productos (local: ${localCount}, IA: ${aiCount}, fallback: ${fallbackCount}). Overrides guardados: ${overridesAdded}.`
-          : payload?.message ?? 'No había productos en "Otros" para reclasificar.';
+      const baseDescription =
+        totalProcessed > 0
+          ? `Procesados ${totalProcessed}, cambiados ${changed}, sin cambios ${unchanged}.`
+          : message ?? 'No había productos en "Otros" para reclasificar.';
+
+      const sourcesDescription =
+        totalProcessed > 0
+          ? ` Fuentes → override: ${overrideCount}, local: ${localCount}, IA: ${aiCount}, fallback: ${fallbackCount}.`
+          : "";
+
+      const overridesDescription = overridesAdded > 0 ? ` Overrides añadidos: ${overridesAdded}.` : "";
+      const examples = Array.isArray(summary.examples) ? summary.examples : [];
+      const exampleText = examples.length > 0
+        ? ` Ej.: ${examples
+            .slice(0, 3)
+            .map((entry) => `"${entry.name}" → ${entry.newCategory}`)
+            .join(", ")}.`
+        : "";
+
+      const description = `${baseDescription}${sourcesDescription}${overridesDescription}${exampleText}`.trim();
+
+      const hasChanges = changed > 0 || overridesAdded > 0;
 
       toastController.update({
-        title: updated > 0 ? "Reclasificación completada" : "Sin cambios",
+        title: hasChanges ? "Reclasificación completada" : "Sin cambios",
         description,
         duration: 6000,
       });
