@@ -5,7 +5,6 @@ import { generateGrammaticalMessage, correctProductName, improveCategorization, 
 import { type Product, type Category, type ProductStatus, type ViewMode } from "@/lib/types";
 import { useReponToast } from "@/hooks/use-repon-toast";
 import { useSharedList } from "@/hooks/use-shared-list";
-import { IdentifyProductsDialog } from "@/components/identify-products-dialog";
 import { ShareDialog } from "@/components/share-dialog";
 import Image from "next/image";
 import { reclassifyOthersClient } from "@/lib/categorization/reclassifyClient";
@@ -34,7 +33,6 @@ import {
   Share2,
   ArrowDownAZ,
   ArrowUpAZ,
-  Camera,
   Loader2,
   HelpCircle,
   Filter,
@@ -727,7 +725,6 @@ export default function PantryPage({ listId }: { listId: string }) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
-  const [showIdentifyDialog, setShowIdentifyDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showLegendDialog, setShowLegendDialog] = useState(false);
   const [checkingItemId, setCheckingItemId] = useState<string | null>(null);
@@ -1585,18 +1582,6 @@ export default function PantryPage({ listId }: { listId: string }) {
                     </TabsList>
                     
                     <div className="flex sm:hidden w-full items-center justify-between">
-                        <div className="flex items-center">
-                             <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button size="icon" className="h-9 w-9" onClick={() => setShowIdentifyDialog(true)} aria-label="Añadir producto con foto">
-                                            <Camera className="h-5 w-5" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>Añadir producto con foto</p></TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </div>
                         <div className="flex items-center gap-1">
                             <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowSearch(!showSearch)} aria-label="Buscar productos">
                                 <Search className="h-5 w-5" />
@@ -1748,18 +1733,6 @@ export default function PantryPage({ listId }: { listId: string }) {
 
                       <Separator orientation="vertical" className="h-6 mx-1" />
 
-                      <TooltipProvider>
-                         <Tooltip>
-                          <TooltipTrigger asChild>
-                              <Button size="icon" className="h-9 w-9" onClick={() => setShowIdentifyDialog(true)} aria-label="Añadir producto con foto">
-                                  <Camera className="h-5 w-5" />
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                              <p>Añadir producto con foto</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
                     </div>
                 </div>
 
@@ -2027,14 +2000,12 @@ export default function PantryPage({ listId }: { listId: string }) {
           </Tabs>
         </div>
         
-        <ShareDialog 
-          open={showShareDialog} 
-          onOpenChange={setShowShareDialog} 
+        <ShareDialog
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
           pantry={pantry}
           shoppingList={shoppingList}
         />
-
-        <IdentifyProductsDialog open={showIdentifyDialog} onOpenChange={setShowIdentifyDialog} onAddProducts={handleBulkAdd} />
         
 
         <Dialog open={!!confirmDeleteId} onOpenChange={() => setConfirmDeleteId(null)}>

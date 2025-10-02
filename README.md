@@ -46,8 +46,8 @@ RePon es una aplicación web colaborativa para gestionar la despensa y la lista 
 - **Generación de recetas con IA:**
   - La app puede sugerir recetas según los productos disponibles en la despensa.
   - **Nota:** Puede no funcionar si hay problemas con la clave de IA o la conexión.
-- **Añadir productos por voz o imagen:**
-  - Puedes añadir productos dictando por voz o sacando una foto. La IA sugiere productos genéricos detectados y puedes añadirlos todos de golpe o uno a uno.
+- **Añadir productos por voz:**
+  - Puedes añadir productos dictando por voz y revisar los nombres sugeridos antes de guardarlos.
 - **Copias de seguridad automáticas:**
   - Antes de sobrescribir la lista, se guarda automáticamente una copia en Firestore (`backup-{listId}`).
 - **Otras:**
@@ -59,7 +59,7 @@ RePon es una aplicación web colaborativa para gestionar la despensa y la lista 
 ---
 
 ## 🚦 Flujo de uso
-1. Abre la app y añade productos desde la barra de texto, por voz o desde una foto.
+1. Abre la app y añade productos desde la barra de texto o por voz.
 2. Cambia el estado de los productos tocando sobre ellos (verde → amarillo → rojo). Al llegar a rojo, pasan a la lista de la compra.
 3. Desde amarillo, puedes pulsar el icono del carrito para enviarlo a la compra sin borrarlo de la despensa.
 4. Gestiona la lista de la compra marcando productos como comprados, devolviéndolos a la despensa o guardándolos para otro día.
@@ -71,7 +71,6 @@ RePon es una aplicación web colaborativa para gestionar la despensa y la lista 
 ## 🤖 Inteligencia Artificial (IA)
 - **Corrección ortográfica y sugerencias inteligentes** al añadir productos.
 - **Categorización automática** de productos.
-- **Reconocimiento de productos en fotos** (nombres genéricos, no marcas).
 - **Generación de recetas** según los productos disponibles.
 - **Reconocimiento de voz** para añadir productos.
 - **Aprendizaje de categorías**: si cambias la categoría manualmente, la app la recordará para futuras ocasiones.
