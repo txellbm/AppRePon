@@ -21,12 +21,6 @@ import { COMMON_PRODUCTS } from "@/data/common-products";
 import { levenshtein } from "@/lib/levenshtein";
 import type { Category } from "@/lib/types";
 import { categorizeWithLocalRules, isValidCategory } from "@/lib/categorization/localRules";
-import {
-  identifyProductsFromPhoto as identifyProductsFromPhotoFlow,
-  type IdentifyProductsFromPhotoInput,
-  type IdentifyProductsFromPhotoOutput,
-} from '@/ai/flows/identify-products-from-photo';
-
 import { generateGrammaticalMessage as generateGrammaticalMessageFlow } from '@/ai/flows/generate-grammatical-message';
 import type { GenerateGrammaticalMessageInput, GenerateGrammaticalMessageOutput } from '@/lib/types';
 
@@ -170,13 +164,6 @@ export async function correctProductName(
   let fallback = { correctedName };
   return runWithAIFallback(correctProductNameFlow, input, fallback, 'correctProductName');
 }
-
-export async function identifyProductsFromPhoto(
-  input: IdentifyProductsFromPhotoInput
-): Promise<IdentifyProductsFromPhotoOutput> {
-  return runWithAIFallback(identifyProductsFromPhotoFlow, input, { products: [] }, 'identifyProductsFromPhoto');
-}
-
 
 export async function generateGrammaticalMessage(
   input: GenerateGrammaticalMessageInput

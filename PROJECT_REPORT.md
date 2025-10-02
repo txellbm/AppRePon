@@ -15,7 +15,6 @@
     - Marcar un producto como "comprado" en la lista de la compra lo mueve a la despensa con estado "disponible".
 - **Categorización con IA:** Al añadir un producto, una llamada a Genkit sugiere su categoría más probable (p. ej., "Leche" -> "Lácteos y Huevos").
 - **Corrección de Nombres con IA:** Los nombres de los productos introducidos son corregidos ortográficamente y capitalizados correctamente por la IA.
-- **Identificación por Foto:** Los usuarios pueden subir una foto de sus compras y la IA identifica los productos, permitiendo añadirlos en bloque a la despensa.
 - **Generación de Recetas con IA:** Basado en los ingredientes disponibles en la despensa, la IA sugiere una receta equilibrada para una comida/cena.
 - **Asistente Conversacional por Voz y Texto:** Una interfaz de chat permite gestionar las listas mediante comandos en lenguaje natural (p. ej., "Añade leche a la compra", "Tengo pan"). El asistente responde con voz.
 - **Notificaciones con Voz:** La aplicación utiliza un flujo de Texto a Voz (TTS) para notificar al usuario de las acciones realizadas (p. ej., "He añadido Leche a tu despensa").
@@ -52,7 +51,6 @@ La aplicación sigue la estructura del App Router de Next.js, promoviendo el uso
 - `src/components/`
     - `pantry-page.tsx`: **El componente principal de la aplicación.** Contiene la mayor parte de la lógica de la interfaz, el estado local y la interacción con las acciones del servidor.
     - `assistant-dialog.tsx`: Componente para la interfaz del asistente conversacional.
-    - `identify-products-dialog.tsx`: Componente para la funcionalidad de añadir productos por foto.
     - `share-dialog.tsx`: Componente para compartir el contenido de las listas.
     - `ui/`: Directorio con todos los componentes de shadcn/ui (Button, Dialog, Card, etc.).
 - `src/ai/flows/`
@@ -91,22 +89,17 @@ La aplicación sigue la estructura del App Router de Next.js, promoviendo el uso
     - **Salida:** Objeto con `title`, `ingredients`, `instructions` y `note`.
     - **Lógica:** Crea una receta de plato único y saludable para una persona, siguiendo la estructura del "Plato de Harvard" y objetivos de salud (antiinflamatorio, drenante). Solo usa los ingredientes proporcionados.
 
-4.  **`identify-products-from-photo.ts`**:
-    - **Entrada:** `photoDataUri: string` (imagen en formato Data URI).
-    - **Salida:** `products: string[]` (array con los nombres de los productos).
-    - **Lógica:** Analiza una imagen para identificar productos de supermercado.
-
-5.  **`conversational-assistant.ts`**:
+4.  **`conversational-assistant.ts`**:
     - **Entrada:** `command: string`, estado actual de `pantry` y `shoppingList`.
     - **Salida:** `response: string` (respuesta hablada), `operations: object[]` (acciones a ejecutar en los datos), `uiActions: object[]` (acciones a ejecutar en la UI).
     - **Lógica:** Es el cerebro del asistente. Interpreta comandos en español para añadir/mover productos o cambiar la interfaz, y genera las operaciones estructuradas correspondientes.
 
-6.  **`text-to-speech.ts`**:
+5.  **`text-to-speech.ts`**:
     - **Entrada:** `query: string` (texto a convertir).
     - **Salida:** `audioDataUri: string` (audio en formato Data URI).
     - **Lógica:** Utiliza el modelo TTS de Google para convertir una cadena de texto en audio reproducible.
 
-7.  **`generate-grammatical-message.ts`**:
+6.  **`generate-grammatical-message.ts`**:
     - **Entrada:** `productName: string`, `messageType: string`.
     - **Salida:** `message: string`.
     - **Lógica:** Construye frases gramaticalmente correctas en español, ajustando género y número del producto para notificaciones (p. ej., "Queda poc**a** lech**e**" vs. "Quedan poc**os** huev**os**").
