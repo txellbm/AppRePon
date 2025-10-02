@@ -188,7 +188,7 @@ onDeleteHistoryItem: (name: string) => Promise<void> | void
   };
 
   return (
-    <div className="relative pt-4">
+    <div className="relative w-full">
       <form onSubmit={handleSubmit} className="flex gap-2">
         <div className="relative flex-grow">
           <Input
@@ -724,7 +724,6 @@ export default function PantryPage({ listId }: { listId: string }) {
   const [statusFilter, setStatusFilter] = useState<'all' | ProductStatus | 'frozen'>('all');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showSearch, setShowSearch] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showLegendDialog, setShowLegendDialog] = useState(false);
   const [checkingItemId, setCheckingItemId] = useState<string | null>(null);
@@ -1583,9 +1582,6 @@ export default function PantryPage({ listId }: { listId: string }) {
                     
                     <div className="flex sm:hidden w-full items-center justify-between">
                         <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowSearch(!showSearch)} aria-label="Buscar productos">
-                                <Search className="h-5 w-5" />
-                            </Button>
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -1663,9 +1659,6 @@ export default function PantryPage({ listId }: { listId: string }) {
                     </div>
 
                     <div className="hidden sm:flex items-center gap-2">
-                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowSearch(!showSearch)} aria-label="Buscar productos">
-                          <Search className="h-5 w-5" />
-                      </Button>
                        <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-9 w-9">
@@ -1736,19 +1729,24 @@ export default function PantryPage({ listId }: { listId: string }) {
                     </div>
                 </div>
 
-                <AnimatePresence>
-                  {showSearch && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      className="relative mt-4"
-                    >
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start">
+                  <div className="w-full sm:flex-1">
+                    <AddItemForm
+                      onAddItem={currentAddItemHandler}
+                      history={history}
+                      pantry={pantry}
+                      shoppingList={shoppingList}
+                      activeTab={activeTab}
+                      onDeleteHistoryItem={handleDeleteHistoryItem}
+                    />
+                  </div>
+                  <div className="w-full sm:max-w-sm">
+                    <div className="relative">
+                      <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input
                         type="text"
                         placeholder="Buscar productos..."
-                        className="pl-10 w-full bg-gray-800 text-white placeholder-gray-400"
+                        className="w-full bg-gray-800 pl-10 pr-10 text-white placeholder-gray-400"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         autoComplete="off"
@@ -1756,20 +1754,21 @@ export default function PantryPage({ listId }: { listId: string }) {
                         spellCheck="false"
                         autoCapitalize="none"
                       />
-                      <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8" onClick={() => { setShowSearch(false); setSearchQuery(""); }}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              <AddItemForm
-                onAddItem={currentAddItemHandler}
-                history={history}
-                pantry={pantry}
-                shoppingList={shoppingList}
-                activeTab={activeTab}
-                onDeleteHistoryItem={handleDeleteHistoryItem}
-              />
+                      {searchQuery && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground"
+                          onClick={() => setSearchQuery("")}
+                          aria-label="Limpiar búsqueda"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
             </div>
             
             <TabsContent value="pantry">
